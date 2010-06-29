@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE SyncML PUBLIC "-//SYNCML//DTD SyncML 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/OMA-TS-SyncML_RepPro_DTD-V1_2.dtd">
+<SyncML xmlns="SYNCML:SYNCML1.2">
+   <SyncHdr>
+      <VerDTD>1.2</VerDTD>
+      <VerProto>SyncML/1.2</VerProto>
+      <SessionID/>
+      <MsgID>1</MsgID>
+      <Target>
+         <LocURI>targetDevice</LocURI>
+      </Target>
+      <Source>
+         <LocURI>sourceDevice</LocURI>
+      </Source>
+   </SyncHdr>
+   <SyncBody/>
+</SyncML>

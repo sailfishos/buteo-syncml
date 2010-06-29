@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><SyncML xmlns="SYNCML:SYNCML1.2"><SyncHdr><VerDTD>1.2</VerDTD><VerProto>SyncML/1.2</VerProto><SessionID/><MsgID>1</MsgID><Target><LocURI>targetDevice</LocURI></Target><Source><LocURI>sourceDevice</LocURI></Source></SyncHdr><SyncBody/></SyncML>

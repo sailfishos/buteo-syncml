@@ -1,0 +1,83 @@
+POST /services/syncml HTTP/1.1
+POST: /services/syncml
+User-Agent: libdatasync
+Content-Type: application/vnd.syncml+xml
+Accept: */*
+auth-type: global
+Content-Length: 3037
+Connection: Keep-Alive
+Accept-Encoding: gzip
+Host: localhost:8081
+
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncML><SyncHdr><VerDTD>1.2</VerDTD>
+        <VerProto>SyncML/1.2</VerProto>
+        <SessionID>1241693158</SessionID>
+        <MsgID>1</MsgID>
+        <Target><LocURI>http://localhost:8081/services/syncml</LocURI>
+        </Target>
+        <Source><LocURI>sc-pim-7c7cc17f-3d01-413d-baeb-435ffcbe375f</LocURI>
+        </Source>
+        <Meta><MaxMsgSize xmlns="syncml:metinf">8192</MaxMsgSize>
+            <MaxObjSize xmlns="syncml:metinf">500000</MaxObjSize>
+        </Meta>
+        <Cred><Meta><Format xmlns="syncml:metinf">b64</Format>
+                <Type xmlns="syncml:metinf">syncml:auth-basic</Type>
+            </Meta>
+            <Data>dGF0dTp0YXR1</Data>
+        </Cred>
+    </SyncHdr>
+    <SyncBody><Put><CmdID>1</CmdID>
+            <Meta><Type xmlns="syncml:metinf">application/vnd.syncml-devinf+xml</Type>
+            </Meta>
+            <Item><Source><LocURI>./devinf12</LocURI>
+                </Source>
+                <Data><DevInf xmlns="syncml:devinf"><VerDTD>1.2</VerDTD>
+                        <Man>Nokia</Man>
+                        <Mod>Model</Mod>
+                        <FwV>1.0</FwV>
+                        <SwV>1.0</SwV>
+                        <HwV>1.0</HwV>
+                        <DevID>DeviceID</DevID>
+                        <DevTyp>phone</DevTyp>
+                        <SupportLargeObjs></SupportLargeObjs>
+                        <DataStore><SourceRef>contact</SourceRef>
+                            <Rx-Pref><CTType>text/x-vcard</CTType>
+                                <VerCT>2.1</VerCT>
+                            </Rx-Pref>
+                            <Tx-Pref><CTType>text/x-vcard</CTType>
+                                <VerCT>2.1</VerCT>
+                            </Tx-Pref>
+                            <Rx><CTType>text/vcard</CTType>
+                                <VerCT>3.0</VerCT>
+                            </Rx>
+                            <Tx><CTType>text/vcard</CTType>
+                                <VerCT>3.0</VerCT>
+                            </Tx>
+                            <SyncCap><SyncType>1</SyncType>
+                                <SyncType>2</SyncType>
+                                <SyncType>3</SyncType>
+                                <SyncType>4</SyncType>
+                                <SyncType>5</SyncType>
+                                <SyncType>6</SyncType>
+                                <SyncType>7</SyncType>
+                            </SyncCap>
+                        </DataStore>
+                    </DevInf>
+                </Data>
+            </Item>
+        </Put>
+        <Alert><CmdID>2</CmdID>
+            <Data>200</Data>
+            <Item><Target><LocURI>contact</LocURI>
+                </Target>
+                <Source><LocURI>contact</LocURI>
+                </Source>
+                <Meta><Anchor xmlns="syncml:metinf"><Next>1241693158</Next>
+                    </Anchor>
+                </Meta>
+            </Item>
+        </Alert>
+        <Final/>
+    </SyncBody>
+</SyncML>

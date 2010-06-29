@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncML>
+<SyncHdr><VerDTD>1.1</VerDTD>
+<VerProto>SyncML/1.1</VerProto>
+<SessionID>1230717403</SessionID>
+<MsgID>4</MsgID>
+<Target><LocURI>http://localhost:8080/funambol/ds</LocURI>
+</Target>
+<Source><LocURI>sc-pim-166b90db-53a4-4877-a5bd-285e533c4cb0</LocURI>
+</Source>
+</SyncHdr>
+<SyncBody><Status><CmdID>1</CmdID>
+<MsgRef>3</MsgRef>
+<CmdRef>0</CmdRef>
+<Cmd>SyncHdr</Cmd>
+<TargetRef>http://localhost:8080/funambol/ds</TargetRef>
+<SourceRef>sc-pim-166b90db-53a4-4877-a5bd-285e533c4cb0</SourceRef>
+<Data>200</Data>
+</Status>
+<Sync><CmdID>2</CmdID>
+<Target><LocURI>note</LocURI>
+</Target>
+<Source><LocURI>memo</LocURI>
+</Source>
+</Sync>
+<Final/></SyncBody>
+</SyncML>

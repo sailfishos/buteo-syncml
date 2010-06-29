@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SyncML>
+  <SyncHdr>
+    <VerDTD>1.2</VerDTD>
+    <VerProto>SyncML/1.2</VerProto>
+    <SessionID>1230022352</SessionID>
+    <MsgID>5</MsgID>
+    <Target>
+      <LocURI>sc-pim-75af2bff-3a5e-4cba-affb-4c555b9ee740</LocURI>
+    </Target>
+    <Source>
+      <LocURI>http://82.77.123.71:8080/services/syncml</LocURI>
+    </Source>
+    <RespURI>http://82.77.123.71:8080/services/syncml?s=RYHmRQAA&amp;srv_id=002</RespURI>
+  </SyncHdr>
+  <SyncBody>
+    <Status>
+      <CmdID>1</CmdID>
+      <MsgRef>5</MsgRef>
+      <CmdRef>0</CmdRef>
+      <Cmd>SyncHdr</Cmd>
+      <!--Status for SyncHdr-->
+      <TargetRef>http://localhost:8080/funambol/ds/card</TargetRef>
+      <SourceRef>sc-pim-75af2bff-3a5e-4cba-affb-4c555b9ee740</SourceRef>
+      <Chal>
+        <Meta>
+          <Type xmlns='syncml:metinf'>syncml:auth-md5</Type>
+          <Format xmlns='syncml:metinf'>b64</Format>
+          <NextNonce xmlns='syncml:metinf'>ZG9iZWhhdmUNCg==</NextNonce>
+        </Meta>
+      </Chal>
+      <Data>200</Data>
+      <Item>
+        <Target>
+          <LocURI>note</LocURI>
+        </Target>
+        <Source>
+          <LocURI>memo</LocURI>
+        </Source>
+      </Item>
+    </Status>
+    <Alert>
+      <CmdID>2</CmdID>
+      <Data>201</Data>
+      <!-- 200 = TWO_WAY_ALERT -->
+      <Item>
+        <Target>
+          <LocURI>addressbook</LocURI>
+        </Target>
+        <Source>
+          <LocURI>card</LocURI>
+        </Source>
+        <Meta>
+          <Anchor xmlns='syncml:metinf'>
+            <Last>1232366487448</Last>
+            <Next>1232981790235</Next>
+          </Anchor>
+          <MaxObjSize xmlns='syncml:metinf'>500000</MaxObjSize>
+        </Meta>
+      </Item>
+    </Alert>
+    <Sync>
+      <CmdID>3</CmdID>
+      <Target>
+        <LocURI>addressbook</LocURI>
+      </Target>
+      <Source>
+        <LocURI>card</LocURI>
+      </Source>
+      <Add>
+        <CmdID>4</CmdID>
+        <Meta>
+          <Type xmlns="syncml:metinf">text/x-vcard</Type>
+        </Meta>
+        <Item>
+          <Source>
+            <LocURI>0</LocURI>
+          </Source>
+          <SourceParent>
+            <LocURI>1</LocURI>
+          </SourceParent>
+          <Data>
+BEGIN:VCARD
+VERSION:2.1
+N:Lahtela;Tatu;;;
+FN:Lahtela, Tatu
+TEL;TYPE=PREF:+35840 7532165
+EMAIL;INTERNET:tatu.lahtela
+TITLE:
+ORG:;
+END:VCARD</Data>
+        </Item>
+      </Add>
+      <Replace>
+        <CmdID>5</CmdID>
+        <Meta>
+          <FieldLevel xmlns="syncml:metinf" />
+          <Type xmlns="syncml:metinf">x-type/x-subtype</Type>
+        </Meta>
+        <Item>
+          <Target>
+            <LocURI>244</LocURI>
+          </Target>
+          <TargetParent>
+            <LocURI>245</LocURI>
+          </TargetParent>
+          <Data>ReplaceData</Data>
+        </Item>
+      </Replace>
+	  <Delete>
+        <CmdID>6</CmdID>
+        <Meta>
+          <Type xmlns="syncml:metinf">x-type/x-subtype2</Type>
+        </Meta>
+        <Item>
+          <Target>
+            <LocURI>128</LocURI>
+          </Target>
+        </Item>
+      </Delete>
+    </Sync>
+    <Results>
+      <Item>
+        <Data>
+          <DevInf xmlns="syncml:devinf">
+            <SupportLargeObjs />
+          </DevInf>
+        </Data>
+      </Item>
+    </Results>
+    <Map>
+      <CmdID>7</CmdID>
+      <Target>
+        <LocURI>http://www.datasync.org/servlet/syncit</LocURI>
+      </Target>
+      <Source>
+        <LocURI>IMEI:001004FF1234567</LocURI>
+      </Source>
+      <MapItem>
+        <Target>
+          <LocURI>./0123456789ABCDEF</LocURI>
+        </Target>
+        <Source>
+          <LocURI>./01</LocURI>
+        </Source>
+      </MapItem>
+      <MapItem>
+        <Target>
+          <LocURI>./0123456789ABCDF0</LocURI>
+        </Target>
+        <Source>
+          <LocURI>./02</LocURI>
+        </Source>
+      </MapItem>
+      <MapItem>
+        <Target>
+          <LocURI>./0123456789ABCDF1</LocURI>
+        </Target>
+        <Source>
+          <LocURI>./03</LocURI>
+        </Source>
+      </MapItem>
+    </Map>
+    <Final/>
+  </SyncBody>
+</SyncML>

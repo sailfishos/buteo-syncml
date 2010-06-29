@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncHdr><CmdId>12<SubCmdID name="value" another="value2">Srikanth Kavoori</SubCmdID>
+    </CmdId>
+</SyncHdr>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Alert><CmdID>-1</CmdID>
+    <Data><![CDATA[201]]></Data>
+    <Item><Target><LocURI>card</LocURI>
+        </Target>
+        <Source><LocURI>addressbook</LocURI>
+        </Source>
+        <Meta><Anchor xmlns="syncml:metinf"><Last xmlns="syncml:metinf">12345678</Last>
+                <Next xmlns="syncml:metinf">12345679</Next>
+            </Anchor>
+            <Type xmlns="syncml:metinf">text</Type>
+        </Meta>
+    </Item>
+</Alert>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Item><Source><LocURI>./devinf12</LocURI>
+    </Source>
+    <Data><DevInf xmlns="syncml:devinf"><VerDTD>1.2</VerDTD>
+            <Man>Nokia</Man>
+            <Mod/>
+            <FwV/>
+            <SwV/>
+            <HwV/>
+            <DevID/>
+            <DevTyp>phone</DevTyp>
+            <UTC/>
+            <SupportLargeObjs/>
+            <SupportNumberOfChanges/>
+        </DevInf>
+    </Data>
+</Item>

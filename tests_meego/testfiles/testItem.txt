@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><Item><Source><LocURI>contacts</LocURI></Source><Target><LocURI>calendar</LocURI></Target><SourceParent><LocURI>contactsparent</LocURI></SourceParent><TargetParent><LocURI>calendarparent</LocURI></TargetParent></Item>

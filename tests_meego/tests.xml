@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<testdefinition version="0.1">
+  <!-- Test suite, name mandatory - the same as test package name -->
+  <suite name="libameegosyncml-tests" domain="synchronization"> 
+    <!-- At least one set per suite, name and description mandatory -->
+    <set name="SyncmlStack " description="tests for syncml-stack" feature="Sync ML 1.1">
+
+      <pre_steps>
+        <step>export LD_LIBRARY_PATH=/usr/share/libmeegosyncml-tests:$LD_LIBRARY_PATH</step>
+      </pre_steps>
+
+      <case name="libmeegosyncml-all" type="Functional" description="Running Tests for Syncml Stack" timeout="1000" subfeature="">
+        <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
+        <step expected_result="0">/usr/share/libmeegosyncml-tests/./runstarget.sh  /usr/share/libmeegosyncml-tests/libmeegosyncml-tests  > /tmp/libmeegosyncml-tests_results.txt </step>
+      </case>
+
+      <!-- Get optional - fetches additional result files -->
+      <get>
+        <file>/tmp/libmeegosyncml-tests.out</file>     
+        <file>/tmp/libmeegosyncml-tests.cmp</file> 
+      </get>         
+    </set>
+  </suite>
+</testdefinition>

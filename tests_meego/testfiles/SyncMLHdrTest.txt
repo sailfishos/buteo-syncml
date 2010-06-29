@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncHdr><VerDTD>1.2</VerDTD>
+    <VerProto>SyncML/1.2</VerProto>
+    <SessionID>12345</SessionID>
+    <MsgID>100</MsgID>
+    <Target><LocURI>card</LocURI>
+    </Target>
+    <Source><LocURI>addressbook</LocURI>
+    </Source>
+    <Meta><MaxMsgSize xmlns="syncml:metinf">20</MaxMsgSize>
+        <MaxObjSize xmlns="syncml:metinf">40</MaxObjSize>
+    </Meta>
+</SyncHdr>
