@@ -4,6 +4,7 @@ Release: 1
 Summary: SyncML library for MeeGo sync
 Group: System/Libraries
 License: Other
+URL: http://meego.gitorious.com/meego-middleware/buteo-syncml
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: qt-devel, doxygen
