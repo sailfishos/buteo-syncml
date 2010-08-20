@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -94,9 +106,6 @@ bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
     aMessage.addToBody( sync );
     aSizeThreshold = remainingBytes;
 
-    LOG_DEBUG("Total Changes: " << iNumberOfChanges \
-				<< "No. of Items Processed in this write" << (iMaxChangesPerMessage-itemsThatCanBeSent));
-
     return allWritten;
 
 }
@@ -110,37 +119,71 @@ bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
 
     int remainingBytes = aSizeThreshold;
 
-    LOG_DEBUG("Items that Can be Sent " << aItemsThatCanBeSent);
+    // Get all items corresponding to the keys from the plug-in's
+    QList<SyncItem*> curritems;
 
-    while( (iLocalChanges.added.count() > 0) &&
+    int count = iLocalChanges.added.count(); 
+    int pos = 0;
+
+    if( 0 < count && 0 == addeditems.count() )
+    {
+        while( count )
+        {
+            curritems = iSyncTarget.getPlugin()->getSyncItems( iLocalChanges.added.mid( pos, iMaxChangesPerMessage ) );
+            if( !curritems.count() )
+            {
+                break;
+            }
+            count -= curritems.count();
+            addeditems += curritems;
+            pos = addeditems.count();
+            LOG_DEBUG("Fetched " << curritems.count() << " items");
+        }
+
+        if( addeditems.count() != iLocalChanges.added.count() )
+        {
+            LOG_WARNING("We didn't get all the items we asked for from the storage plug-in");
+        }
+        iLocalChanges.added.clear();
+    }
+
+    // The order of the items returned to us may not correspond to iLocalChanges.added, so
+    // we iterate over the returned items and get their keys.
+    while( (addeditems.count() > 0) &&
     	   (aItemsThatCanBeSent  > 0) &&
     	   (remainingBytes > 0) ) {
+
         int cmdId = aMessage.getNextCmdId();
         SyncMLAdd* add = new SyncMLAdd(cmdId);
-        SyncItemKey syncItemKey = iLocalChanges.added.first();
-
         QString mimeType;
-        bool processed = processItem( syncItemKey, *add, remainingBytes, SYNCML_ADD, mimeType );
+        SyncItemKey key = *addeditems.first()->getKey();
+
+        bool processed = processItem( key, addeditems.first(), *add, remainingBytes, SYNCML_ADD, mimeType );
         remainingBytes -= add->sizeAsXML();
         aSyncElement.addChild( add );
 
         if (processed) {
-            emit newItemWritten( aMessage.getMsgId(), cmdId, syncItemKey, MOD_ITEM_ADDED,
+            emit newItemWritten( aMessage.getMsgId(), cmdId, key, MOD_ITEM_ADDED,
                                  iSyncTarget.getSourceDatabase(), iSyncTarget.getTargetDatabase(),
                                  mimeType );
-            iLocalChanges.added.removeFirst();
             aItemsThatCanBeSent--;
         }
         else {
             LOG_WARNING("Sync item was not processed");
+        }
+
+        if( !addeditems.isEmpty() )
+        {
+            delete addeditems.takeFirst();
         }
     }
 
     aSizeThreshold = remainingBytes;
     bool processed = false;
 
-    if( iLocalChanges.added.count() == 0 ) {
+    if( addeditems.count() == 0 ) {
         processed = true;
+        LOG_DEBUG("Processed all added items");
     }
 
     return processed;
@@ -156,34 +199,65 @@ bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
 
     int remainingBytes = aSizeThreshold;
 
-    LOG_DEBUG("Items that Can be Sent " << aItemsThatCanBeSent);
+    // Get all items corresponding to the keys from the plug-in's
+    QList<SyncItem*> curritems;
 
-    while( (iLocalChanges.modified.count() > 0)  &&
+    int count = iLocalChanges.modified.count(); 
+    int pos = 0;
+
+    if( 0 < count && 0 == modifieditems.count() )
+    {
+        while( count )
+        {
+            curritems = iSyncTarget.getPlugin()->getSyncItems( iLocalChanges.modified.mid( pos, iMaxChangesPerMessage ) );
+            if( !curritems.count() )
+            {
+                break;
+            }
+            count -= curritems.count();
+            modifieditems += curritems;
+            pos = modifieditems.count();
+            LOG_DEBUG("Fetched " << curritems.count() << " items");
+        }
+
+        if( modifieditems.count() != iLocalChanges.modified.count() )
+        {
+            LOG_WARNING("We didn't get all the items we asked for from the storage plug-in");
+        }
+        iLocalChanges.modified.clear();
+    }
+
+    while( (modifieditems.count() > 0)  &&
      	   (aItemsThatCanBeSent  > 0) &&
      	   (remainingBytes > 0) ) {
         int cmdId = aMessage.getNextCmdId();
         SyncMLReplace* replace = new SyncMLReplace( cmdId );
-        SyncItemKey syncItemKey = iLocalChanges.modified.first();
-
         QString mimeType;
-        bool processed = processItem( syncItemKey, *replace, remainingBytes, SYNCML_REPLACE, mimeType );
+        SyncItemKey key = *modifieditems.first()->getKey();
+
+        bool processed = processItem( key, modifieditems.first(), *replace, remainingBytes, SYNCML_REPLACE, mimeType );
         remainingBytes -= replace->sizeAsXML();
         aSyncElement.addChild( replace );
 
         if (processed) {
-            emit newItemWritten( aMessage.getMsgId(), cmdId, syncItemKey, MOD_ITEM_MODIFIED,
+            emit newItemWritten( aMessage.getMsgId(), cmdId, key, MOD_ITEM_MODIFIED,
                                  iSyncTarget.getSourceDatabase(), iSyncTarget.getTargetDatabase(),
                                  mimeType );
-            iLocalChanges.modified.removeFirst();
             aItemsThatCanBeSent--;
         } // no else
+
+        if( !modifieditems.isEmpty() )
+        {
+            delete modifieditems.takeFirst();
+        }
     }
 
     aSizeThreshold = remainingBytes;
     bool processed = false;
 
-    if( iLocalChanges.modified.count() == 0 ) {
+    if( modifieditems.count() == 0 ) {
         processed = true;
+        LOG_DEBUG("Processed all modified items");
     }
 
     return processed;
@@ -198,9 +272,7 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
 
     int remainingBytes = aSizeThreshold;
 
-    LOG_DEBUG("Items that Can be Sent " << aItemsThatCanBeSent);
-
-    while( iLocalChanges.removed.count() > 0   &&
+    while( iLocalChanges.removed.count() > 0 &&
       	   (aItemsThatCanBeSent > 0) &&
       	   (remainingBytes > 0) ) {
         int cmdId = aMessage.getNextCmdId();
@@ -211,7 +283,7 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
         // that we're using mimetype here, we should be able to handle identification of used
         // storage purely on the db uri's.
         QString mimeType;
-        bool processed = processItem( syncItemKey, *del, remainingBytes, SYNCML_DELETE, mimeType );
+        bool processed = processItem( syncItemKey, NULL, *del, remainingBytes, SYNCML_DELETE, mimeType );
 
         remainingBytes -= del->sizeAsXML();
         aSyncElement.addChild( del );
@@ -229,12 +301,14 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
 
     if( iLocalChanges.removed.count() == 0 ) {
         processed = true;
+        LOG_DEBUG("Processed all deleted items");
     }
 
     return processed;
 }
 
 bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
+                                       SyncItem *aSyncItem,
                                        SyncMLLocalChange& aParent,
                                        int aSizeThreshold,
                                        SyncMLCommand aCommand,
@@ -260,7 +334,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                 itemObject->insertTarget( remoteKey );
             }
             else {
-                LOG_DEBUG("Could not find mapping to for local uid: " << aItemKey);
+                LOG_WARNING("Could not find mapping to for local uid: " << aItemKey);
             }
         }
         else {
@@ -275,18 +349,16 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
     }
     else {
 
-        SyncItem* item = iSyncTarget.getPlugin()->getSyncItem( aItemKey );
+        if( aSyncItem ) {
 
-        if( item ) {
+            aMimeType = aSyncItem->getType();
 
-            aMimeType = item->getType();
+            aParent.addMimeMetadata( aSyncItem->getType() );
+            qint64 size = aSyncItem->getSize();
 
-            aParent.addMimeMetadata( item->getType() );
-            qint64 size = item->getSize();
+            if( !aSyncItem->getParentKey()->isEmpty() ) {
 
-            if( !item->getParentKey()->isEmpty() ) {
-
-                const SyncItemKey* parentKey = item->getParentKey();
+                const SyncItemKey* parentKey = aSyncItem->getParentKey();
 
                 if( iRole == ROLE_SERVER ) {
                     SyncItemKey remoteKey = iSyncTarget.mapToRemoteUID( *parentKey );
@@ -320,30 +392,27 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                 qint64 dataLeft = iLargeObjectState.iSize - iLargeObjectState.iOffset;
 
                 if( aSizeThreshold < dataLeft ) {
-                    item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
+                    aSyncItem->read( iLargeObjectState.iOffset, aSizeThreshold, data );
                     aParent.addSizeMetadata( size );
                     itemObject->insertData( data );
                     itemObject->insertMoreData();
                     iLargeObjectState.iOffset += aSizeThreshold;
                 }
                 else {
-                    item->read( iLargeObjectState.iOffset, dataLeft, data );
+                    aSyncItem->read( iLargeObjectState.iOffset, dataLeft, data );
                     itemObject->insertData( data );
                     iLargeObjectState.iOffset += dataLeft;
                     processed = true;
                 }
 
             }
-            else if( size < aSizeThreshold ) {
-                // Item fits into the message
+            else
+            {
                 QByteArray data;
-                item->read( 0, size, data );
+                aSyncItem->read( 0, size, data );
                 itemObject->insertData( data );
                 processed = true;
             }
-
-            delete item;
-            item = NULL;
 
         }
         else {

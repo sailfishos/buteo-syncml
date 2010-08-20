@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -51,6 +63,7 @@ StorageHandler::~StorageHandler()
 
 bool StorageHandler::addItem( const ItemId& aItemId,
                               StoragePlugin& aPlugin,
+			      const SyncItemKey& aLocalKey,
                               const SyncItemKey& aParentKey,
                               const QString& aType,
                               const QString& aFormat,
@@ -72,6 +85,7 @@ bool StorageHandler::addItem( const ItemId& aItemId,
         return false;
     }
 
+    newItem->setKey( aLocalKey );
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
@@ -115,7 +129,7 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 
     if( !item ) {
         LOG_DEBUG( "Could not find item, processing as Add" );
-        return addItem( aItemId, aPlugin, aParentKey, aType, aFormat, aData );
+        return addItem( aItemId, aPlugin, aLocalKey, aParentKey, aType, aFormat, aData );
     }
 
     item->setParentKey( aParentKey );
@@ -173,6 +187,7 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
         return false;
     }
 
+    newItem->setKey( aRemoteKey);
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
@@ -308,10 +323,26 @@ bool StorageHandler::finishLargeObject( const ItemId& aItemId )
 
 }
 
-QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlugin )
+QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlugin, 
+		                               ConflictResolver* aConflictResolver )
 {
     FUNCTION_CALL_TRACE;
 
+    
+    QMutableMapIterator<ItemId, SyncItem*> i( iAddList );
+    
+    while( i.hasNext() ) {
+	i.next();
+	// If we fail to find a sync item with local key  for replace we add it as 
+	// a new item ; one reason is that the item has been deleted locally if so
+	// its a conflict  
+	if ( aConflictResolver &&  aConflictResolver->isConflict(*i.value()->getKey(), false) ) {
+	     LOG_DEBUG ("Move to Replace List :" << *i.value()->getKey());	
+    	     iReplaceList.insert( i.key(), i.value() );
+             i.remove();
+	}
+    }
+    
     QMap<ItemId, CommitResult> results;
 
     QList<ItemId> addIds = iAddList.keys();
@@ -338,7 +369,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
                 result.iStatus = COMMIT_ADDED;
 
                 emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , addItems[i]->getType() );
+                                    aPlugin.getSourceURI() , addItems[i]->getType(), addItems.count() );
 
                 break;
             }
@@ -348,7 +379,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
                 result.iStatus = COMMIT_DUPLICATE;
 
                 emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , addItems[i]->getType() );
+                                    aPlugin.getSourceURI() , addItems[i]->getType(), addItems.count() );
 
                 break;
             }
@@ -357,7 +388,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
                 result.iStatus = generalStatus( addStatus[i] );
 
                 emit itemProcessed( MOD_ITEM_ERROR, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , addItems[i]->getType() );
+                                    aPlugin.getSourceURI() , addItems[i]->getType(), addItems.count() );
 
                 break;
             }
@@ -392,7 +423,8 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
         CommitResult result;
 
         result.iItemKey = *i.value()->getKey();
-	
+	result.iStatus = COMMIT_INIT_REPLACE;	
+
         iId.iCmdId = i.key().iCmdId;
 	iId.iItemIndex = i.key().iItemIndex;
        	
@@ -411,6 +443,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
             else {
                 LOG_DEBUG( "Conflict resolved, remote side wins" );
                 result.iConflict = CONFLICT_REMOTE_WIN;
+		aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
             }
         }
         else {
@@ -444,7 +477,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
                 result.iStatus = COMMIT_REPLACED;
 
                 emit itemProcessed( MOD_ITEM_MODIFIED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , replaceItems[i]->getType() );
+                                    aPlugin.getSourceURI() , replaceItems[i]->getType(), replaceItems.count() );
 
                 break;
             }
@@ -454,7 +487,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
                 result.iStatus = COMMIT_DUPLICATE;
 
                 emit itemProcessed( MOD_ITEM_MODIFIED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , replaceItems[i]->getType() );
+                                    aPlugin.getSourceURI() , replaceItems[i]->getType(), replaceItems.count() );
 
                 break;
             }
@@ -463,7 +496,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
                 result.iStatus = generalStatus( replaceStatus[i] );
 
                 emit itemProcessed( MOD_ITEM_ERROR, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() , replaceItems[i]->getType() );
+                                    aPlugin.getSourceURI() , replaceItems[i]->getType(), replaceItems.count() );
 
                 break;
             }
@@ -488,6 +521,8 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
 
     QMutableMapIterator<ItemId, SyncItemKey> i( iDeleteList );
 
+    ItemId iId;
+    
     while( i.hasNext() ) {
 
         i.next();
@@ -495,8 +530,12 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
         CommitResult result;
 
         result.iItemKey = i.value();
+	result.iStatus = COMMIT_INIT_DELETE;
+	
+	iId.iCmdId = i.key().iCmdId;
+        iId.iItemIndex = i.key().iItemIndex;
 
-        LOG_DEBUG( "Checking item" << i.key().iCmdId <<"/" << i.key().iItemIndex << "for conflict" );
+        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
 
         if( aConflictResolver && aConflictResolver->isConflict( i.value(), true ) ) {
 
@@ -505,11 +544,13 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
             if( aConflictResolver->localSideWins() ) {
                 LOG_DEBUG( "Conflict resolved, local side wins" );
                 result.iConflict = CONFLICT_LOCAL_WIN;
+		aConflictResolver->revertLocalChange ( result.iItemKey, CR_MODIFY_TO_ADD );
                 i.remove();
             }
             else {
                 LOG_DEBUG( "Conflict resolved, remote side wins" );
                 result.iConflict = CONFLICT_REMOTE_WIN;
+		aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
             }
         }
         else {
@@ -517,7 +558,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
             result.iConflict = CONFLICT_NO_CONFLICT;
         }
 
-        results.insert( i.key(), result );
+        results.insert( iId, result );
 
     }
 
@@ -543,7 +584,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = COMMIT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType );
+                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
 
                 break;
             }
@@ -553,7 +594,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = COMMIT_NOT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType );
+                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
 
                 break;
             }
@@ -562,7 +603,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = generalStatus( deleteStatus[i] );
 
                 emit itemProcessed( MOD_ITEM_ERROR, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType );
+                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
 
                 break;
             }

@@ -1,0 +1,689 @@
+libmeegosyncml (0.4.9-27) unstable; urgency=low
+
+  * Fixes: NB#182304 - Some data not transfered message displayed when
+    all data sync initiated from 5200
+  * Fixes: NB#185413 - Sync with Nokia 6300i fails with "no content 
+    available for sync" failure when there are three content types enabled
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 19 Aug 2010 11:59:04 +0530
+
+libmeegosyncml (0.4.9-26) unstable; urgency=low
+
+  * Fixed a regression in LocalChangesPackage::processRemovedItems : don't
+    fetch these items from backend, as they have been deleted and don't exist!
+  * Fixes: NB#185595 - Sync log doesnot display all the content type label names.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Wed, 18 Aug 2010 11:59:04 +0530
+
+libmeegosyncml (0.4.9-25) unstable; urgency=low
+
+  * TODO : PR
+  * Fixes: NB#179954 -  It took ~10 minutes to display device contacts from
+    NOS
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 17 Aug 2010 11:59:04 +0530
+
+libmeegosyncml (0.4.9-24) unstable; urgency=low
+
+  * Removed unnecessary stuff from debian/rules which was causing compilation
+    issues!
+  * Fixes: NB#183589 -  Development packages libmeegosyncml-dev and
+    sync-fw-dev does not contain .pc files
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 16 Aug 2010 14:06:48 +0530
+
+libmeegosyncml (0.4.9-23) unstable; urgency=low
+
+  * Fixes: NB#171728 -  Switch needs to fall back to sync if client does not
+    support one way sync.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 10 Aug 2010 12:05:04 +0530
+
+libmeegosyncml (0.4.9-22) unstable; urgency=low
+
+  * Fixes: NB#183511 -  SSU Fails: Packaging conflict between
+    libmeegosyncml_0.4.9-17+0m6_armel.deb and libmaemosyncml 0.4.9-8+0m6
+  * Added UT cases for refresh sync.
+  * Workaround for NB#176070 - QNetworkAccessManager can't be used in
+    QThreads.
+  * Fixes: 183009 -  Optimize signals from sync backend to UI.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 09 Aug 2010 10:14:00 +0530
+
+libmeegosyncml (0.4.9-21) unstable; urgency=low
+
+  * Fixes: NB#183706 Modified contact in N95 is updated to DUT after
+    sync when delete the same contact in DUT before sync, when conflict set to DUT
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 05 Aug 2010 09:26:52 +0530
+
+libmeegosyncml (0.4.9-20) unstable; urgency=low
+
+  * In case of an anchor mismatch, revert to refresh/slow sync based on the
+    sync direction, sync initiator and remote device sync types.
+  * Fixes: NB#183279 <coverity> defects from libmaemosyncml 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Thu, 05 Aug 2010 09:26:52 +0530
+
+libmeegosyncml (0.4.9-19) unstable; urgency=low
+
+  * Fixes: NB#180367   Conflict set to DUT: Modified contact in DUT is 
+    not updated to N95, when modify a contact in DUT and delete the same contact in N95.
+  * Fixes: NB#180360 Modifications made to device contacts are not reflected in
+    N900 when conflict is set to device and vice versa
+  * Fixes: NB#183324 - Unable to integrate SyncScheduleSettingsDialog into MfE
+    accounts ui plugin.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 04 Aug 2010 11:30:08 +0530
+
+libmeegosyncml (0.4.9-18) unstable; urgency=low
+
+  * Implemented refresh sync, merged changes from refresh_sync branch to
+    nokia_proprietary branch.
+  * Fixes: NB#180900 -  Support refresh sync in client and server modes.
+  * Fixes: NB#177628 -  N900 : Send use case fails when sync initiated from
+  * Fixes: NB#182959 -  Sync failed for Calendar only data when initiated
+    from S60 (N97mini)
+  * Don't fail addition/modification for an item that has <MoreData> without a <size>.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 02 Aug 2010 11:30:08 +0530
+
+libmeegosyncml (0.4.9-17) unstable; urgency=low
+
+  * Changing package name libmaemosyncml->libmeegosyncml 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 23 Jul 2010 14:29:24 +0530
+
+libmaemosyncml (0.4.9-16) unstable; urgency=low
+
+  * Fixes: NB#167889  -  Sync fails if bluetooth pairing is removed from device
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Thu, 22 Jul 2010 14:29:24 +0530
+
+libmaemosyncml (0.4.9-15) unstable; urgency=low
+
+  * Fixes: NB#181297  -  "remote initiated sync from S40/S60/N900 does not end at all"
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 21 Jul 2010 14:29:24 +0530
+
+libmaemosyncml (0.4.9-14) unstable; urgency=low
+
+  * Fixes: NB#179703 - Syncing calendar data and notes with S60 (N97mini)
+    fails, initiated from Device
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 20 Jul 2010 14:29:24 +0530
+
+libmaemosyncml (0.4.9-13) unstable; urgency=low
+
+  * Rebuild 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 19 Jul 2010 15:10:24 +0530
+
+libmaemosyncml (0.4.9-12) unstable; urgency=low
+
+  * Reverted fix 177628
+  * Fixes: NB#180426  -  Switch fails for all/individual data with S60 phone
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 16 Jul 2010 15:10:24 +0530
+
+libmaemosyncml (0.4.9-11) unstable; urgency=low
+
+  * Fixes: NB#176944 -  Changes required in syncml stack state machine
+    to handle receiving of mappings while it's sending items.
+  * Close the obex BT link in client mode when there is a link error.
+  * Fixes: 177628  -  N900 : Send use case fails when sync 
+    initiated from device in particular scenario
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 14 Jul 2010 15:10:24 +0530
+
+libmaemosyncml (0.4.9-10) unstable; urgency=low
+
+  * Rebuild .
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Thu, 08 Jul 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-9) unstable; urgency=low
+
+  * Compilation fixes .
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 07 Jul 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-8) unstable; urgency=low
+
+  * Support for reading configuration from a file
+  * Modified configuration API to be based on properties, and easier to use
+  * Added support of http x-headers
+  * Fixes: NB#176791  -  There should be a HTTP patches to sync-app and
+    libmaemosyncml for AT&T addressbook synch
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Sat, 03 Jul 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-7) unstable; urgency=low
+  * Fixes: NB#174412 -  All data sync from device to N900 does not end
+  * Fixes: NB#174748 - Remote sync from S40 fails always, if sync application
+    is open then sync ui crashes too
+  * Fixes: NB#176871  -  msyncd crash when delete a calendar event in N95 and
+    modify the same event in device.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 28 Jun 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-6) unstable; urgency=low
+
+  * Fixes: NB#166841 - Contacts in device are not synchronized to S40
+    device - server client role change
+  * Dynamic role selection
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 21 Jun 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-5) unstable; urgency=low
+
+  * Removal of profile related changes. 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 18 Jun 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-3) unstable; urgency=low
+
+  * Fixes: 174265 -  Msyncd crashed when avatar is added to contact and synced
+    from DUT to N900
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 14 Jun 2010 14:52:24 +0530
+
+libmaemosyncml (0.4.9-2) unstable; urgency=low
+
+  * Fixed issues related to storing and cleaning of id mappings
+  * Fixes: NB#171533 -  Device sync to S40-msyncd crashed for all data
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Sun, 13 Jun 2010 15:42:48 +0530
+
+libmaemosyncml (0.4.9-1) unstable; urgency=low
+
+  * Fixes: NB#172829 -  Contacts created in DUT does not synchronize to N900
+    - N900 Initiated
+  *  Accounts related changes.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 09 Jun 2010 14:46:29 +0530
+
+libmaemosyncml (0.4.8-13) unstable; urgency=low
+
+  * Fixes: NB#172626 None of the calendar events from S40 gets synchronized to DUT -
+    S40 Initiated
+  * Fixes: NB#166780 Syncing combination of any 2 N900 contents failing when
+    sync initiated from N900 .
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Fri, 04 Jun 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-12) unstable; urgency=low
+
+  * Fixes: Phone number is displayed in the Contact application
+    instead of Name after transferring contacts via switch application.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 02 Jun 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-10) unstable; urgency=low
+
+  * Fixes: Phone number is displayed in the Contact application
+    instead of Name after transferring contacts via switch application.
+  * Fixes: NB#171057  -  msyncd crash for calendar data with N95 in conflict
+    scenario.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 31 May 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-9) unstable; urgency=low
+
+  * Fixes: NB#171057  -  msyncd crash for calendar data with N95 in conflict
+    scenario.
+  * Fixes: NB#169487 Phone number is displayed in the Contact application
+    instead of Name after transferring contacts via switch application
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 25 May 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-8) unstable; urgency=low
+
+  * Added convinience function to ChangeLog to allow external applications to manipulate
+    and delete sync anchor data
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 19 May 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-7) unstable; urgency=low
+
+  * Added convinience function to ChangeLog to allow external applications to manipulate
+    and delete sync anchor data
+  * Fixes: NB#167135 - Modified Calendar/Contact data is added as duplicate
+    copies in DUT if first sync is initiated from S60
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Sat, 15 May 2010 13:35:21 +0530
+
+libmaemosyncml (0.4.8-6) unstable; urgency=low
+
+  * Week 18 PR
+  * Large improvements to OBEX transport
+  * Updates to doxygen documentation
+  * Fixes: NB161729 - Remote sync from the latest S60 phones does not work due to d2dsettings message
+  * Fixes: NB164672   None of the bookmarks are synchronized from DUT 
+    to PC via Ovi_suite BT/USB 
+  * Removed SAN package digest check.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 28 Apr 2010 16:11:43 +0300
+
+libmaemosyncml (0.4.8-5) unstable; urgency=low
+ 
+  * Week 17 PR
+  * Made server URI comparison case insensitive when figuring out MIME type
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 21 Apr 2010 13:44:05 +0300
+
+libmaemosyncml (0.4.8-4) unstable; urgency=low
+
+  *  Week 16 PR 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 14 Apr 2010 13:48:45 +0300
+
+libmaemosyncml (0.4.8-3) unstable; urgency=low
+
+  * Week 15 PR
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Wed, 07 Apr 2010 13:39:36 +0300
+
+libmaemosyncml (0.4.8-2) unstable; urgency=low
+
+  * Minor fix for crash seen in ovi suite sync with contacts  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 01 Apr 2010 16:21:17 +0300
+
+libmaemosyncml (0.4.8-1) unstable; urgency=low
+
+  * Week 14 PR 
+  * Added support for re-sending initialization package for HTTP transport
+  * Review Comments Changes updated  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 31 Mar 2010 14:17:17 +0300
+
+libmaemosyncml (0.4.8-0) unstable; urgency=low
+
+  * Week 13 PR
+  * Fixes: NB#157296 - <CodeStyle> Code review for libmaemosyncml  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 24 Mar 2010 17:49:10 +0200
+
+libmaemosyncml (0.4.7-9) unstable; urgency=low
+
+  * Week 12 PR 
+  * Added support for server initiated syncing using SyncML 1.2 SAN package
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 18 Mar 2010 19:22:03 +0200
+
+libmaemosyncml (0.4.7-8) unstable; urgency=low
+
+  * Fix for properly sending wbxml when requested after receiving SAN message
+  * Fixes: NB#160190 - 'Some data not copied' message is displayed after synchronizing calendar data/notes/contacts with S60 phone
+  * Support for multiple CTCap objects per storage
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 16 Mar 2010 14:54:47 +0200
+
+libmaemosyncml (0.4.7-7) unstable; urgency=low
+
+
+  * Week 10 PR 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 11 Mar 2010 11:32:03 +0200
+
+libmaemosyncml (0.4.7-6) unstable; urgency=low
+
+  * Week 09 PR 
+  * Fixed some bugs in OBEX transport
+  * Different MTU's for BT and USB transports
+  * Fixes: NB#153864 - msyncd constantly consumes ~75% of CPU after transferring 2 GB of data to DUT 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed,  3 Mar 2010 09:52:47 +0200
+
+libmaemosyncml (0.4.7-5) unstable; urgency=low
+
+  * Week 08 PR
+  * Reinforced OBEX transport to only accept Connect commands with target set to "SYNCML-SYNC"
+  * Support for hierarchical synchronization added
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 24 Feb 2010 16:04:45 +0200
+
+libmaemosyncml (0.4.7-4) unstable; urgency=low
+
+  * Week 07 PR 
+  * Removed dependency to sqlite3 package
+  * Added support for parsing & initiating sync from SyncML 1.2 SAN package
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 18 Feb 2010 15:44:17 +0200
+
+libmaemosyncml (0.4.7-3) unstable; urgency=low
+
+  * Week 07 Release
+  * Implemented: SWP#Hsync-698: Busy Signalling
+  * Made upper limit for number of changes as configurable
+  * Fixes: NB#150562 - <MemLeak> in sync
+  * Fixes: NB#156558 - <Safety> valgrind returns 2 Invalid Read issues for libmaemosyncml-tests 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 15 Feb 2010 09:24:47 +0200
+
+libmaemosyncml (0.4.7-2) unstable; urgency=low
+
+  * Week 06 Release 2 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 11 Feb 2010 13:14:14 +0200
+
+libmaemosyncml (0.4.7-1) unstable; urgency=low
+
+  * Week 06 Release 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon,  8 Feb 2010 10:15:56 +0200
+
+libmaemosyncml (0.4.7-0) unstable; urgency=low
+
+  * Week 05 Release
+  * Fixed itemProcessed() signal not being emitted when items have been added
+    to remote database
+  * Fixes: NB#153991 - msyncd crashed while synchronizing all data with N900
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon,  1 Feb 2010 14:38:16 +0200
+
+libmaemosyncml (0.4.6-4) unstable; urgency=low
+  
+  * Week 04 Release 
+  * Added the feature to limit the number of messages per syncml message
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 25 Jan 2010 11:44:55 +0200
+
+libmaemosyncml (0.4.6-3) unstable; urgency=low
+
+  * Week 03 Release 01
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 18 Jan 2010 11:31:47 +0200
+
+libmaemosyncml (0.4.6-2) unstable; urgency=low
+
+  * Week 02 Release 2 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 13 Jan 2010 12:06:10 +0200
+
+libmaemosyncml (0.4.6-1) unstable; urgency=low
+
+  * Week 02 Release  
+  * Fixes: NB#150562 - Memory leaks in libmaemosyncml tests
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 11 Jan 2010 14:33:59 +0200
+
+libmaemosyncml (0.4.6-0) unstable; urgency=low
+
+  * Week 52 Release
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 21 Dec 2009 14:36:39 +0200
+
+libmaemosyncml (0.4.5-0) unstable; urgency=low
+
+  * Week 51 Release
+  * Fixes: NB#149311 - First sync does not add any data from N900
+  * Fixes: NB#148705 - Coverity defects for libmaemosyncml
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 14 Dec 2009 14:55:31 +0200
+
+libmaemosyncml (0.4.4-1) unstable; urgency=low
+
+  * Week 50 Release 2
+  * Fixed anchor handling in server initiated syncs
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue,  8 Dec 2009 15:48:46 +0200
+
+libmaemosyncml (0.4.4-0) unstable; urgency=low
+
+  * Week 50 Release
+  * Fixed hanging issue occurring when in OBEX server mode
+  * Fixed server initiated one-way syncs
+  * Fixes: NB#147760 - Unit test problems in CI environment
+  * Fixes: NB#146321 - Transfer of contacts and calendar fails from Switch UI 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon,  7 Dec 2009 11:40:39 +0200
+
+libmaemosyncml (0.4.3-0) unstable; urgency=low
+
+  * Week 49 Release
+  * Fixed not sending SyncML Status in response to received Results
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue,  1 Dec 2009 10:31:46 +0200
+
+libmaemosyncml (0.4.2-0) unstable; urgency=low
+
+  * Week 48 Release 
+  * Fixes: NB#146324 - Synchronization fails with S40 devices
+  * Send MaxGUIDSize in DevInf in client mode
+  * Fixes: NB#145231 - Code review comments
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 24 Nov 2009 16:32:35 +0200
+
+libmaemosyncml (0.4.1-1) unstable; urgency=low
+
+  * Week 47 Release 2 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 18 Nov 2009 15:19:51 +0200
+
+libmaemosyncml (0.4.1-0) unstable; urgency=low
+
+  * Week 47 Release 
+  * Fixes: NB#144679 - <coverity> some major and moderate defects from sync 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 16 Nov 2009 17:23:51 +0200
+
+libmaemosyncml (0.4.0-0) unstable; urgency=low
+
+  * Week 46 Release
+  * Added Optimisation Flags
+  * Fixes: NB#145558 - Code review comments
+  * Dedicated CTCaps handling for both SyncML 1.1 and SyncML 1.2
+  * Database performance improvements
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 10 Nov 2009 18:55:14 +0200
+
+libmaemosyncml (0.3.9-0) unstable; urgency=low
+
+  * Week 45 Release 1
+  * Commit changes to local database in batches 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed,  4 Nov 2009 12:22:46 +0200
+
+libmaemosyncml (0.3.8-2) unstable; urgency=low
+
+  * Week 44 Release 2  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 27 Oct 2009 17:27:13 +0200
+
+libmaemosyncml (0.3.8-1) unstable; urgency=low
+
+  * Week 44 Release 1
+  * Added libmaemosyncml-tests package support to run unit tests during CI
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon, 26 Oct 2009 18:31:42 +0200
+
+libmaemosyncml (0.3.8-0) unstable; urgency=low
+
+  * Week 43 Release  
+  * Direct wbxml encoding using libwbxml2
+  * Use libwbxml2 instead of xml2wbxml in wbxml conversions
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 20 Oct 2009 17:26:42 +0300
+
+libmaemosyncml (0.3.7-1) unstable; urgency=low
+
+  * Week 42 Release 2 
+  * Item format specified under Item Meta now overrides ones specified under
+    Add/Replace Meta
+  * Removed BT service from libmaemosyncml as obsolete
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Fri, 16 Oct 2009 17:58:17 +0300
+
+libmaemosyncml (0.3.7-0) unstable; urgency=low
+
+  * Week 42 Release
+  * Accept "bin" encoding format as "b64"
+  * Fixed progress reporting of SyncAgent
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 13 Oct 2009 18:32:56 +0300
+
+libmaemosyncml (0.3.6-1) unstable; urgency=low
+
+  * Week 41 Release 
+  * made coverage as an extra target
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Mon,  5 Oct 2009 18:29:09 +0300
+
+libmaemosyncml (0.3.6-0) unstable; urgency=low
+
+  * Removed debug package installation as the size exceeds the limit 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Fri,  2 Oct 2009 11:48:09 +0300
+
+libmaemosyncml (0.3.5-9) unstable; urgency=low
+
+  *  Week 40 Release 2 
+  *  minor changes to session handler 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu,  1 Oct 2009 18:38:52 +0300
+
+libmaemosyncml (0.3.5-8) unstable; urgency=low
+
+  * Week 40 Release
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 29 Sep 2009 17:53:52 +0300
+
+libmaemosyncml (0.3.5-7) unstable; urgency=low
+
+  * Week 39 Release 2 
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Fri, 25 Sep 2009 08:14:26 +0300
+
+libmaemosyncml (0.3.5-6) unstable; urgency=low
+
+  * Week 39 Release  
+  * Code review fixes
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Tue, 22 Sep 2009 17:43:00 +0300
+
+libmaemosyncml (0.3.5-5) unstable; urgency=low
+
+  * Week 38 Release 2 
+  * Changed retrieval of storages from as-supplied to on-demand
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 17 Sep 2009 18:16:19 +0300
+
+libmaemosyncml (0.3.5-4) unstable; urgency=low
+
+  * Week 38 Release
+  * Fixed OBEX transport not to crash in SB
+  * Optimized SyncML Delete command performance
+  * Fixed retrieval of item id from Replace/Delete when running in server mode
+  * Fixes: NB#133670 - No license information for the source files  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Wed, 16 Sep 2009 11:46:35 +0300
+
+libmaemosyncml (0.3.5-3) unstable; urgency=low
+
+  * week 37 Release 2  
+
+ -- Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>  Thu, 10 Sep 2009 18:11:05 +0300
+
+libmaemosyncml (0.3.5-2) unstable; urgency=low
+
+  * Week 37 Release 
+  * Minor bugfixes to OBEX server operation
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Tue,  8 Sep 2009 17:35:31 +0300
+
+libmaemosyncml (0.3.5-1) unstable; urgency=low
+
+  * Week 36 Release 2
+  * Last sync time now rounded to the next following second
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Thu,  3 Sep 2009 14:41:04 +0300
+
+libmaemosyncml (0.3.5-0) unstable; urgency=low
+
+  * Week 36 Release 
+  * Fixed issues with database opening warning  
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Tue,  1 Sep 2009 17:12:10 +0300
+
+libmaemosyncml (0.3.4-1) unstable; urgency=low
+
+  * Fixed issues in BT disconnect
+  * Cleaned up StoragePlugin and SyncItem APIs 
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Thu, 27 Aug 2009 16:11:00 +0300
+
+libmaemosyncml (0.3.4-0) unstable; urgency=low
+
+  * Week35 Release  
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Tue, 25 Aug 2009 17:43:26 +0300
+
+libmaemosyncml (0.3.3-0) unstable; urgency=low
+
+  * Week 34 release:
+  * Added Suspend/Resume feature  
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Fri, 21 Aug 2009 09:27:11 +0300
+
+libmaemosyncml (0.3.2-1) unstable; urgency=low
+
+  * Added MD5 authentication support for server and client
+  * Added server-side authentication
+  * Added sync without initialization phase 
+ 
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Wed, 19 Aug 2009 18:24:38 +0300
+
+libmaemosyncml (0.3.2-0) unstable; urgency=low
+
+  * Week33 release
+  * Device to Device Sync functionality is checked using 2 harmattan devices.
+      Note: This Cannot be done from existing UI though
+  * SyncAgent API Interface has been updated and a new API for setting
+    the authentication has been added
+  * BT sync issue with s60 fixed
+  * ID mapping tracking has been added to the code. yet to verify.
+
+  * Week 32 release
+  * Added device capability sending
+  * Added authentication challenge handling. MD5 and server side authentication not yet done.
+ 
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Wed, 19 Aug 2009 18:24:27 +0300
+
+  *  Week 31 release. Fixes: NB#129610,NB#126685
+  *  Removed:
+        transport/HTTPServerTransport.h
+        transport/HTTPServerTransport.cpp          
+       
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Thu, 30 Jul 2009 18:00:00 +0200
+
+  * Week 29 release
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Sat, 18 Jul 2009 17:59:50 +0200
+
+
+  * Week 28 release 
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Tue, 08 Jul 2009 17:49:50 +0200
+
+
+  * Week 27 release 
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Thu, 02 Jul 2009 17:49:50 +0200
+
+
+libmaemosyncml (0.2.5-1) unstable; urgency=low
+
+  * Week 26 release 
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Thu, 25 Jun 2009 15:49:50 +0200
+
+
+libmaemosyncml (0.2.2-0) unstable; urgency=low
+
+  * Phase 2 Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Lassi Nieminen <lassi.ta.nieminen@nokia.com>  Mon, 1 Jun 2009 15:11:50 +0200
+

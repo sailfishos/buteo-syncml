@@ -1,10 +1,13 @@
+include(doc/doc.pro)
+
 CONFIG += ordered \
-  qt \
-  thread 
+	qt \
+	debug \
+	thread 
 
 # Directories
 SUBDIRS += src \
-           Tests_meego
+           tests_meego
 
 QT += core
 
@@ -12,4 +15,5 @@ QT += core
 QT -= gui
 
 QTDIR = /usr/lib/qt4
+
 TEMPLATE = subdirs

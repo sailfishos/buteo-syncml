@@ -36,11 +36,13 @@
 #include <QBitArray>
 #include <QMap>
 #include <QString>
-#include <QDebug>
+#include <QVariant>
 
 #include "SyncAgentConsts.h"
 #include "SyncMode.h"
 #include "DeviceInfo.h"
+
+class QXmlStreamReader;
 
 namespace DataSync {
 
@@ -49,10 +51,17 @@ class Transport;
 class SyncAgentConfigTest;
 
 
-/*! \brief Configuration for the Sync Agent
+/*! \brief Configuration object for the SyncAgent
  *
- * It specifies the used transportation layer
- * and necessary information for performing sync action.
+ * This class specifies all necessary configuration parameters for
+ * SyncAgent. Configuration parameters are divided between critical
+ * parameters, non-critical properties and extensions. Critical
+ * parameters can be accessed and manipulated using get/set-functions
+ * related to a particular parameter. Non-critical properties are
+ * divided between agent-related properties and transport-related
+ * properties. Extensions can be used to enable or disable features
+ * that SyncAgent supports that are not directly related to OMA DS
+ * protocol.
  */
 class SyncAgentConfig {
 
@@ -67,6 +76,21 @@ public:
      *
      */
     ~SyncAgentConfig();
+
+    /*! \brief Internalizes configuration from a file
+     *
+     * It should be noted that only common configuration can be internalized
+     * from a file. Configuration related to callback interfaces
+     * ( setTransport() and setStorageProvider() ) and initiating a
+     * synchronization session cannot be internalized from a file, and must
+     * always be explicitly set.
+     *
+     * @param aFile Configuration file
+     * @param aSchemaFile XML Schema file used when validating configuration file
+     * @return True on success, otherwise false
+     */
+    bool fromFile( const QString& aFile,
+                   const QString& aSchemaFile = "/etc/sync/meego-syncml-conf.xsd" );
 
     /*! \brief Sets the transport to use in sync
      *
@@ -99,6 +123,147 @@ public:
      * @return
      */
     StorageProvider* getStorageProvider() const;
+
+    /*! \brief Sets the device information to be used
+     *
+     * @param aDeviceInfo Device info to use
+     */
+    void setDeviceInfo(const DeviceInfo &aDeviceInfo);
+
+    /*! \brief Returns the device information to be user
+     *
+     * @return
+     */
+    const DeviceInfo& getDeviceInfo() const;
+
+    /*! \brief Set the database file location (full path)
+     *
+     * If not set, defaults to /etc/syncml/syncml.db
+     *
+     * @param aPath Full database file path
+     */
+    void setDatabaseFilePath( const QString& aPath );
+
+    /*! \brief Returns the database file location (full path)
+     *
+     * @return Full path to database file
+     */
+    QString getDatabaseFilePath() const;
+
+    /*! \brief Sets the local device name to be used in sync
+     *
+     * If not set, defaults to device ID specified in device info
+     *
+     * @param aLocalDevice Local Device identification
+     */
+    void setLocalDeviceName( const QString& aLocalDevice );
+
+    /*! \brief Returns the local device name to be used in sync
+     *
+     * @return
+     */
+    const QString& getLocalDeviceName() const;
+
+    /*! \brief Sets a property value related to the agent
+     *
+     * If property already exists, old value is replaced. See
+     * SyncAgentConfigProperties.h for a list of supported properties.
+     *
+     * @param aProperty Property to set
+     * @param aValue Value to set
+     */
+    void setAgentProperty( const QString& aProperty, const QString& aValue );
+
+    /*! \brief Gets a property value related to the agent
+     *
+     * @param aProperty Property to get
+     * @return Value of property if found, otherwise empty
+     */
+    QString getAgentProperty( const QString& aProperty ) const;
+
+    /*! \brief Sets a property value related to the transport
+     *
+     * If property already exists, old value is replaced. See
+     * SyncAgentConfigProperties.h for a list of supported properties.
+     *
+     * @param aProperty Property to set
+     * @param aValue Value to set
+     */
+    void setTransportProperty( const QString& aProperty, const QString& aValue );
+
+    /*! \brief Gets a property value related to the transport
+     *
+     * @param aProperty Property to get
+     * @return Value of property if found, otherwise empty
+     */
+    QString getTransportProperty( const QString& aProperty ) const;
+
+    /*! \brief Set parameters for initiating synchronization
+     *
+     * It should be noted that these parameters are relevant only for
+     * initiating synchronization, they are not used when serving. By default,
+     * remote device name is set to unknown device identifier ("/"), protocol
+     * version 1.2 is used, and two-way synchronization is performed.
+     *
+     * @param aRemoteDeviceName Name of the remote device to synchronize with.
+     *                          If not set, defaults to unknown device "/"
+     * @param aVersion Protocol version to use. If not set, defaults to DS_1_2
+     * @param aSyncMode Type of sync to be used. If not set, defaults to
+     *                  two-way fast sync initiated by client
+     */
+    void setSyncParams( const QString& aRemoteDeviceName,
+                        ProtocolVersion aVersion,
+                        const SyncMode& aSyncMode );
+
+    /*! \brief Returns the remote device name to be used in sync
+     *
+     * @return
+     */
+    const QString& getRemoteDeviceName() const;
+
+    /*! \brief Returns the protocol version to be used in sync
+     *
+     * @return
+     */
+    const ProtocolVersion& getProtocolVersion() const;
+
+    /*! \brief Returns the type of sync to be used in sync
+     *
+     * @return
+     */
+    const SyncMode& getSyncMode() const;
+
+    /*! \brief Sets the parameters to authenticate a synchronization session
+     *
+     * It should be noted that these parameters are relevant only for
+     * initiating synchronization, they are not used when serving. By default,
+     * no authentication is used.
+     *
+     * @param aAuthType Authentication type to use
+     * @param aUsername Username to use (if required, otherwise empty)
+     * @param aPassword Password to use (if required, otherwise empty)
+     */
+    void setAuthParams( const AuthenticationType& aAuthType,
+                        const QString& aUsername,
+                        const QString& aPassword );
+
+    /*! \brief Returns the authentication type to be used
+     *
+     * @return
+     */
+    const AuthenticationType& getAuthenticationType() const;
+
+    /*! \brief Returns the user name to use
+     *
+     * @return
+     */
+    const QString& getUsername() const;
+
+    /*! \brief Returns the password to be used in SyncML authentication
+     *
+     * @return
+     */
+    const QString& getPassword() const;
 
     /*! \brief Adds a target for sync
      *
@@ -137,210 +302,100 @@ public:
      */
     const QMap<QString, QString>* getTargets() const;
 
-    /*! \brief Sets the type of sync to be used
+    /*! \brief Enables a protocol extension
      *
-     * If not set, defaults to two-way fast sync initiated by client
-     *
-     * @param aSyncMode Sync mode to use
-     *
+     * @param aName Name of the extension
+     * @param aData Data of the extension
      */
-    void setSyncMode( const SyncMode& aSyncMode );
+    void setExtension( const QString& aName, const QVariant& aData = QVariant() );
 
-    /*! \brief Returns the type of sync to be used
+    /*! \brief Returns whether protocol extension has been enabled
      *
+     * @param aName Name of the extension
      * @return
      */
-    const SyncMode& getSyncMode() const;
+    bool extensionEnabled( const QString& aName ) const;
 
-    /*! \brief Sets the local device identification to be used in sync
+    /*! \brief Returns data of enaled extension
      *
-     * If not set, defaults to device ID specified in device info
-     *
-     * @param aLocalDevice Local Device identification
-     */
-    void setLocalDevice( const QString& aLocalDevice );
-
-    /*! \brief Returns the local device identification to be used in sync
-     *
+     * @param aName
      * @return
      */
-    QString getLocalDevice() const;
+    QVariant getExtensionData( const QString& aName ) const;
 
-    /*! \brief Sets the remote device identification to be used in sync
+    /*! \brief Disables a protocol extension
      *
-     * If not set, defaults to "/"
-     *
-     * @param aRemoteDevice Remote device identification
+     * @param aName Name of the extension
      */
-    void setRemoteDevice( const QString& aRemoteDevice );
-
-    /*! \brief Returns the remote device identification to be used in sync
-     *
-     * @return
-     */
-    QString getRemoteDevice() const;
-
-    /*! \brief Sets the authentication type to be used
-     *
-     * If not set, defaults to AUTH_NONE
-     *
-     * @param aAuthenticationType Authentication type to be used
-     */
-    void setAuthenticationType( AuthenticationType aAuthenticationType );
-
-    /*! \brief Gets the authentication type to be used
-     *
-     * @return
-     */
-    AuthenticationType getAuthenticationType() const;
-
-    /*! \brief Sets the user name to be used in SyncML authentication
-     *
-     * If not set, SyncML authentication is not attempted
-     *
-     * @param aUsername Username to use
-     */
-    void setUsername( const QString& aUsername );
-
-    /*! \brief Returns the user name to be used in SyncML authentication
-     *
-     * @return
-     */
-    QString getUsername() const;
-
-    /*! \brief Sets the password to be used in SyncML authentication
-     *
-     * If not set, SyncML authentication is not attempted
-     *
-     * @param aPassword Password to use
-     */
-    void setPassword( const QString& aPassword );
-
-    /*! \brief Returns the password to be used in SyncML authentication
-     *
-     * @return
-     */
-    QString getPassword() const;
-
-    /*! \brief Sets conflict resolution policy to use
-     *
-     * If not set, defaults to PREFER_LOCAL_CHANGES
-     *
-     * @param aPolicy Conflict resolution policy
-     */
-    void setConflictResolutionPolicy( ConflictResolutionPolicy aPolicy );
-
-    /*! \brief Returns the conflict resolution policy to use
-     *
-     * @return
-     */
-    ConflictResolutionPolicy getConflictResolutionPolicy() const;
-
-    /*! \brief Set the database file location (full path)
-     *
-     * If not set, defaults to /tmp/syncml.db
-     *
-     * @param aPath Full database file path
-     */
-    void setDatabaseFilePath( const QString& aPath );
-
-    /*! \brief Returns the database file location (full path)
-     *
-     * @return Full path to database file
-     */
-    QString getDatabaseFilePath() const;
-
-    /**
-     * \brief Get the protocol version for the synchronization.
-     *
-     * @return
-     */
-    ProtocolVersion getProtocolVersion() const;
-
-
-    /*! \brief Set the protocol version for the synchronization.
-     *
-     * If not set, defaults to DS_1_2
-     *
-     * @param aVersion Protocol version
-     */
-    void setProtocolVersion( ProtocolVersion aVersion );
-
-    /*! \brief Sets a protocol attribute for the synchronization.
-     *
-     * @see ProtocolAttributes for list of attributes
-     *
-     * @param aAttribute Attribute to set
-     */
-    void setProtocolAttribute( int aAttribute );
-
-    /*! \brief Clears a protocol attribute for the synchronization.
-     *
-     * @see ProtocolAttributes for the list of attributes
-     *
-     * @param aAttribute Attribute to clear
-     */
-    void clearProtocolAttribute( int aAttribute );
-
-    /*! \brief Checks if protocol attribute is set
-     *
-     * @see ProtocolAttributes for list of attributes
-     *
-     * @param aAttribute to check
-     * @return True if attribute is set, otherwise false
-     */
-    bool getProtocolAttribute( int aAttribute ) const;
-
-    /*! \brief Sets No. of changes to be sent per syncml message
-     *
-     *
-     * @param aChanges number of changes
-     */
-    void setMaxChangesToSend(int aChanges);
-
-    /*! \brief get the No. of changes that can be sent
-     *
-     * @return number of changes
-     */
-    int getMaxChangesToSend() const;
-
-    /*! \brief Sets the Device Info to be used
-     *
-     * @param aDeviceInfo Device info to use
-     */
-    void setDeviceInfo(const DeviceInfo &aDeviceInfo);
-
-    /*! \brief gets the Device Info of the Config
-     *
-     * @return DeviceInfo
-     */
-    DeviceInfo& getDeviceInfo();
-
-    /*! \brief gets the Device Info of the Config
-     *
-     * @return DeviceInfo
-     */
-    const DeviceInfo& getDeviceInfo() const;
+    void clearExtension( const QString& aName );
 
 private:
 
+    /*! \brief Read a file
+     *
+     * @param aFileName Filename of the file to read
+     * @param aData If reading succeeded, contains file data
+     * @return True if reading succeeded, false otherwise
+     */
+    bool readFile( const QString& aFileName, QByteArray& aData ) const;
+
+    /*! \brief Parse contents of configuration file
+     *
+     * @param aData Data of conf file
+     * @return True on success, otherwise false
+     */
+    bool parseConfFile( const QByteArray& aData );
+
+    /*! \brief Parse agent properties
+     *
+     * @param aReader XML stream reader to use
+     * @return True on succcess, otherwise false
+     */
+    bool parseAgentProps( QXmlStreamReader& aReader );
+
+    /*! \brief Parse transport properties
+     *
+     * @param aReader XML stream reader to use
+     * @return True on succcess, otherwise false
+     */
+    bool parseTransportProps( QXmlStreamReader& aReader );
+
+    /*! \brief Parse protocol extensions
+     *
+     * @param aReader XML stream reader to use
+     * @return True on succcess, otherwise false
+     */
+    bool parseSyncExtensions( QXmlStreamReader& aReader );
+
+    /*! \brief Parse EMI tags extension data
+     *
+     * @param aReader XML stream reader to use
+     * @return True on succcess, otherwise false
+     */
+    bool parseEMITagsExtension( QXmlStreamReader& aReader );
+
     Transport*                      iTransport;
     StorageProvider*                iStorageProvider;
+
+    QString                         iDatabaseFilePath;
+    QString                         iLocalDeviceName;
+    DeviceInfo                      iDeviceInfo;
+
+    QMap<QString, QString>          iAgentProperties;
+    QMap<QString, QString>          iTransportProperties;
+
+    QString                         iRemoteDeviceName;
+    ProtocolVersion                 iProtocolVersion;
+    SyncMode                        iSyncMode;
+    AuthenticationType              iAuthenticationType;
+    QString                         iUsername;
+    QString                         iPassword;
+
+    QMap<QString, QVariant>         iExtensions;
+
     QMap<QString, QString>          iTargets;
     QList<QString>                  iTargetDbs;
     QList<QString>                  iDTargetDbs;
-    SyncMode                        iSyncMode;
-    QString                         iUsername;
-    QString                         iPassword;
-    ConflictResolutionPolicy        iConflictResolutionPolicy;
-    QString                         iDatabaseFilePath;
-    ProtocolVersion                 iProtocolVersion;
-    AuthenticationType              iAuthenticationType;
-    QBitArray                       iProtocolAttributes;
-    int 							iMaxChangesToSend;
-    DeviceInfo                      iDeviceInfo;
-    QString                         iLocalDeviceName;
-    QString                         iRemoteDeviceName;
 
     friend class SyncAgentConfigTest;
 };

@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -124,6 +136,22 @@ void SyncTarget::revertSyncMode()
     }
 }
 
+bool SyncTarget::setRefreshFromClient()
+{
+    FUNCTION_CALL_TRACE
+    
+    bool refreshSet = false;
+
+    if( iSyncMode.syncDirection() == DIRECTION_FROM_CLIENT &&
+        iSyncMode.syncInitiator() == INIT_CLIENT )
+    {
+        iSyncMode.setRefresh();
+        refreshSet = true;
+    }
+  
+    return refreshSet;
+}
+
 bool SyncTarget::reverted() const
 {
     return iReverted;
@@ -158,6 +186,16 @@ bool SyncTarget::discoverLocalChanges( const Role& aRole )
 
             if (iPlugin != NULL) {
                 success = iPlugin->getAll( iLocalChanges.added );
+            }
+        }
+	else if( iSyncMode.syncType() == TYPE_REFRESH ) {
+            LOG_DEBUG("Refresh sync mode");
+            // As server, we don't initiate a refresh sync
+            if( aRole == ROLE_CLIENT && direction == DIRECTION_FROM_CLIENT ) {
+                LOG_DEBUG("We need to send all changes as a client");
+                if (iPlugin != NULL) {
+                    success = iPlugin->getAll( iLocalChanges.added );
+                }
             }
         }
         else {
@@ -201,6 +239,11 @@ bool SyncTarget::discoverLocalChanges( const Role& aRole )
 }
 
 const LocalChanges* SyncTarget::getLocalChanges() const
+{
+    return &iLocalChanges;
+}
+
+LocalChanges* SyncTarget::getLocalChanges() 
 {
     return &iLocalChanges;
 }
@@ -292,3 +335,4 @@ void SyncTarget::saveSession( DatabaseHandler& aDbHandler, const QDateTime& aSyn
     }
 
 }
+

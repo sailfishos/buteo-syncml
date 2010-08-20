@@ -47,6 +47,7 @@
 #include "SyncMLMessageParser.h"
 #include "NonceStorage.h"
 #include "DevInfHandler.h"
+#include "RemoteDeviceInfo.h"
 
 class ServerSessionHandlerTest;
 class ClientSessionHandlerTest;
@@ -71,16 +72,6 @@ struct ItemReference {
     QString iRemoteDatabase;            /*!<Remote database related to the item*/
     QString iMimeType;                  /*!<MIME type of the item*/
 
-};
-
-/*! \brief Structure to hold reference to a Map
- *
- */
-struct MapReference {
-    int iMsgId;                 /*!<Message ID related to the map*/
-    int iCmdId;                 /*!<Command ID related to the map*/
-    QString iLocalDatabase;     /*!<Local database related to the map*/
-    QString iRemoteDatabase;    /*!<Remote database related to the map*/
 };
 
 /*! \brief SessionHandler handles all control flow and session related tasks of SyncML protocol.
@@ -169,17 +160,23 @@ signals:
      * @param aModifiedDatabase Database that was modified (local or remote)
      * @param aDatabase Identifier of the database
      * @param aMimeType Mime type of the item being processed
+     * @param aCommittedItems No. of items committed for this operation
      */
     void itemProcessed( DataSync::ModificationType aModificationType,
                         DataSync::ModifiedDatabase aModifiedDatabase,
                         QString aDatabase,
-                        QString aMimeType);
+                        QString aMimeType, int aCommittedItems );
 
     /*! \brief A signal that informs that a storage has been acquired
      *
      * @param aMimeType MIME type of the storage
      */
     void storageAccquired (QString aMimeType);
+
+    /*! \brief A signal that requests storage to resend the same buffer
+     * after removing any illegal XML characters from the IODevice
+     */
+    void purgeAndResendBuffer();
 
 protected slots:
 
@@ -281,17 +278,6 @@ protected slots:
                            QString aLocalDatabase, QString aRemoteDatabase,
                            QString aMimeType );
 
-    /*! \brief Should be called when new map reference is available
-     *
-     * @param aMsgId Message id of the map
-     * @param aCmdId Command id of the map
-     * @param aLocalDatabase Local database to which map relates to
-     * @param aRemoteDatabase Local database to which map relates to
-     */
-    void newMapReference( int aMsgId, int aCmdId,
-                          const QString& aLocalDatabase,
-                          const QString& aRemoteDatabase );
-
     /*! \brief Should be called when remote side has responded to item reference
      *
      * @param aMsgRef Message reference of the item
@@ -299,13 +285,6 @@ protected slots:
      * @param aKey Key of the item
      */
     void processItemStatus( int aMsgRef, int aCmdRef, SyncItemKey aKey );
-
-    /*! \brief Should be called when remote side has responded to map reference
-     *
-     * @param aMsgRef Message reference of the item
-     * @param aCmdRef Command reference of the item
-     */
-    void processMapStatus( int aMsgRef, int aCmdRef );
 
 protected:
 
@@ -438,31 +417,6 @@ protected:
      */
     void setProtocolVersion( const ProtocolVersion& aProtocolVersion );
 
-    /*! \brief Gets protocol attribute of this session
-     *
-     * @see ProtocolAttributes for list of attributes
-     *
-     * @param aAttribute Protocol attribute to check
-     * @return True if attribute is set, otherwise false
-     */
-    bool getProtocolAttribute( int aAttribute ) const;
-
-    /*! \brief Sets protocol attribute for this session
-     *
-     * @see ProtocolAttributes for list of attributes
-     *
-     * @param aAttribute Protocol attribute to set
-     */
-    void setProtocolAttribute( int aAttribute );
-
-    /*! \brief Clears protocol attribute for this session
-     *
-     * @see ProtocolAttributes for list of attributes
-     *
-     * @param aAttribute Protocol attribute to clear
-     */
-    void clearProtocolAttribute( int aAttribute );
-
     /*! \brief Returns local NEXT anchor
      *
      * @return Local NEXT anchor
@@ -560,6 +514,14 @@ protected:
      * @return Maximum permitted size
      */
     int getRemoteMaxMsgSize() const;
+
+    /*! \brief Sets the maximum permitted size of SyncML messages that we can receive
+     *
+     * By default read from configuration. Can be overridden by remote device
+     *
+     * @param aMaxMsgSize New maximum permitted size
+     */
+    void setLocalMaxMsgSize( int aMaxMsgSize );
 
     /*! \brief Get the maximum permitted size of SyncML messages that we can receive
      *
@@ -667,6 +629,44 @@ protected:
      */
     DevInfHandler& getDevInfHandler();
 
+    /*! \brief Adds EMI tags token to the message
+     *
+     */
+    void insertEMITagsToken( HeaderParams& aLocalHeader );
+
+    /*! \brief Adds EMI tags response to the message
+     *
+     * @param aRemoteHeader Header sent by remote side
+     * @param aLocalHeader Header to be sent by local side
+     */
+    void handleEMITags( const HeaderParams& aRemoteHeader, HeaderParams& aLocalHeader );
+
+    /*! \brief Clears EMI tags from local headers
+     *
+     */
+    void clearEMITags();
+
+    /*! \brief Sets sync-without-initialization-phase flag
+     *
+     * @param aSyncWithoutInitPhase
+     */
+    void setSyncWithoutInitPhase( bool aSyncWithoutInitPhase );
+
+    /*! \brief Returns sync-without-initialization-phase flag
+     *
+     */
+    bool isSyncWithoutInitPhase() const;
+
+    /*! \brief Tries to report the error encountered for the last syncml message we sent
+     *
+     * @param aErrorMsg Human readable error message
+     * @return Returns sync state mapped to the last syncml error
+     */
+    SyncState getLastError( QString &aErrorMsg );
+
+    ///< Pointer to RemotDeviceInfo object
+    RemoteDeviceInfo*                                  iRemoteDeviceInfoInstance;
+
 private: // functions
 
     void exitSync();
@@ -695,12 +695,12 @@ private: // data
     QString                             iSessionId;                 ///< Session ID
     QString                             iLocalNextAnchor;           ///< Local NEXT anchor of this session
     QString                             iSyncError;                 ///< Human-readable description upon sync abort
-    QBitArray                           iProtocolAttributes;        ///< Protocol attributes in use in current session
+    bool                                iSyncWithoutInitPhase;      ///< Perform synchronization without init phase
+    int                                 iLocalMaxMsgSize;           ///< Maximum size for messages received from remote device
     int                                 iRemoteMaxMsgSize;          ///< Maximum size for messages sent to remote device
     DatabaseHandler                     iDatabaseHandler;           ///< Handler for database operations
     AuthenticationType                  iAuthenticationType;        ///< Type of authentication to use
     QList<ItemReference>                iItemReferences;            ///<Keeps track which status refers to which item in which database
-    QList<MapReference>                 iMapReferences;             ///<Keeps track which status refers to which map in which database
     NonceStorage*                       iNonceStorage;              ///< Storage for MD5 nonces
     bool                                iSyncFinished;              ///< Set to true when sync has ended
     bool                                iSessionClosed;             ///< Set to true when Session tearing down started.
@@ -708,10 +708,12 @@ private: // data
     bool                                iAuthenticationPending;     ///< True if authentication is pending from remote side
     bool                                iParsing;                   ///< Set to true when we are parsing a message
     ProtocolVersion                     iProtocolVersion;           ///< Protocol version in use in current session
-    bool 								iRemoteReportedBusy;        ///< indicates that server reported busy
+    bool				iRemoteReportedBusy;        ///< indicates that server reported busy
     Role                                iRole;                      ///< Role in use
     QString                             iLocalDeviceName;           ///< Name of the local device in this session
     QString                             iRemoteDeviceName;          ///< Name of the remote device in this session
+    ///< A quick way to get the response a remote party sent to the last "cmd" command we sent
+    QMap<QString, ResponseStatusCode>     cmdRespMap;
 
     friend class ::ServerSessionHandlerTest;
     friend class ::ClientSessionHandlerTest;

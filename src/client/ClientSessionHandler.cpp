@@ -1,27 +1,42 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
 
 #include "ClientSessionHandler.h"
 
+#include <QVariant>
+
 #include "SyncAgentConfig.h"
+#include "SyncAgentConfigProperties.h"
 #include "SyncTarget.h"
 #include "FinalPackage.h"
 #include "AlertPackage.h"
@@ -69,7 +84,7 @@ void ClientSessionHandler::initiateSync()
         composeClientInitializationPackage();
 
         // If doing sync without init phase, move to sending items state
-        if( getProtocolAttribute( NO_INIT_PHASE ) ) {
+        if( isSyncWithoutInitPhase() ) {
             setSyncState( SENDING_ITEMS );
         }
         else {
@@ -110,8 +125,8 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
         setSessionId( QString::number( aData.iSessionId ) );
     }
 
-    if( !getConfig()->getLocalDevice().isEmpty() ) {
-        setLocalDeviceName( getConfig()->getLocalDevice() );
+    if( !getConfig()->getLocalDeviceName().isEmpty() ) {
+        setLocalDeviceName( getConfig()->getLocalDeviceName() );
     }
     else {
         setLocalDeviceName( getConfig()->getDeviceInfo().getDeviceID() );
@@ -130,8 +145,8 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
         setProtocolVersion( DS_1_2 );
     }
 
-    if( getConfig()->getProtocolAttribute( NO_INIT_PHASE ) ) {
-        setProtocolAttribute( NO_INIT_PHASE );
+    if( getConfig()->extensionEnabled( SYNCWITHOUTINITPHASEEXTENSION ) ) {
+        setSyncWithoutInitPhase( true );
     }
 
     HeaderParams headerParams;
@@ -140,7 +155,10 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
     headerParams.targetDevice = getRemoteDeviceName();
     headerParams.maxMsgSize = getLocalMaxMsgSize();
 
-    //FIXME! Add extra headers here
+    if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
+    {
+        insertEMITagsToken( headerParams );
+    }
 
     if( getAuthenticationType() == AUTH_NONE ) {
         setSessionAuthenticated( true );
@@ -167,7 +185,33 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
 
         QString mime = aData.iSyncInfo[i].iContentType;
 
-        //FIXME! Add extra headers here
+        // Hacks for content types (OVI Suite, S60)
+        // OVI Suite and S60 do not use WSP Content Types to give mime information,
+        // because WSP's define mime codes only for contacts, calendar and notes.
+        // They only send hardcoded server URI's, which we must convert to respective
+        // mime types
+        if( mime.isEmpty() ) {
+
+            if( serverURI.contains( "Contacts", Qt::CaseInsensitive ) ) {
+                mime = "text/x-vcard";
+            }
+            else if( serverURI.contains( "Calendar", Qt::CaseInsensitive ) ) {
+                mime = "text/x-vcalendar";
+            }
+            else if( serverURI.contains( "Notes", Qt::CaseInsensitive ) ) {
+                mime = "text/plain";
+            }
+            else if( serverURI.contains( "Bookmarks", Qt::CaseInsensitive ) ) {
+                mime = "text/x-vbookmark";
+            }
+            else if( serverURI.contains( "sms", Qt::CaseInsensitive ) ) {
+                mime = "text/x-vmsg";
+            }
+            else {
+                LOG_CRITICAL( "Could not find MIME for server URI:" << serverURI );
+            }
+
+        }
 
         LOG_DEBUG( "Searching for storage with MIME type" << mime );
         StoragePlugin* source = createStorageByMIME( mime );
@@ -207,7 +251,7 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
     composeClientInitializationPackage();
 
     // If doing sync without init phase, move to sending items state
-    if( getProtocolAttribute( NO_INIT_PHASE ) ) {
+    if( isSyncWithoutInitPhase() ) {
         setSyncState( SENDING_ITEMS );
     }
     else {
@@ -293,7 +337,7 @@ ResponseStatusCode ClientSessionHandler::syncAlertReceived( const SyncMode& aSyn
 	else if( syncState == SENDING_ITEMS ) {
 
 		// Allow Alert only if we're doing sync without init phase
-		if( getProtocolAttribute( NO_INIT_PHASE ) ) {
+		if( isSyncWithoutInitPhase() ) {
 			status = acknowledgeTarget( aSyncMode, aAlertParams );
 			setSyncState( REMOTE_INIT );
 		}
@@ -326,7 +370,7 @@ bool ClientSessionHandler::syncReceived()
 	else if( syncState == REMOTE_INIT ) {
 
 		// Allow only if doing sync without init phase
-		if( getProtocolAttribute( NO_INIT_PHASE ) ) {
+		if( isSyncWithoutInitPhase() ) {
 			setSyncState( RECEIVING_ITEMS );
 			return true;
 		}
@@ -388,8 +432,10 @@ void ClientSessionHandler::finalReceived()
 	}
 	default:
 	{
-		abortSync( INTERNAL_ERROR,  "Internal state machine error"  );
-		break;
+                QString errorMsg;
+                SyncState state = getLastError(errorMsg);
+                abortSync( state, errorMsg );
+                break;
 	}
 	}
 }
@@ -553,7 +599,8 @@ ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyn
 	// invalid
 	if( syncMode.syncType() != TYPE_FAST )
 	{
-	    LOG_DEBUG( "Server requested revertion to slow sync, complying and clearing mappings" );
+	    LOG_DEBUG( "Server requested revertion to slow sync for database"
+	                << target->getSourceDatabase() <<", complying and clearing mappings" );
 	    target->revertSyncMode();
         target->clearUIDMappings();
 	}
@@ -611,7 +658,7 @@ void ClientSessionHandler::composeClientInitializationPackage()
 	composeClientInitialization();
 
 	// If we are to do sync without separate initialization phase, send local modifications too
-	if( getProtocolAttribute( NO_INIT_PHASE ) ) {
+	if( isSyncWithoutInitPhase() ) {
 		discoverClientLocalChanges();
 		composeLocalChanges();
 	}
@@ -633,25 +680,39 @@ void ClientSessionHandler::composeClientModificationsPackage()
 
 void ClientSessionHandler::composeDataUpdateStatusPackage()
 {
-	FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE;
 
-	const QList<SyncTarget*>& targets = getSyncTargets();
+    // Mappings need to be sent in data update status package if we have not
+    // yet sent them
+    bool fastMapsSend = false;
 
-	foreach( const SyncTarget* target, targets ) {
+    int configValue = getConfig()->getAgentProperty( FASTMAPSSENDPROP ).toInt();
 
-		LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( target->getSourceDatabase(),
-				target->getTargetDatabase(),
-				target->getUIDMappings() );
+    if( configValue > 0 )
+    {
+        fastMapsSend = true;
+    }
 
-		connect( localMappingsPackage, SIGNAL( newMapWritten( int, int, const QString&, const QString& ) ),
-				this, SLOT( newMapReference( int, int, const QString&, const QString& ) ) );
+    if( !fastMapsSend )
+    {
+        const QList<SyncTarget*>& targets = getSyncTargets();
 
-		getResponseGenerator().addPackage( localMappingsPackage );
+        foreach( const SyncTarget* target, targets )
+        {
 
-	}
+            LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( target->getSourceDatabase(),
+                            target->getTargetDatabase(),
+                            target->getUIDMappings() );
 
-	// Close the package by appending Final
-	getResponseGenerator().addPackage( new FinalPackage() );
+            connect( localMappingsPackage, SIGNAL( newMapWritten( int, int, const QString&, const QString& ) ),
+                     this, SLOT( newMapReference( int, int, const QString&, const QString& ) ) );
+
+            getResponseGenerator().addPackage( localMappingsPackage );
+        }
+    }
+
+    // Close the package by appending Final
+    getResponseGenerator().addPackage( new FinalPackage() );
 
 }
 
@@ -691,9 +752,8 @@ void ClientSessionHandler::composeResultAlert()
 {
 	FUNCTION_CALL_TRACE;
 
-	AlertPackage* package = new AlertPackage(RESULT_ALERT,
-									getConfig()->getLocalDevice(),
-									getConfig()->getRemoteDevice());
+	AlertPackage* package = new AlertPackage( RESULT_ALERT, getLocalDeviceName(),
+                                              getRemoteDeviceName() );
 
 	getResponseGenerator().addPackage( package );
 

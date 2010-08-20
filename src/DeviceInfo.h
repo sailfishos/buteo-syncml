@@ -143,7 +143,6 @@ public:
      */
     const QString& getDeviceType() const;
 
-
     /*! \brief Returns the type of the device.
      *
      * Possible device types are enumerated in OMA DS Device

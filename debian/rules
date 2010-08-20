@@ -1,0 +1,102 @@
+#!/usr/bin/make -f                                                                                                                                                               
+# -*- makefile -*-                                                                                                                                                               
+# Sample debian/rules that uses debhelper.                                                                                                                                       
+# This file was originally written by Joey Hess and Craig Small.                                                                                                                 
+# As a special exception, when this file is copied by dh-make into a                                                                                                             
+# dh-make output file, you may use that output file without restriction.                                                                                                         
+# This special exception was added by Craig Small in version 0.37 of dh-make.                                                                                                    
+#
+# # Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1                     
+QMAKE = /usr/bin/qmake -makefile libmeegosyncml.pro
+CFLAGS += -Wall -Wextra -Wno-unused-parameter --strip-unneeded 
+CXXFLAGS += -Wall -Wextra -Wno-unused-parameter --strip-unneeded 
+
+comma :=,
+empty := 
+space := $(empty) $(empty)
+
+
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+    INSTALL_PROGRAM += -s
+endif
+
+TMP_BUILD_OPTS = $(subst $(comma),$(space),$(DEB_BUILD_OPTIONS))
+
+ifneq (,$(filter parallel=%,$(TMP_BUILD_OPTS)))
+    NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(TMP_BUILD_OPTS)))
+    PARALLEL_MAKEFLAGS += -j$(NUMJOBS)
+endif
+
+configure: configure-stamp
+configure-stamp:          
+	dh_testdir        
+	# Add here commands to configure the package.
+	/usr/bin/qmake -makefile libmeegosyncml.pro
+	touch configure-stamp                        
+
+build: build-stamp
+build-stamp: configure-stamp 
+	dh_testdir           
+	# Add here commands to compile the package.
+	$(MAKE) $(PARALLEL_MAKEFLAGS)
+	touch $@        
+	                                                
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	# Add here commands to clean up after the build process.
+#	$(MAKE) clean                                          
+	[ ! -f Makefile ] || $(MAKE) distclean                  
+	rm -f Makefile src/Makefile                             
+	dh_clean
+		                                                
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+	
+	make $(PARALLEL_MAKEFLAGS) doc
+	INSTALL_ROOT=$(CURDIR)/debian/tmp make $(PARALLEL_MAKEFLAGS) install
+
+    # Add here commands to install the package into debian/tmp
+    $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
+
+
+# Build architecture-independent files here.
+binary-indep: build install                 
+# We have nothing to do by default.         
+#
+# Build architecture-dependent files here.
+binary-arch: build install                
+	dh_testdir                        
+	dh_testroot                       
+	dh_installdirs                    
+	dh_installchangelogs              
+	dh_installdocs                    
+	dh_installexamples
+	dh_install --sourcedir=debian/tmp -v
+	dh_installman
+	dh_strip --dbg-package=libmeegosyncml-dbg 
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps  ## TODO Disabled for now so the build succeeds
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
+
+#!/usr/bin/make -f
+#include /usr/share/cdbs/1/rules/debhelper.mk
+#include /usr/share/cdbs/1/class/qmake.mk
+#QMAKE = /usr/bin/qmake -makefile libmeegosyncml.pro
+#CFLAGS += -Wall -Wextra -Wno-unused-parameter
+#CXXFLAGS += -Wall -Wextra -Wno-unused-parameter
+DEB_DESTDIR := $(CURDIR)/debian/tmp
+#DEB_DH_INSTALL_SOURCEDIR := debian/tmp

@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -39,16 +51,14 @@ using namespace DataSync;
 #define RELEASE_SESSION "ReleaseSession"
 #define GET_DEFAULT_ADAPTER "DefaultAdapter"
 #define FIND_DEVICE "FindDevice"
+#define CREATE_DEVICE "CreateDevice"
+#define CREATE_PAIRED_DEVICE "CreatePairedDevice"
 #define CONNECT "Connect"
 #define DISCONNECT "Disconnect"
 
-#define MAX_MTU 16384
-
-
 OBEXBTConnection::OBEXBTConnection( const QString& aBTAddress,
                                     const QString& aServiceUUID )
- : OBEXConnection( MAX_MTU ),
-   iBTAddress( aBTAddress ),
+ : iBTAddress( aBTAddress ),
    iServiceUUID( aServiceUUID ),
    iFd( -1 )
 {
@@ -56,8 +66,7 @@ OBEXBTConnection::OBEXBTConnection( const QString& aBTAddress,
 }
 
 OBEXBTConnection::OBEXBTConnection( int aFd )
- : OBEXConnection( MAX_MTU ),
-   iFd( aFd )
+ : iFd( aFd )
 {
     FUNCTION_CALL_TRACE;
 }
@@ -114,16 +123,15 @@ void OBEXBTConnection::disconnectLink()
 QString OBEXBTConnection::connectDevice( const QString& aBTAddress, const QString& aServiceUUID )
 {
     FUNCTION_CALL_TRACE;
-
+  
     QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, QDBusConnection::systemBus() );
 
     if( !managerInterface.isValid() ) {
         LOG_CRITICAL( "Could not find BlueZ manager interface" );
         return "";
     }
-
+    
     QDBusReply<QDBusObjectPath> pathReply = managerInterface.call( QLatin1String( GET_DEFAULT_ADAPTER ) );
-
     if( !pathReply.isValid() ) {
         LOG_CRITICAL( "Could not find default adapter path:" << pathReply.error() );
         return "";
@@ -151,6 +159,21 @@ QString OBEXBTConnection::connectDevice( const QString& aBTAddress, const QStrin
     LOG_DEBUG( "BT session created" );
 
     pathReply = adapterInterface.call( QLatin1String( FIND_DEVICE ), aBTAddress );
+
+    if( !pathReply.isValid() ) {
+	    LOG_WARNING( "Couldn't find device " << aBTAddress << "Reason:" <<  pathReply.error() );
+	    LOG_DEBUG( "Create Device :" << aBTAddress );
+	    pathReply = adapterInterface.call( QLatin1String( CREATE_DEVICE ), aBTAddress );
+    	    if (pathReply.isValid()){
+		LOG_DEBUG( "Create Paired Device :" << aBTAddress << "Path :" << pathReply.value().path() ); 
+	    	QDBusReply<QDBusObjectPath> reply =
+		       	adapterInterface.call(QLatin1String( CREATE_PAIRED_DEVICE ),
+				       	aBTAddress, qVariantFromValue(pathReply.value()), QString());	
+		if( !reply.isValid() ) {
+			LOG_CRITICAL( "Pairing failed Reason:" << reply.error());	
+		}
+	    }
+    }
 
     if( !pathReply.isValid() ) {
         LOG_CRITICAL( "Couldn't find device " << aBTAddress );

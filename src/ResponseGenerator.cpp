@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -27,11 +39,10 @@
 #include "SyncMLMessage.h"
 #include "SyncMLStatus.h"
 #include "SyncMLAlert.h"
+#include "datatypes.h"
 #include "LogMacros.h"
 
 using namespace DataSync;
-
-const float MAXMSGSIZETHRESHOLD = 0.9f;
 
 ResponseGenerator::ResponseGenerator()
  : iMaxMsgSize( 0 ),
@@ -58,13 +69,11 @@ const HeaderParams& ResponseGenerator::getHeaderParams() const
 
 void ResponseGenerator::setHeaderParams( const HeaderParams& aHeaderParams )
 {
-    FUNCTION_CALL_TRACE
     iHeaderParams = aHeaderParams;
 }
 
 void ResponseGenerator::setRemoteMsgId( int aRemoteMsgId )
 {
-    FUNCTION_CALL_TRACE
     iRemoteMsgId = aRemoteMsgId;
 }
 
@@ -73,16 +82,34 @@ int ResponseGenerator::getRemoteMsgId() const
     return iRemoteMsgId;
 }
 
-SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const ProtocolVersion& aVersion )
+SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const ProtocolVersion& aVersion,
+                                                       bool aWbXML )
 {
     FUNCTION_CALL_TRACE
-
-    LOG_DEBUG("Session: Preparing to send next message");
 
     iHeaderParams.msgID = getNextMsgId();
     SyncMLMessage* message = new SyncMLMessage( iHeaderParams, aVersion );
     int messageSize = message->sizeAsXML();
-    int messageSizeThreshold = int( (float)aMaxSize * MAXMSGSIZETHRESHOLD );
+
+    // Make sure we don't go over the maximum message size. Threshold-based solution is employed
+    // with fast XML size estimator, so we don't need to serialize XML to find out how big the
+    // message is every time we need to check it. Message size threshold is maximum message size
+    // minus overhead. Overhead whatever's not included in the estimation, like XML header, DOCTYPE
+    // and buffer for errors in estimator. Overhead is MAXMSGOVERHEADRATIO times max message size
+    // (now at 10%), but always at least MINMSGOVERHEADBYTES (now at 256) bytes.
+    // If wbXML is used, compression rate is taken into account to ensure best performance.
+    // Safe estimate of XML->wbXML compression rate of 66% is currently presumed
+
+    int maxSize = aMaxSize;
+
+    if( aWbXML )
+    {
+        maxSize /= WBXMLCOMPRESSIONRATE;
+    }
+
+    int overhead = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * maxSize), MINMSGOVERHEADBYTES );
+    int messageSizeThreshold = maxSize - overhead;
+
     int remainingBytes = messageSizeThreshold - messageSize;
 
     while( iStatuses.count() > 0 ) {
@@ -116,6 +143,12 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
             break;
         }
     }
+    LOG_DEBUG( "Message generated with following parameters:" );
+    LOG_DEBUG( "Maximum size reported by remote device:" << aMaxSize );
+    LOG_DEBUG( "Maximum size after compression efficiency estimation:" << maxSize );
+    LOG_DEBUG( "Estimated overhead:" << overhead );
+    LOG_DEBUG( "Message size threshold value was:" << messageSizeThreshold );
+    LOG_DEBUG( "Remaining bytes was:" << remainingBytes );
 
     return message;
 
@@ -123,8 +156,6 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
 
 void ResponseGenerator::addPackage( Package* aPackage )
 {
-    FUNCTION_CALL_TRACE
-
     iPackages.append( aPackage );
 }
 
@@ -138,8 +169,6 @@ void ResponseGenerator::clearPackageQueue()
 
 bool ResponseGenerator::packageQueueEmpty() const
 {
-    FUNCTION_CALL_TRACE;
-
     return iPackages.isEmpty();
 }
 
@@ -150,8 +179,6 @@ const QList<Package*>& ResponseGenerator::getPackages() const
 
 void ResponseGenerator::ignoreStatuses( bool aIgnore )
 {
-    FUNCTION_CALL_TRACE;
-
     iIgnoreStatuses = aIgnore;
 }
 

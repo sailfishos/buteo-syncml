@@ -61,7 +61,9 @@ enum CommitStatus
     COMMIT_UNSUPPORTED_FORMAT, /*!<Failed, unsupported format*/
     COMMIT_ITEM_TOO_BIG,       /*!<Failed, item too big*/
     COMMIT_NOT_ENOUGH_SPACE,   /*!<Failed, not enough space*/
-    COMMIT_GENERAL_ERROR       /*!<Failed, unspecified error*/
+    COMMIT_GENERAL_ERROR,      /*!<Failed, unspecified error*/
+    COMMIT_INIT_REPLACE,       /*!<Successful, Initial state before modifications*/
+    COMMIT_INIT_DELETE         /*!<Successful, Initial state before deletions*/
 };
 
 /*! \brief Conflict status on item commit
@@ -141,6 +143,7 @@ public:
      *
      * @param aItemId Item identification
      * @param aPlugin Local storage plugin
+     * @param aLocalKey Local key of the item or empty 
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
@@ -149,10 +152,11 @@ public:
      */
     bool addItem( const ItemId& aItemId,
                   StoragePlugin& aPlugin,
+	          const SyncItemKey& aLocalKey,
                   const SyncItemKey& aParentKey,
                   const QString& aType,
                   const QString& aFormat,
-                  const QString& aData );
+                  const QString& aData);
 
     /*! \brief Replaces an existing item in local database
      *
@@ -170,7 +174,7 @@ public:
                       const SyncItemKey& aParentKey,
                       const QString& aType,
                       const QString& aFormat,
-                      const QString& aData );
+                      const QString& aData);
 
     /*! \brief Deletes an existing item in local database
      *
@@ -249,9 +253,12 @@ public:
     /*! \brief Commits added items to local database
      *
      * @param aPlugin Local storage plugin
+     * @param aConflictResolver If conflict resolution is to be done, conflict resolver.
+     *        Otherwise NULL
      * @return Commit results
      */
-    QMap<ItemId, CommitResult> commitAddedItems( StoragePlugin& aPlugin );
+    QMap<ItemId, CommitResult> commitAddedItems( StoragePlugin& aPlugin, 
+		    ConflictResolver* aConflictResolver );
 
     /*! \brief Commits replaced items to local database
      *
@@ -281,10 +288,11 @@ signals:
      * @param aModifiedDatabase Database that was modified (local or remote)
      * @param aDatabase Identifier of the database that was modified
      * @param aMimeType Mime type of the item being processed
+     * @param aCommittedItems No. of items committed for this operation (addition, modification or delete)
      */
     void itemProcessed( DataSync::ModificationType aModificationType,
                         DataSync::ModifiedDatabase aModifiedDatabase,
-                        const QString aDatabase,const QString aMimeType);
+                        const QString aDatabase,const QString aMimeType, int aCommittedItems);
 private:
 
     CommitStatus generalStatus( StoragePlugin::StoragePluginStatus aStatus ) const;

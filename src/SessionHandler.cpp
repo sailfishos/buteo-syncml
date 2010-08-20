@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -23,6 +35,7 @@
 
 #include "ChangeLog.h"
 #include "SyncAgentConfig.h"
+#include "SyncAgentConfigProperties.h"
 #include "CommandHandler.h"
 #include "AlertPackage.h"
 #include "SyncTarget.h"
@@ -41,12 +54,14 @@ using namespace DataSync;
 SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
                                 const Role& aRole,
                                 QObject* aParent ) :
-	QObject( aParent ),
-	iCommandHandler( aRole ),
-	iDevInfHandler( aConfig->getDeviceInfo() ),
+    QObject( aParent ),
+    iRemoteDeviceInfoInstance( RemoteDeviceInfo::instance() ),
+    iCommandHandler( aRole ),
+    iDevInfHandler( aConfig->getDeviceInfo() ),
     iConfig(aConfig),
     iSyncState( NOT_PREPARED ),
-    iProtocolAttributes( LAST_PROTOCOL_ATTRIBUTE ),
+    iSyncWithoutInitPhase( false ),
+    iLocalMaxMsgSize ( -1 ),
     iRemoteMaxMsgSize( -1 ),
     iDatabaseHandler( aConfig->getDatabaseFilePath() ),
     iAuthenticationType( AUTH_NONE ),
@@ -59,6 +74,7 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
     iProtocolVersion( DS_1_2 ),
     iRemoteReportedBusy(false),
     iRole( aRole )
+
 {
     FUNCTION_CALL_TRACE;
 
@@ -78,6 +94,8 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
 SessionHandler::~SessionHandler()
 {
     FUNCTION_CALL_TRACE;
+
+    RemoteDeviceInfo::destroyInstance();
 
     // Make sure that all allocated objects are released.
     releaseStoragesAndTargets();
@@ -103,20 +121,33 @@ void SessionHandler::prepareSync()
 
     if( nonces ) {
 
+        int localMaxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+
+        int confValue = getConfig()->getAgentProperty( MAXMESSAGESIZEPROP ).toInt();
+
+        if( confValue > 0 )
+        {
+            localMaxMsgSize = confValue;
+        }
+
+        setLocalMaxMsgSize( localMaxMsgSize );
+        setRemoteMaxMsgSize( localMaxMsgSize );
+
         // Set up transport
         Transport& transport = getTransport();
-        iRemoteMaxMsgSize = transport.getMaxTxSize();
+
         connect( &transport, SIGNAL(sendEvent(DataSync::TransportStatusEvent, QString )),
                  this, SLOT(setTransportStatus(DataSync::TransportStatusEvent , QString )));
-        connect( &transport, SIGNAL(readXMLData(QIODevice *)) ,
-                 &iParser, SLOT(parseResponse(QIODevice *)));
+        connect( &transport, SIGNAL(readXMLData(QIODevice *, bool)) ,
+                 &iParser, SLOT(parseResponse(QIODevice *, bool)));
         connect( &transport, SIGNAL(readSANData(QIODevice *)) ,
                  this, SLOT(SANPackageReceived(QIODevice *)));
+        connect( this, SIGNAL(purgeAndResendBuffer()) ,
+                 &transport, SLOT(purgeAndResendBuffer()));
 
         setLocalNextAnchor( QString::number( QDateTime::currentDateTime().toTime_t() ) );
         connectSignals();
         iItemReferences.clear();
-        iMapReferences.clear();
         setSyncState( PREPARED );
     }
     else {
@@ -197,10 +228,30 @@ void SessionHandler::setTransportStatus(DataSync::TransportStatusEvent aEvent , 
         }
         case TRANSPORT_CONNECTION_FAILED:
         case TRANSPORT_CONNECTION_TIMEOUT:
-        case TRANSPORT_CONNECTION_ABORTED:
         case TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED:
         {
             abortSync( CONNECTION_ERROR , aErrorString );
+            break;
+        }
+        case TRANSPORT_CONNECTION_ABORTED:
+        {
+            LOG_DEBUG( "Connection Error" );
+            abortSync( CONNECTION_ERROR , aErrorString );
+            break;
+        }
+        case TRANSPORT_SESSION_REJECTED:
+        {
+            // Remote aborted after receiving the first message from us, likely
+            // candidate for unsupported sync type.
+            if( cmdRespMap.isEmpty() ) {
+                LOG_DEBUG( "Unsupported sync type" );
+                abortSync( UNSUPPORTED_SYNC_TYPE , "Unsupported sync type" );
+            }
+            else
+            {
+                LOG_DEBUG( "Connection Error" );
+                abortSync( CONNECTION_ERROR , aErrorString );
+            }
             break;
         }
         default:
@@ -306,6 +357,13 @@ void SessionHandler::handleParserErrors( DataSync::ParserError aError )
             abortSync( INVALID_SYNCML_MESSAGE, "Parser error: invalid data" );
             break;
         }
+        case PARSER_ERROR_INVALID_CHARS:
+        {
+            // Emit signal to transport to remove any invalid characters
+            // from the buffer
+            emit purgeAndResendBuffer();
+            break;
+        }
         default:
         {
             abortSync( INVALID_SYNCML_MESSAGE, "Unspecified error" );
@@ -344,9 +402,17 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
     // Save message id of the remote party
     getResponseGenerator().setRemoteMsgId( aHeaderParams->msgID );
 
-    // If remote party sent max message size, set it to transport
-    if( aHeaderParams->maxMsgSize > 0 ) {
+    // If remote party sent max message size, save it.
+    // If remote partys max message size is smaller than ours, reduce our
+    // max message size to match
+    if( aHeaderParams->maxMsgSize > 0 )
+    {
         setRemoteMaxMsgSize( aHeaderParams->maxMsgSize );
+
+        if( getRemoteMaxMsgSize() < getLocalMaxMsgSize() )
+        {
+            setLocalMaxMsgSize( getRemoteMaxMsgSize() );
+        }
     }
 
     // Ignore sending of all command statuses if we are instructed so
@@ -403,6 +469,13 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
 void SessionHandler::handleStatusElement( StatusParams* aStatusParams )
 {
     FUNCTION_CALL_TRACE;
+
+    // Add the response from this status to the command we sent to our map
+    // cmd here corresponds to the syncml command for which we are handling this
+    // status element sent by the remote device, which would have the response.
+    QString cmd = (aStatusParams->cmd).toLower();
+    cmdRespMap[cmd] = aStatusParams->data;
+    LOG_DEBUG( "Remote device responded with " << aStatusParams->data << " for cmd " << cmd );
 
     // Common status handling
     if( aStatusParams->cmdRef == 0 ) {
@@ -541,11 +614,30 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
         return;
     }
 
+    ConflictResolutionPolicy policy = PREFER_LOCAL_CHANGES;
+
+    ConflictResolutionPolicy confValue = static_cast<ConflictResolutionPolicy>( getConfig()->getAgentProperty( CONFLICTRESOLUTIONPOLICYPROP ).toInt() );
+
+    if( confValue > 0 )
+    {
+        policy = confValue;
+    }
+
     ConflictResolver conflictResolver( *target->getLocalChanges(),
-                                       getConfig()->getConflictResolutionPolicy() );
+                                       policy );
+
+    bool fastMapsSend = false;
+
+    int configValue = getConfig()->getAgentProperty( FASTMAPSSENDPROP ).toInt();
+
+    if( configValue > 0 )
+    {
+        fastMapsSend = true;
+    }
 
     iCommandHandler.handleSync( *aSyncParams, *target, iStorageHandler,
-                                iResponseGenerator, conflictResolver );
+                                iResponseGenerator, conflictResolver,
+                                fastMapsSend );
 
 }
 
@@ -740,13 +832,17 @@ void SessionHandler::sendNextMessage()
 
     // @todo: what if message generation fails?
 
-    SyncMLMessage* message = iResponseGenerator.generateNextMessage( iRemoteMaxMsgSize, getProtocolVersion() );
+    SyncMLMessage* message = iResponseGenerator.generateNextMessage( iRemoteMaxMsgSize, getProtocolVersion(),
+                                                                     getTransport().usesWbXML() );
 
     // @todo: what if sending fails?
 
     getTransport().sendSyncML( message );
 
-    //FIXME! Add extra headers here
+    if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
+    {
+        clearEMITags();
+    }
 
     LOG_DEBUG( "Next message sent" );
 
@@ -772,26 +868,10 @@ void SessionHandler::setProtocolVersion( const ProtocolVersion& aProtocolVersion
     iProtocolVersion = aProtocolVersion;
 }
 
-bool SessionHandler::getProtocolAttribute( int aAttribute ) const
-{
-    return iProtocolAttributes.at( aAttribute );
-}
-
-void SessionHandler::setProtocolAttribute( int aAttribute )
-{
-    iProtocolAttributes.setBit( aAttribute );
-}
-
-void SessionHandler::clearProtocolAttribute( int aAttribute )
-{
-    iProtocolAttributes.clearBit( aAttribute );
-}
-
 const QString& SessionHandler::getLocalNextAnchor() const
 {
     return iLocalNextAnchor;
 }
-
 
 void SessionHandler::setLocalNextAnchor( const QString& aLocalNextAnchor )
 {
@@ -853,11 +933,8 @@ void DataSync::SessionHandler::connectSignals()
     connect( &iCommandHandler, SIGNAL( itemAcknowledged( int, int, SyncItemKey ) ),
              this, SLOT( processItemStatus( int, int, SyncItemKey ) ) );
 
-    connect( &iCommandHandler, SIGNAL( mappingAcknowledged( int, int ) ),
-             this, SLOT( processMapStatus( int, int ) ) );
-
-    connect( &iStorageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString ,QString ) ),
-             this, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString ,QString) ) );
+    connect( &iStorageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString ,QString, int ) ),
+             this, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase,QString ,QString, int) ) );
 
 }
 
@@ -962,15 +1039,24 @@ bool SessionHandler::anchorMismatch( const SyncMode& aSyncMode, const SyncTarget
 {
     FUNCTION_CALL_TRACE;
 
-    LOG_DEBUG("Remote Last Anchor:" << aRemoteLastAnchor );
-    LOG_DEBUG("Target: DATABASE:" <<  aTarget.getTargetDatabase() );
-    LOG_DEBUG("Stored Remote Last Anchor:" <<  aTarget.getRemoteLastAnchor());
+    if( aSyncMode.syncType() != TYPE_FAST )
+    {
+        LOG_DEBUG( "Slow sync mode, not checking anchors of remote database" << aTarget.getTargetDatabase() );
+        return false;
+    }
 
-    if( aSyncMode.syncType() == TYPE_FAST &&
-        ( aRemoteLastAnchor.isEmpty() || aTarget.getRemoteLastAnchor() != aRemoteLastAnchor ) ) {
+    LOG_DEBUG( "Fast sync mode, checking anchors of remote database" << aTarget.getTargetDatabase() );
+    LOG_DEBUG( "Stored LAST anchor:" << aTarget.getRemoteLastAnchor() );
+    LOG_DEBUG( "LAST anchor reported by remote device:" << aRemoteLastAnchor );
+
+    if( aRemoteLastAnchor.isEmpty() || aTarget.getRemoteLastAnchor() != aRemoteLastAnchor )
+    {
+        LOG_DEBUG( "Anchor mismatch!" );
         return true;
     }
-    else {
+    else
+    {
+        LOG_DEBUG( "Anchors match" );
         return false;
     }
 }
@@ -979,6 +1065,16 @@ void SessionHandler::composeLocalChanges()
 {
     FUNCTION_CALL_TRACE;
 
+    int maxChangesPerMessage = DEFAULT_MAX_CHANGES_TO_SEND;
+
+    int configValue = getConfig()->getTransportProperty( MAXCHANGESPERMESSAGEPROP ).toInt();
+    if( configValue > 0 )
+    {
+        maxChangesPerMessage = configValue;
+    }
+
+    LOG_DEBUG( "Setting number of changes to send per message to" << maxChangesPerMessage );
+
     const QList<SyncTarget*>& targets = getSyncTargets();
     foreach( const SyncTarget* syncTarget, targets ) {
         const LocalChanges* localChanges = syncTarget->getLocalChanges();
@@ -986,7 +1082,7 @@ void SessionHandler::composeLocalChanges()
                                                                             *localChanges,
                                                                             getRemoteMaxMsgSize(),
                                                                             iRole,
-                                                                            getConfig()->getMaxChangesToSend());
+                                                                            maxChangesPerMessage );
         iResponseGenerator.addPackage(localChangesPackage);
 
         connect( localChangesPackage, SIGNAL( newItemWritten( int, int, SyncItemKey, ModificationType, QString, QString, QString ) ),
@@ -1145,8 +1241,8 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
     // If remote party sent unknown device id, identify ourselves in the response
     if( aHeaderParams.targetDevice == SYNCML_UNKNOWN_DEVICE ) {
 
-        if( !getConfig()->getLocalDevice().isEmpty() ) {
-            aHeaderParams.targetDevice = getConfig()->getLocalDevice();
+        if( !getConfig()->getLocalDeviceName().isEmpty() ) {
+            aHeaderParams.targetDevice = getConfig()->getLocalDeviceName();
         }
         else {
             aHeaderParams.targetDevice = getDevInfHandler().getDeviceInfo().getDeviceID();
@@ -1180,7 +1276,10 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
     headerParams.targetDevice = getRemoteDeviceName();
     headerParams.maxMsgSize = getLocalMaxMsgSize();
 
-    //FIXME! Add extra headers here
+    if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
+    {
+        handleEMITags( aHeaderParams, headerParams );
+    }
 
     setLocalHeaderParams( headerParams );
 
@@ -1192,19 +1291,24 @@ void SessionHandler::setupSession( const QString& aSessionId )
 
     setSessionId( aSessionId );
 
-    if( !getConfig()->getLocalDevice().isEmpty() ) {
-        setLocalDeviceName( getConfig()->getLocalDevice() );
+    if( !getConfig()->getLocalDeviceName().isEmpty() ) {
+        setLocalDeviceName( getConfig()->getLocalDeviceName() );
     }
     else {
         setLocalDeviceName( getDevInfHandler().getDeviceInfo().getDeviceID() );
     }
 
-    setRemoteDeviceName( getConfig()->getRemoteDevice() );
+    if( !getConfig()->getRemoteDeviceName().isEmpty() ) {
+        setRemoteDeviceName( getConfig()->getRemoteDeviceName() );
+    }
+    else {
+        setRemoteDeviceName( SYNCML_UNKNOWN_DEVICE );
+    }
 
     setProtocolVersion( getConfig()->getProtocolVersion() );
 
-    if( getConfig()->getProtocolAttribute( NO_INIT_PHASE ) ) {
-        setProtocolAttribute( NO_INIT_PHASE );
+    if( getConfig()->extensionEnabled( SYNCWITHOUTINITPHASEEXTENSION ) ) {
+        setSyncWithoutInitPhase( true );
     }
 
     setAuthenticationType( getConfig()->getAuthenticationType() );
@@ -1215,7 +1319,10 @@ void SessionHandler::setupSession( const QString& aSessionId )
     headerParams.targetDevice = getRemoteDeviceName();
     headerParams.maxMsgSize = getLocalMaxMsgSize();
 
-    //FIXME! Add extra headers here
+    if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
+    {
+        insertEMITagsToken(headerParams);
+    }
 
     if( getAuthenticationType() == AUTH_NONE ) {
         setSessionAuthenticated( true );
@@ -1231,8 +1338,6 @@ void SessionHandler::setupSession( const QString& aSessionId )
 void SessionHandler::saveSession()
 {
     FUNCTION_CALL_TRACE;
-
-    LOG_DEBUG("Saving Sync Session ");
 
     // Store last sync time with accuracy of 1 second, ceiling it to the
     // next full second.
@@ -1277,7 +1382,7 @@ StoragePlugin* SessionHandler::createStorageByURI( const QString& aURI )
 
         if (plugin != NULL) {
             iStorages.append( plugin );
-	    emit storageAccquired (plugin->getPreferredFormat().iType);
+            emit storageAccquired (plugin->getPreferredFormat().iType);
         }
     }
 
@@ -1303,7 +1408,7 @@ StoragePlugin* SessionHandler::createStorageByMIME( const QString& aMIME )
         if (plugin) {
             iStorages.append( plugin );
 	    emit storageAccquired (aMIME);
-	}
+        }
     }
 
     return plugin;
@@ -1312,8 +1417,6 @@ StoragePlugin* SessionHandler::createStorageByMIME( const QString& aMIME )
 
 const QList<StoragePlugin*>& SessionHandler::getStorages() const
 {
-    FUNCTION_CALL_TRACE;
-
     return iStorages;
 }
 
@@ -1371,25 +1474,21 @@ SyncTarget* SessionHandler::getSyncTarget( const QString& aSourceURI ) const
 
 const QList<SyncTarget*>& SessionHandler::getSyncTargets() const
 {
-    FUNCTION_CALL_TRACE;
     return iSyncTargets;
 }
 
 void SessionHandler::setLocalHeaderParams( const HeaderParams& aHeaderParams )
 {
-    FUNCTION_CALL_TRACE;
     iResponseGenerator.setHeaderParams(aHeaderParams);
 }
 
 const HeaderParams& SessionHandler::getLocalHeaderParams() const
 {
-    FUNCTION_CALL_TRACE;
     return iResponseGenerator.getHeaderParams();
 }
 
 void SessionHandler::setRemoteMaxMsgSize( int aMaxMsgSize )
 {
-    FUNCTION_CALL_TRACE;
     iRemoteMaxMsgSize = aMaxMsgSize;
 }
 
@@ -1398,64 +1497,58 @@ int SessionHandler::getRemoteMaxMsgSize() const
     return iRemoteMaxMsgSize;
 }
 
+void SessionHandler::setLocalMaxMsgSize( int aMaxMsgSize )
+{
+    iLocalMaxMsgSize = aMaxMsgSize;
+}
+
 int SessionHandler::getLocalMaxMsgSize()
 {
-    FUNCTION_CALL_TRACE;
-    return getTransport().getMaxTxSize();
+    return iLocalMaxMsgSize;
 }
 
 void SessionHandler::setRemoteLocURI( const QString& aURI )
 {
-    FUNCTION_CALL_TRACE;
     getTransport().setRemoteLocURI(aURI);
 }
 
 bool SessionHandler::getSessionAuthenticated() const
 {
-    FUNCTION_CALL_TRACE;
     return iSessionAuthenticated;
 }
 
 void SessionHandler::setSessionAuthenticated( bool aAuthenticated )
 {
-    FUNCTION_CALL_TRACE;
     iSessionAuthenticated = aAuthenticated;
 }
 
 void SessionHandler::setAuthenticationType( const AuthenticationType& aAuthenticationType )
 {
-    FUNCTION_CALL_TRACE;
     iAuthenticationType = aAuthenticationType;
 }
 
 AuthenticationType SessionHandler::getAuthenticationType() const
 {
-    FUNCTION_CALL_TRACE;
     return iAuthenticationType;
 }
 
 const SyncAgentConfig* SessionHandler::getConfig() const
 {
-    FUNCTION_CALL_TRACE;
     return iConfig;
 }
 
 Transport& SessionHandler::getTransport()
 {
-    FUNCTION_CALL_TRACE;
-
     return *iConfig->getTransport();
 }
 
 ResponseGenerator& SessionHandler::getResponseGenerator()
 {
-    FUNCTION_CALL_TRACE;
     return iResponseGenerator;
 }
 
 DatabaseHandler& SessionHandler::getDatabaseHandler()
 {
-    FUNCTION_CALL_TRACE;
     return iDatabaseHandler;
 }
 
@@ -1481,28 +1574,11 @@ void SessionHandler::newItemReference( int aMsgId, int aCmdId, SyncItemKey aKey,
     LOG_DEBUG("Adding reference to item:" << aKey );
 }
 
-void SessionHandler::newMapReference( int aMsgId, int aCmdId,
-                                      const QString& aLocalDatabase,
-                                      const QString& aRemoteDatabase )
-{
-    FUNCTION_CALL_TRACE;
-
-    MapReference reference;
-
-    reference.iMsgId = aMsgId;
-    reference.iCmdId = aCmdId;
-    reference.iLocalDatabase = aLocalDatabase;
-    reference.iRemoteDatabase = aRemoteDatabase;
-
-    iMapReferences.append( reference );
-
-    LOG_DEBUG("Adding reference to map:" << aLocalDatabase << "->" << aRemoteDatabase );
-}
-
-
 void SessionHandler::processItemStatus( int aMsgRef, int aCmdRef, SyncItemKey aKey )
 {
     FUNCTION_CALL_TRACE;
+
+    quint32 count = iItemReferences.count();
 
     for( int i = 0; i < iItemReferences.count(); ++i ) {
 
@@ -1512,11 +1588,10 @@ void SessionHandler::processItemStatus( int aMsgRef, int aCmdRef, SyncItemKey aK
             reference.iCmdId == aCmdRef &&
             reference.iKey == aKey ) {
 
+            emit itemProcessed( reference.iModificationType, MOD_REMOTE_DATABASE, reference.iLocalDatabase,
+                                reference.iMimeType, count );
             iItemReferences.removeAt( i );
 
-            emit itemProcessed( reference.iModificationType, MOD_REMOTE_DATABASE, reference.iLocalDatabase,
-                                reference.iMimeType );
-
             break;
 
         }
@@ -1524,27 +1599,6 @@ void SessionHandler::processItemStatus( int aMsgRef, int aCmdRef, SyncItemKey aK
     }
 
 }
-
-void DataSync::SessionHandler::processMapStatus( int aMsgRef, int aCmdRef)
-{
-    FUNCTION_CALL_TRACE;
-
-    for( int i = 0; i < iMapReferences.count(); ++i ) {
-        const MapReference& reference = iMapReferences[i];
-
-        if( reference.iMsgId == aMsgRef &&
-            reference.iCmdId == aCmdRef ) {
-
-            iMapReferences.removeAt( i );
-
-            break;
-
-        }
-
-    }
-
-}
-
 
 bool DataSync::SessionHandler::isRemoteBusyStatusSet() const
 {
@@ -1581,6 +1635,66 @@ DevInfHandler& SessionHandler::getDevInfHandler()
     return iDevInfHandler;
 }
 
+void SessionHandler::insertEMITagsToken( HeaderParams& aLocalHeader )
+{
+    FUNCTION_CALL_TRACE;
+
+    QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
+
+    QStringList tags = data.toStringList();
+
+    LOG_WARNING( "EMI tags extension: adding token" << tags[0] );
+
+    aLocalHeader.EMI.append( tags[0] );
+
+
+}
+
+void SessionHandler::handleEMITags( const HeaderParams& aRemoteHeader, HeaderParams& aLocalHeader )
+{
+    FUNCTION_CALL_TRACE;
+
+    QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
+
+    QStringList tags = data.toStringList();
+
+    if( aRemoteHeader.EMI.contains( tags[0] ) )
+    {
+        LOG_DEBUG( "EMI tags extension: responding to" << tags[0] << "with" << tags[1] );
+        aLocalHeader.EMI.append( tags[1] );
+    }
+
+}
+
+void SessionHandler::clearEMITags()
+{
+    FUNCTION_CALL_TRACE;
+
+    QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
+
+    QStringList tags = data.toStringList();
+
+    HeaderParams headerParams = getLocalHeaderParams();
+
+    for( int i = 0; i < tags.count(); ++i )
+    {
+        headerParams.EMI.removeOne( tags[i] );
+    }
+
+    setLocalHeaderParams( headerParams );
+
+}
+
+void SessionHandler::setSyncWithoutInitPhase( bool aSyncWithoutInitPhase )
+{
+    iSyncWithoutInitPhase = aSyncWithoutInitPhase;
+}
+
+bool SessionHandler::isSyncWithoutInitPhase() const
+{
+    return iSyncWithoutInitPhase;
+}
+
 QString SessionHandler::generateSessionID()
 {
     // A common way to create unique session ID is to use UNIX timestamp.
@@ -1592,3 +1706,39 @@ QString SessionHandler::generateSessionID()
     return sessionId;
 }
 
+SyncState SessionHandler::getLastError( QString &aErrorMsg )
+{
+    // Try to figure out the last erroneous sync state, if any
+    SyncState state = iSyncState;
+    aErrorMsg = "";
+
+    if( iSyncState != SYNC_FINISHED )
+    {
+        // Check alerts first - checking if the remote device responded with an error
+        // for the sync alert that we sent last.
+         switch(cmdRespMap["alert"])
+        {
+            case NOT_SUPPORTED:
+            {
+                state = UNSUPPORTED_SYNC_TYPE;
+                aErrorMsg = "Unsupported sync type";
+                break;
+            }
+            case NOT_FOUND:
+            {
+                state = UNSUPPORTED_STORAGE_TYPE;
+                aErrorMsg = "Unsupported storage type";
+                break;
+            }
+            default:
+            {
+                //TODO Do we check more codes
+		state = INTERNAL_ERROR;
+                aErrorMsg = "Internal error";
+                break;
+            }
+        }
+        //TODO Do we check responses to messages other than alerts?
+    }
+    return state;
+}

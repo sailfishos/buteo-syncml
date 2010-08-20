@@ -44,6 +44,7 @@ namespace DataSync {
 class OBEXConnection;
 class OBEXClientWorker;
 class OBEXServerWorker;
+class OBEXWorkerThread;
 
 /*! \brief Transport that implements OBEX functionality
  *
@@ -95,11 +96,19 @@ public:
      */
     virtual ~OBEXTransport();
 
+    /* \brief Sets a transport property
+     *
+     * Properties should usually be set before attempting to send or receive.
+     * Supported properties:
+     * bt-obex-mtu: MTU in OBEX over BT
+     * usb-obex-mtu: MTU in OBEX over USB
+     *
+     * @param aProperty Property to set
+     * @param aValue Value to set
+     */
+    virtual void setProperty( const QString& aProperty, const QString& aValue );
+
     virtual bool sendSyncML( SyncMLMessage* aMessage );
-
-    virtual qint64 getMaxTxSize();
-
-    virtual qint64 getMaxRxSize();
 
     virtual bool getData( const QString& aContentType, QByteArray& aData );
 
@@ -121,6 +130,8 @@ private slots:
 
     void connectionError();
 
+    void sessionRejected();
+
 private:
 
     void setupClient( OBEXConnection* connection );
@@ -128,7 +139,8 @@ private:
     void setupServer( OBEXConnection* connection );
 
     Mode                iMode;
-    QThread*            iWorkerThread;
+    Type                iType;
+    OBEXWorkerThread*   iWorkerThread;
     OBEXClientWorker*   iClientWorker;
     OBEXServerWorker*   iServerWorker;
 
@@ -163,6 +175,12 @@ public:
      *
      */
     virtual ~OBEXWorkerThread();
+
+    /*! \brief Retrieves the connection
+     *
+     * @return
+     */
+    OBEXConnection* getConnection();
 
 protected:
 

@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -177,7 +189,7 @@ bool ServerSessionHandler::syncReceived()
             return false;
         }
         else {
-            setProtocolAttribute( NO_INIT_PHASE );
+            setSyncWithoutInitPhase(true);
             setSyncState( RECEIVING_ITEMS );
             return true;
         }
@@ -204,8 +216,13 @@ bool ServerSessionHandler::mapReceived()
 
     SyncState syncState = getSyncState();
 
-    if( syncState == SENDING_ITEMS  ) {
+    // If we sent the last set of items and received mappings from client, send the final
+    if( syncState == SENDING_ITEMS && getResponseGenerator().packageQueueEmpty() ) {
         setSyncState( RECEIVING_MAPPINGS );
+        return true;
+    }
+    // If we receive mappings before we close our sending items package, don't send the final
+    else if( syncState == SENDING_ITEMS ) {
         return true;
     }
     else if( syncState == RECEIVING_MAPPINGS ) {
@@ -264,16 +281,26 @@ void ServerSessionHandler::finalReceived()
             break;
         }
         case SENDING_ITEMS:
+        {
+            // If we have no more items to send
+            if( getResponseGenerator().packageQueueEmpty() ) {
+                composeMapAcknowledgementPackage();
+                setSyncState( FINALIZING );
+            }
+            break;
+        }
         case RECEIVING_MAPPINGS:
         {
-            composeMapAcknowledgementPackage();
             setSyncState( FINALIZING );
-
+            composeMapAcknowledgementPackage();
             break;
         }
         default:
         {
-            abortSync( INTERNAL_ERROR, "Internal state machine error" );
+            // Try to find out what error occurred
+            QString errorMsg;
+            SyncState state = getLastError(errorMsg);
+            abortSync( state, errorMsg );
             break;
         }
 
@@ -409,10 +436,19 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
     target->setTargetDatabase( aAlertParams.sourceDatabase );
 
     if( anchorMismatch( aSyncMode, *target, aAlertParams.lastAnchor ) ) {
-
+        LOG_DEBUG("Anchor mismatch, refresh required");
         // Anchor mismatch, must revert to slow sync
         status = REFRESH_REQUIRED;
-        target->revertSyncMode();
+        bool clientInitiedRefresh = false;
+
+        if( iRemoteDeviceInfoInstance->supportedSyncTypes().contains( DataSync::SYNCTYPE_FROMCLIENTSLOW ) &&
+            (clientInitiedRefresh = target->setRefreshFromClient()) ) {
+            LOG_DEBUG("Anchor mismatch, client refresh required, sending 203 as client supports refresh");
+        }
+        if( !clientInitiedRefresh ){
+            LOG_DEBUG("Anchor mismatch, refresh required, sending 202");
+            target->revertSyncMode();
+        }
     }
 
 
@@ -493,7 +529,7 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage()
     data.iUIMode = SANUIMODE_BACKGROUND;
     data.iInitiator = SANINITIATOR_SERVER;
     data.iSessionId = 0;
-    data.iServerIdentifier = getConfig()->getLocalDevice();
+    data.iServerIdentifier = getConfig()->getLocalDeviceName();
 
     const QList<StoragePlugin*>& storages = getStorages();
 
@@ -540,7 +576,7 @@ void ServerSessionHandler::composeServerModificationsPackage()
     FUNCTION_CALL_TRACE;
 
     // If doing sync without init phase, also send initialization
-    if( getProtocolAttribute( NO_INIT_PHASE )) {
+    if( isSyncWithoutInitPhase() ) {
         composeServerInitialization();
     }
 

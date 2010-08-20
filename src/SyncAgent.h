@@ -36,21 +36,105 @@
  * \section intro_sec Library overview
  *
  * Libmeegosyncml implements Open Mobile Alliance Data Synchronization protocol
- * (OMA DS), formerly known as SyncML. This library supports OMA DS versions
- * 1.1.2 and 1.2.1, and implements both OMA DS Server and OMA DS Client
- * functionality. In addition, this library offers transports for synchronization
- * occurring over HTTP, and over OBEX using Bluetooth or USB.
+ * (OMA DS), formerly known as SyncML. This library offers:
+ * - Support for OMA DS 1.1.2 and 1.2.1
+ * - Both OMA DS Client and Server functionality
+ * - Bindings for HTTP and OBEX (over Bluetooth and USB)
+ * - WbXML support using libwbxml
  *
- * \section features_sec Supported features
- * \li \ref features11\n
- * \li \ref features12\n
- * \li \ref otherfeatures\n
+ * \section guides_sec Guides
+ *
+ * \li \ref whatis\n
+ * \li \ref howtouse\n
+ * \li \ref creatingstorageplugin\n
+ * \li \ref otherconsiderations\n
  *
  * \section example_sec Examples
- * \li \ref example12httpsync\n
- * \li \ref example11btsync\n
+ * \li \ref example1\n
  *
- * \page features12 Supported DS 1.2 features
+ * \section other_sec Other
+ * \li \ref conformance\n
+ *
+ * \page whatis What is libmeegosyncml?
+ *  Libmeegosyncml is a protocol stack that implements OMA DS standard. It is based
+ *  on Qt and provides easy-to-use and easy-to-understand interface for synchronizing
+ *  data between devices and services.
+ *
+ *  It should be noted libmeegosyncml it is not a complete synchronization solution,
+ *  because in addition to the protocol stack, a total solution would include at least:
+ * - Integration to storage backends. Libmeegosyncml has been designed to be
+ *   generic enough to allow synchronization of practically any kind of data
+ *   ranging from simple PIM data to large files. It does not understand anything
+ *   about the data it is synchronizing; this is the responsibility of 'storage
+ *   plugins' which are written by the developers interested in synchronizing some
+ *   specific data type, for example contacts.
+ * - Detection of changes in a storage. SyncML protocol supports fast synchronization
+ *   that is achieved by sending only modifications occurred in a storage since last
+ *   synchronization session, instead of exchanging all the items. Implementation of
+ *   this detection of changes (additions, modifications and deletion of items) is
+ *   the responsibility of developers writing the 'storage plugins'.
+ * - User interface. Libmeegosyncml includes Qt signals that provide information about
+ *   an ongoing synchronization sessions, but it is the responsibility of the developers
+ *   to act on these signals.
+ *
+ * \page howtouse How to use it
+ *
+ * Synchronization session is governed by SyncAgent. SyncAgent support two types of
+ * operation:
+ * - Initiating a synchronization towards another device or service
+ * - Responding to synchronization request sent by another device or service
+ *
+ * SyncAgent must be configured by passing a SyncAgentConfig object to it. SyncAgentConfig
+ * includes a number of parameters and properties that can be used to specify what should
+ * be synchronized and how. These parameters and properties can be configured run-time,
+ * or by specifying an XML file that corresponds to the defined configuration schema.
+ *
+ * The most critical configuration parameters include:
+ *
+ * - Storage provider. Developers using libmeegosyncml must implement StorageProvider
+ *   interface that SyncAgent uses to query storage backends when required. These storage
+ *   backends are abstracted by StoragePlugin interface, which developers also must implement
+ *   for each type of data they wish to synchronize. Libmeegosyncml does not provide readymade
+ *   StoragePlugin implementations, as these are highly dependant on the underlying storage
+ *   backend.
+ * - Transport. Libmeegosyncml includes readymade transports for HTTP and OBEX over USB and
+ *   Bluetooth. Custom transports can be created by deriving them from BaseTransport.
+ * - Location of database. Libmeegosyncml maintains an SQL database that includes SyncML sync
+ *   anchors, item ID mappings, MD5 nonces and suspend/resume information. By default this
+ *   database is placed to /etc/sync/, but is highly recommended that synchronization applications
+ *   specify their own location for this database.
+ * - Information necessary to initiate a synchronization. For example in order to initiate a synchronization,
+ *   information is required what storage backends should be synchronized, should authentication
+ *   be used (and if so, which authentication scheme to use) and what protocol version to use.
+ *
+ * SyncAgent must be run in a thread that has an event loop. Synchronization is started by calling
+ * either startSync() or listen(), after which status updates concerning the state of the
+ * synchronization session can be received with signals stateChanged() and itemProcessed(). When
+ * synchronization session is finished, syncFinished() signal is emitted and results of the
+ * synchronization can be retrieved with getResults().
+ *
+ *
+ * \page creatingstorageplugin Creating a storage plugin
+ *
+ * Developers using libmeegosyncml must implement StorageProvider callback interface. This interface is
+ * used by SyncAgent to reserve and release storage backends, based on either storage database URI or MIME type.
+ * Individual storage backends are abstracted by StoragePlugin interface. This interface includes all the necessary
+ * callback functions that SyncAgent needs to synchronize the database. This involves functionality related
+ * to the following topics:
+ *
+ * - Metadata of the storage. SyncAgent must be able to access for example the source database URI, the list of
+ *   supported MIME types, maximum supported item size and SyncML CTCaps of the storage.
+ * - Accessing storage items. SyncAgent must be able to access individual items of a storage backend. These items
+ *   are called 'sync items' that are represented by SyncItem class. Each 'sync item' is identified with a unique
+ *   ID that is reinforced by the StoragePlugin.
+ * - Manipulation of storage items. The purpose of SyncML is synchronization, and this is achieved by adding new
+ *   items to a storage backend, and/or by modifying and deleting existing items of the storage backend.
+ * - Sync analysis. In order to achieve fast synchronization, StoragePlugin implementations must be able to analyze
+ *   changes that have occurred in the storage backend since last synchronization.
+ *
+ * \page otherconsiderations Other considerations
+ *
+ * \page conformance Protocol conformance
  *
  * \section client12 OMA DS 1.2 Client features
  *
@@ -231,9 +315,6 @@
  * \li SCR-DS-PCE-S-015: Support for Sequence element
  *
  *
- * \page features11 Supported DS 1.1 features
- *
- *
  * \section client11 OMA DS 1.1 Client features
  * \subsection client11protocolsupported Supported conformance requirements
  * \li Support of 'two-way sync'
@@ -369,13 +450,81 @@
  * \li Sequence
  *
  *
- * \page otherfeatures Other features
  *
- * \li Synchronization over HTTP or HTTPS
- * \li Synchronization over OBEX on Bluetooth and USB
+ * \page example1 Initiating a synchronization over HTTP
  *
- * \page example12httpsync OMA DS 1.2 synchronization over HTTP
- * \page example11btsync OMA DS 1.1 synchronization over OBEX Bluetooth
+ * The following code initiates a two-way synchronization with an online synchronization service
+ * over HTTP.
+ * \code
+ * QT       += core network
+ * QT       -= gui
+ * TARGET = example1
+ * LIBS += -lmeegosyncml
+ * TEMPLATE = app
+ * SOURCES += main.cpp
+ *
+ * -------------------------------------
+ *
+ * #include <QtCore/QCoreApplication>
+ *
+ * #include <libmeegosyncml/SyncAgent.h>
+ * #include <libmeegosyncml/SyncAgentConfig.h>
+ * #include <libmeegosyncml/HTTPTransport.h>
+ *
+ * #include "MyStorageProvider.h"
+ *
+ * class SyncHandler : public QObject
+ * {
+ * public:
+ *      SyncHandler()
+ *      {
+ *      }
+ *      virtual ~SyncHandler()
+ *      {
+ *      }
+ *
+ *      void start()
+ *      {
+ *          iConfig.fromFile( "MyConfig.xml" );
+ *          iTransport.init();
+ *          iTransport.setRemoteLocURI( "https://my.sync.service.com:443" );
+ *          iConfig.setStorageProvider( &iProvider );
+ *          iConfig.setTransport( &iTransport );
+ *          iConfig.setSyncParams( "MySyncService", DataSync::DS_1_2, DataSync::SyncMode( DataSync::DIRECTION_TWO_WAY,
+ *                                                                                        DataSync::INIT_CLIENT ) );
+ *          iConfig.setAuthParams( DataSync::AUTH_BASIC, "MyUsername", "MyPassword");
+ *          iConfig.addSyncTarget( "./contacts", "./contacts" );
+ *          connect( &iAgent, SIGNAL(syncFinished(DataSync::SyncState)),
+ *                   this, SLOT(syncFinished(DataSync::SyncState)) );
+ *          iAgent.startSync( iConfig );
+ *      }
+ *
+ * protected slots:
+ *
+ *      void syncFinished( DataSync::SyncState aState )
+ *      {
+ *          Q_UNUSED( aState );
+ *          QCoreApplication::instance()->exit();
+ *      }
+ *
+ *
+ * private:
+ *      MyStorageProvider           iProvider;
+ *      DataSync::HTTPTransport     iTransport;
+ *      DataSync::SyncAgentConfig   iConfig;
+ *      DataSync::SyncAgent         iAgent;
+ *  };
+ *
+ *  int main(int argc, char *argv[])
+ *  {
+ *      QCoreApplication a(argc, argv);
+ *
+ *      SyncHandler handler;
+ *      handler.start();
+ *
+ *      return a.exec();
+ * }
+ * \endcode
  */
 
 #ifndef SYNCAGENT_H
@@ -545,11 +694,12 @@ signals:    //  public signals
      * @param aModifiedDatabase Database that was modified (local or remote)
      * @param aLocalDatabase Identifier of the local database used in the sync
      * @param aMimeType Mimetype of the item prcessed
+     * @param aCommittedItems No. of items committed for this operation
      */
     void itemProcessed( DataSync::ModificationType aModificationType,
                         DataSync::ModifiedDatabase aModifiedDatabase,
                         QString aLocalDatabase,
-                        QString aMimeType);
+                        QString aMimeType, int aCommittedItems );
 
     /*! \brief Signal indicating that a storage has been acquired
      *
@@ -570,7 +720,7 @@ private slots:
     void receiveItemProcessed( DataSync::ModificationType aModificationType,
                                DataSync::ModifiedDatabase aModifiedDatabase,
                                const QString aDatabase,
-                               const QString aMimeType);
+                               const QString aMimeType, int aCommittedItems );
 
 
     void listenEvent();

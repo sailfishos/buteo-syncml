@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = Harmattan SyncML Stack
+PROJECT_NAME           = Libmeegosyncml
 PROJECT_NUMBER         = 
 OUTPUT_DIRECTORY       = doc/
 CREATE_SUBDIRS         = NO
@@ -94,7 +94,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = meegosyncml/
+INPUT                  = src/
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.c \
                          *.cc \

@@ -82,15 +82,6 @@ enum AuthenticationType {
     AUTH_MD5        /*!<Use SyncML MD5 authentication*/
 };
 
-/*! \brief Supported SyncML protocol attributes
- *
- */
-enum ProtocolAttributes {
-    //FIXME! Add extra headers here
-    NO_INIT_PHASE,                  /*!<Perform sync without separate initialization phase*/
-    LAST_PROTOCOL_ATTRIBUTE
-};
-
 /*! \brief Conflict resolution policy to enforce
  *
  * It should be noted that conflict resolution is performed by local device only when it is
@@ -98,8 +89,8 @@ enum ProtocolAttributes {
  * a server, therefore reinforcing it's own resolution policy.
  */
 enum ConflictResolutionPolicy {
-    PREFER_LOCAL_CHANGES,  /*!<Prefer modifications of this device over the remote device*/
-    PREFER_REMOTE_CHANGES  /*!<Prefer modifications of remote device over this device*/
+    PREFER_LOCAL_CHANGES    = 0,  /*!<Prefer modifications of this device over the remote device*/
+    PREFER_REMOTE_CHANGES   = 1   /*!<Prefer modifications of remote device over this device*/
 };
 
 /*! \brief Indicates the overall synchronization process state
@@ -132,14 +123,14 @@ enum SyncState {
     INTERNAL_ERROR = 401,
     AUTHENTICATION_FAILURE,
     DATABASE_FAILURE,
-    //FIXME! Add extra headers here
 
     // Server/Network errors 5xx
     SUSPENDED = 501,
     ABORTED,
-
     CONNECTION_ERROR,
-    INVALID_SYNCML_MESSAGE
+    INVALID_SYNCML_MESSAGE,
+    UNSUPPORTED_SYNC_TYPE,
+    UNSUPPORTED_STORAGE_TYPE
 
 };
 
@@ -160,8 +151,6 @@ enum ModifiedDatabase {
     MOD_LOCAL_DATABASE, /*!<Modification was done to local database*/
     MOD_REMOTE_DATABASE /*!<Modification was done to remote database*/
 };
-
-#define DEFAULT_MAX_CHANGES_TO_SEND 22
 
 }
 Q_DECLARE_METATYPE( DataSync::SyncState );

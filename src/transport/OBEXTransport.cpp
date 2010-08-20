@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -23,6 +35,7 @@
 
 #include "datatypes.h"
 #include "SyncMLMessage.h"
+#include "SyncAgentConfigProperties.h"
 
 #include "OBEXBTConnection.h"
 #include "OBEXUsbConnection.h"
@@ -33,8 +46,8 @@ using namespace DataSync;
 
 OBEXTransport::OBEXTransport( Mode aOpMode, Type aType, int aFd, int aTimeOut,
                              QObject* aParent )
-: BaseTransport( aParent ), iMode( aOpMode ), iWorkerThread( 0 ), iClientWorker( 0 ),
-  iServerWorker( 0 ), iTimeOut( aTimeOut ), iMessage( 0 )
+: BaseTransport( aParent ), iMode( aOpMode ), iType( aType ), iWorkerThread( 0 ),
+  iClientWorker( 0 ), iServerWorker( 0 ), iTimeOut( aTimeOut ), iMessage( 0 )
 {
 
     OBEXConnection* connection = 0;
@@ -69,8 +82,9 @@ OBEXTransport::OBEXTransport( Mode aOpMode, Type aType, int aFd, int aTimeOut,
 
 OBEXTransport::OBEXTransport( const QString& aBTAddress, const QString& aServiceUUID,
                               int aTimeOut, QObject* aParent )
- : BaseTransport( aParent ), iMode( MODE_OBEX_CLIENT ), iWorkerThread( 0 ), iClientWorker( 0 ),
-   iServerWorker( 0 ), iTimeOut( aTimeOut ), iMessage( 0 )
+ : BaseTransport( aParent ), iMode( MODE_OBEX_CLIENT ), iType( TYPE_BT ),
+   iWorkerThread( 0 ), iClientWorker( 0 ), iServerWorker( 0 ), iTimeOut( aTimeOut ),
+   iMessage( 0 )
 {
     OBEXConnection* connection = new OBEXBTConnection( aBTAddress, aServiceUUID );
     setupClient(connection);
@@ -121,6 +135,34 @@ OBEXTransport::~OBEXTransport()
     iMessage = 0;
 }
 
+void OBEXTransport::setProperty( const QString& aProperty, const QString& aValue )
+{
+    FUNCTION_CALL_TRACE;
+
+    //const QString BTOBEXMTU( "bt-obex-mtu" );
+    //const QString USBOBEXMTU( "usb-obex-mtu" );
+
+    //bt-obex-mtu:
+    if( aProperty == BTOBEXMTUPROP && iType == TYPE_BT )
+    {
+        if( iWorkerThread && iWorkerThread->getConnection() )
+        {
+            LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+            iWorkerThread->getConnection()->setMTU( aValue.toInt() );
+        }
+    }
+    //usb-obex-mtu:
+    else if( aProperty == USBOBEXMTUPROP && iType == TYPE_USB )
+    {
+        if( iWorkerThread && iWorkerThread->getConnection() )
+        {
+            LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+            iWorkerThread->getConnection()->setMTU( aValue.toInt() );
+        }
+    }
+
+}
+
 void OBEXTransport::setupClient( OBEXConnection* connection )
 {
     FUNCTION_CALL_TRACE;
@@ -135,6 +177,8 @@ void OBEXTransport::setupClient( OBEXConnection* connection )
              this, SLOT(connectionTimeout()), Qt::QueuedConnection );
     connect( worker, SIGNAL(connectionError()),
              this, SLOT(connectionError()), Qt::QueuedConnection );
+    connect( worker, SIGNAL(sessionRejected()),
+             this, SLOT(sessionRejected()), Qt::QueuedConnection );
 
     iWorkerThread = new OBEXWorkerThread( connection, worker );
     iClientWorker = worker;
@@ -190,16 +234,6 @@ bool OBEXTransport::sendSyncML( SyncMLMessage* aMessage )
     {
         return BaseTransport::sendSyncML( aMessage );
     }
-}
-
-qint64 OBEXTransport::getMaxTxSize()
-{
-    return OBEX_MAX_MESSAGESIZE;
-}
-
-qint64 OBEXTransport::getMaxRxSize()
-{
-    return OBEX_MAX_MESSAGESIZE;
 }
 
 bool OBEXTransport::getData( const QString& aContentType, QByteArray& aData )
@@ -332,6 +366,11 @@ void OBEXTransport::connectionError()
     emit sendEvent( TRANSPORT_CONNECTION_ABORTED, "" );
 }
 
+void OBEXTransport::sessionRejected()
+{
+    emit sendEvent( TRANSPORT_SESSION_REJECTED, "" );
+}
+
 OBEXWorkerThread::OBEXWorkerThread( OBEXConnection* connection, OBEXClientWorker* worker)
  : iConnection( connection ), iClientWorker( worker ), iServerWorker( 0 )
 {
@@ -348,6 +387,11 @@ OBEXWorkerThread::OBEXWorkerThread( OBEXConnection* connection, OBEXServerWorker
 
 OBEXWorkerThread::~OBEXWorkerThread()
 {
+}
+
+OBEXConnection* OBEXWorkerThread::getConnection()
+{
+    return iConnection;
 }
 
 void OBEXWorkerThread::run()

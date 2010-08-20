@@ -1,0 +1,6 @@
+interface: MeeGo syncML
+type: library
+scope: Platform
+state: unstable
+libs-pkg: libmeegosyncml
+dev-pkg: libmeegosyncml-dev

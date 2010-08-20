@@ -12,7 +12,14 @@ VER_PAT = 6
 
 CONFIG += dll \ 
     debug \
-    silent
+    silent \
+    create_pc \
+    create_prl
+
+QMAKE_PKGCONFIG_DESTDIR = pkgconfig
+QMAKE_PKGCONFIG_LIBDIR  = $$target.path
+QMAKE_PKGCONFIG_INCDIR  = $$headers.path
+pkgconfig.files = $${TARGET}.pc
 
 
 INCLUDEPATH += . \
@@ -37,6 +44,7 @@ SOURCES += SyncItem.cpp \
 	LocalChangesPackage.cpp \
 	LocalMappingsPackage.cpp \
 	DeviceInfo.cpp \
+	RemoteDeviceInfo.cpp \
 	SyncTarget.cpp \
 	FinalPackage.cpp \
 	AlertPackage.cpp \
@@ -70,6 +78,7 @@ HEADERS += SyncItem.h \
 	LocalMappingsPackage.h \
 	Package.h \
 	DeviceInfo.h \
+	RemoteDeviceInfo.h \
 	SyncAgentConsts.h \
 	SyncResults.h \
 	SyncTarget.h \
@@ -91,7 +100,12 @@ HEADERS += SyncItem.h \
 	ServerAlertedNotification.h \
     SyncMLGlobals.h \
     RequestListener.h \
-    DevInfHandler.h
+    DevInfHandler.h \
+    SyncAgentConfigProperties.h
+    
+OTHER_FILES += config/meego-syncml-conf.xsd \
+               config/meego-syncml-conf.xml \
+               config/nokia-syncml-conf.xml
 
 LIBS += -lsqlite3 -lwbxml2 -lopenobex
 
@@ -100,7 +114,8 @@ QTDIR = /usr/lib/qt4
 QT += network \
     xml \
     sql \
-    dbus
+    dbus \
+    xmlpatterns
 
 QT -= gui
 
@@ -113,7 +128,8 @@ QMAKE_CXXFLAGS = -Wall \
 QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda \
     $(OBJECTS_DIR)/*.gcno \
     $(OBJECTS_DIR)/*.gcov \
-    lib*.so*
+    lib*.so* \
+    lib$${TARGET}.prl pkgconfig/*
 
 QMAKE_STRIP = strip
 
@@ -122,8 +138,13 @@ QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 headers.path  = /usr/include/libmeegosyncml
 headers.files = $$HEADERS
 target.path   = /usr/lib
+config.path   = /etc/sync
+config.files  = config/meego-syncml-conf.xsd \
+                config/nokia-syncml-conf.xml
+                
 INSTALLS += target \
-    	headers
+    	    headers \
+    	    config
 
 # #####################################################################
 # make coverage (debug)

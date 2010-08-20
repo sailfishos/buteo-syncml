@@ -49,12 +49,18 @@ public:
     /*! \brief Constructor
      *
      */
-    OBEXConnection( int aMTUSize );
+    OBEXConnection();
 
     /*! \brief Destructor
      *
      */
     virtual ~OBEXConnection();
+
+    /*! \brief Sets the maximum transfer unit to use in session
+     *
+     * @param aMTU Maximum transfer unit to use
+     */
+    void setMTU( qint32 aMTU );
 
     /*! \brief Connect transport layer
      *
@@ -99,7 +105,7 @@ private:
     void closeOpenOBEX();
 
     obex_t*         iTransportHandle;
-    int             iMTUSize;
+    qint32          iMTU;
 
 };
 

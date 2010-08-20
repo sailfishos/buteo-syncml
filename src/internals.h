@@ -171,14 +171,6 @@ struct StatusParams : public Fragment {
                      cmdRef(-1), data(SERVER_FAILURE) {}
 };
 
-  struct DevInfData  {
-      QString source;
-      QString target;
-      MetaParams meta;
-      bool supportsLargeObjects;
-      DevInfData() : supportsLargeObjects( false ) {}
-  };
-
 struct ResultsParams : public Fragment {
     int cmdID;
     int msgRef;
@@ -186,8 +178,7 @@ struct ResultsParams : public Fragment {
     QString targetRef;
     QString sourceRef;
     MetaParams meta;
-    DevInfData devData;
-    ResultsParams() : Fragment( FRAGMENT_RESULTS ) {}
+    ResultsParams() : Fragment( FRAGMENT_RESULTS ), cmdID(-1), msgRef(-1), cmdRef(-1) {}
 };
 
   struct MapItem {

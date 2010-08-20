@@ -30,6 +30,7 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
+
 #ifndef SYNCTARGET_H
 #define SYNCTARGET_H
 
@@ -140,6 +141,12 @@ public:
      */
     void revertSyncMode();
 
+    /*! \brief Set client only refresh sync type 
+     *
+     * @return True if sync mode has been set to client inited refresh from client (203)
+     */
+    bool setRefreshFromClient();
+
     /*! \brief Returns whether this target's sync mode has been reverted to slow sync
      *
      * @return True if sync mode has been reverted, otherwise false
@@ -163,6 +170,15 @@ public:
      * @return Local changes
      */
     const LocalChanges* getLocalChanges() const;
+    
+    /*! \brief Retrieve local changes since last sync
+     *
+     * Before calling this function, discoverLocalChanges() should be used to
+     * find the changes
+     *
+     * @return Local changes
+     */
+    LocalChanges* getLocalChanges() ;
 
     /*! \brief Return the plugin of the sync target
      *
@@ -218,7 +234,7 @@ public:
      * @param aSyncEndTime Time of the end of sync
      */
     void saveSession( DatabaseHandler& aDbHandler, const QDateTime& aSyncEndTime );
-
+    
 protected:
 
 private:

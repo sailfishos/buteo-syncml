@@ -55,6 +55,16 @@ namespace DataSync
         ROLE_SERVER     /*!<Act as OMA DS server*/
     };
 
+    enum SyncTypes {
+        SYNCTYPE_TWOWAY = 1,
+        SYNCTYPE_TWOWAYSLOW,
+        SYNCTYPE_FROMCLIENT,
+        SYNCTYPE_FROMCLIENTSLOW,
+        SYNCTYPE_FROMSERVER,
+        SYNCTYPE_FROMSERVERSLOW,
+        SYNCTYPE_SERVERALERTED
+    };
+
     enum AlertType
     {
         // Invalid type for initializations etc.
@@ -170,10 +180,6 @@ namespace DataSync
         ATOMIC_RESPONSE_TOO_LARGE = 517
     };
 
-    // Maximum message sizes for incoming/outgoing messages
-    #define HTTP_MAX_MESSAGESIZE 65535
-    #define OBEX_MAX_MESSAGESIZE 65535
-
     #define SYNCML_ELEMENT_SYNCHDR "SyncHdr"
     #define SYNCML_ELEMENT_SYNCBODY "SyncBody"
     #define SYNCML_ELEMENT_SYNCML "SyncML"
@@ -283,8 +289,6 @@ namespace DataSync
     #define SYNCML_UNKNOWN_DEVICE "/"
     #define SYNCML_URI_PREFIX "./"
 
-
-
     #define SYNCML_FORMAT_ENCODING_B64 "b64"
 
     // Silly Ovi.com developers don't want to follow standards. This encoding
@@ -297,8 +301,6 @@ namespace DataSync
     #define SYNCML_SCHEMA_HTTP "http"
     #define SYNCML_SCHEMA_HTTPS "https"
 
-    //FIXME! Add extra headers here
-
     #define HTTP_HDRSTR_POST "POST"
     #define HTTP_HDRSTR_UA "User-Agent"
     #define HTTP_UA_VALUE "libmeegosyncml"
@@ -308,8 +310,13 @@ namespace DataSync
     #define HTTP_AUTHTYPE_VALUE "global"
     #define HTTP_HDRSTR_TOKEN "token"
 
-    #define HTTP_ERROR_ZERO_BYTES "Response of Zero Bytes"
-    #define HTTP_ERROR_AUTH_NEEDED "authentication needed"
+    #define DEFAULT_MAX_CHANGES_TO_SEND 22
+    #define DEFAULT_MAX_MESSAGESIZE     16384
+    #define DEFAULT_OBEX_MTU            1024
+
+    #define MAXMSGOVERHEADRATIO      0.1f
+    #define MINMSGOVERHEADBYTES      256
+    #define WBXMLCOMPRESSIONRATE     0.66f
 
 } // end namespace DataSync
 

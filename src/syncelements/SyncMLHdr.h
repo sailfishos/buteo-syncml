@@ -30,6 +30,7 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
+
 #ifndef SYNCMLHDR_H
 #define SYNCMLHDR_H
 

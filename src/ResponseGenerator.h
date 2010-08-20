@@ -97,9 +97,12 @@ public:
      *
      * @param aMaxSize Maximum size of the message
      * @param aVersion Protocol version to use
+     * @param aWbXML If generated message will be converted to WbXML, take increased
+     *               compression into account in size calculations
      * @return SyncML message on success, otherwise NULL
      */
-    SyncMLMessage* generateNextMessage( int aMaxSize, const ProtocolVersion& aVersion );
+    SyncMLMessage* generateNextMessage( int aMaxSize, const ProtocolVersion& aVersion,
+                                        bool aWbXML = false );
 
     /*! \brief Add package to package queue for sending
      *

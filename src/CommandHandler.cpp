@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -28,6 +40,8 @@
 #include "ConflictResolver.h"
 #include "DevInfPackage.h"
 #include "AlertPackage.h"
+
+#include "LocalMappingsPackage.h"
 
 
 using namespace DataSync;
@@ -47,8 +61,11 @@ ResponseStatusCode CommandHandler::handleMap( const MapParams& aMapParams, SyncT
 {
     FUNCTION_CALL_TRACE;
 
+    UIDMapping mapping;
     for( int i = 0; i < aMapParams.mapItemList.count(); ++i ) {
-        addUIDMapping( aTarget, aMapParams.mapItemList[i].source, aMapParams.mapItemList[i].target );
+        mapping.iRemoteUID = aMapParams.mapItemList[i].source;
+        mapping.iLocalUID = aMapParams.mapItemList[i].target;
+        aTarget.addUIDMapping( mapping );
     }
 
     return SUCCESS;
@@ -59,7 +76,8 @@ void CommandHandler::handleSync( const SyncParams& aSyncParams,
                                  SyncTarget& aTarget,
                                  StorageHandler& aStorageHandler,
                                  ResponseGenerator& aResponseGenerator,
-                                 ConflictResolver& aConflictResolver )
+                                 ConflictResolver& aConflictResolver,
+                                 bool aFastMapsSend )
 {
     FUNCTION_CALL_TRACE;
 
@@ -68,416 +86,14 @@ void CommandHandler::handleSync( const SyncParams& aSyncParams,
     }
 
     QMap<ItemId, ResponseStatusCode> responses;
+    composeBatches( aSyncParams, aTarget, aStorageHandler, aResponseGenerator, responses );
 
-    // Batch updates
+    QList<UIDMapping> newMappings;
+    commitBatches( aStorageHandler, aConflictResolver, aTarget, aSyncParams, responses, newMappings );
 
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+    processResults( aSyncParams, responses, aResponseGenerator );
 
-        const SyncActionData& data = aSyncParams.actionList[i];
-
-        QString defaultType = data.meta.type;
-        QString defaultFormat = data.meta.format;
-
-        // Process items associated with the command
-        for( int a = 0; a < data.items.count(); ++a ) {
-
-            const ItemParams& item = data.items[a];
-
-            // Resolve id of the item
-            ItemId id;
-            id.iCmdId = data.cmdID;
-            id.iItemIndex = a;
-
-            // Resolve type of the item
-            QString type;
-            if( !item.meta.type.isEmpty() ) {
-                type = item.meta.type;
-            }
-            else {
-                type = defaultType;
-            }
-
-            // Resolve format of the item
-            QString format;
-            if( !item.meta.format.isEmpty() ) {
-                format = item.meta.format;
-            }
-            else {
-                format = defaultFormat;
-            }
-
-            if( data.action == SYNCML_ADD ) {
-
-                // Resolve item key
-                QString remoteKey = item.source;
-
-                // Resolve parent
-                QString parentKey;
-
-                if( iRole == ROLE_CLIENT ) {
-                    // Client might receive SourceParent or TargetParent. SourceParent is used
-                    // when server does not yet know the id of parent. TargetParent is used if
-                    // server knows the id of the parent.
-
-                    if( !item.sourceParent.isEmpty() ) {
-                        parentKey = aTarget.mapToLocalUID( item.sourceParent );
-                    }
-                    else {
-                        parentKey = item.targetParent;
-                    }
-                }
-                else if( iRole == ROLE_SERVER && !item.sourceParent.isEmpty() ) {
-                    // Server always receives SourceParent, which must be mapped to local id
-                    parentKey = aTarget.mapToLocalUID( item.sourceParent );
-
-                }
-                // no else
-
-                LOG_DEBUG( "Processing ADD with item URL:" << remoteKey );
-
-                // Large object chunk
-                if( item.moreData ) {
-
-                    // First chunk of large object
-                    if( !aStorageHandler.buildingLargeObject() ) {
-
-                        // Size needs to be specified for first chunk
-                        if( item.meta.size == 0 ) {
-                            LOG_CRITICAL( "No size found for large object:" << id.iCmdId
-                                          <<"/" << id.iItemIndex );
-                            responses.insert( id, SIZE_REQUIRED );
-                        }
-                        else if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey,
-                                                                       parentKey, type, format,
-                                                                       item.meta.size ) ) {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-
-                    }
-
-                    if( aStorageHandler.buildingLargeObject() ) {
-
-                        if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
-
-                            aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
-                                                                             aTarget.getSourceDatabase(),
-                                                                             aTarget.getTargetDatabase() ) );
-                            responses.insert( id, CHUNKED_ITEM_ACCEPTED );
-                        }
-                        else {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-
-                    }
-
-
-                }
-                // Last chunk of large object
-                else if( aStorageHandler.buildingLargeObject() ) {
-
-                    if( !aStorageHandler.matchesLargeObject( remoteKey ) ) {
-                        aResponseGenerator.addPackage( new AlertPackage( NO_END_OF_DATA,
-                                                                         aTarget.getSourceDatabase(),
-                                                                         aTarget.getTargetDatabase() ) );
-                        responses.insert( id, COMMAND_NOT_ALLOWED );
-                    }
-                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
-                        if( !aStorageHandler.finishLargeObject( id ) ) {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-                    }
-                    else {
-                        responses.insert( id, COMMAND_FAILED );
-                    }
-
-                }
-                // Normal object
-                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), parentKey,
-                                                   type, format, item.Data ) ) {
-                    responses.insert( id, COMMAND_FAILED );
-                }
-            }
-            else if( data.action == SYNCML_REPLACE ) {
-
-                // Resolve item key
-                QString localKey;
-
-                if( iRole == ROLE_CLIENT ) {
-                    localKey = item.target;
-                }
-                else {
-                    localKey = aTarget.mapToLocalUID( item.source );
-                }
-
-                // Resolve parent
-                QString parentKey;
-
-                if( iRole == ROLE_CLIENT ) {
-                    // Client might receive SourceParent or TargetParent. SourceParent is used
-                    // when server does not yet know the id of parent. TargetParent is used if
-                    // server knows the id of the parent.
-
-                    if( !item.sourceParent.isEmpty() ) {
-                        parentKey = aTarget.mapToLocalUID( item.sourceParent );
-                    }
-                    else {
-                        parentKey = item.targetParent;
-                    }
-                }
-                else if( iRole == ROLE_SERVER ) {
-                    // Server always receives SourceParent, which must be mapped to local id
-                    parentKey = aTarget.mapToLocalUID( item.sourceParent );
-
-                }
-                // no else
-
-                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
-
-                // Large object chunk
-                if( item.moreData ) {
-
-                    // First chunk of large object
-                    if( !aStorageHandler.buildingLargeObject() ) {
-
-                        // Size needs to be specified for first chunk
-                        if( item.meta.size == 0 ) {
-                            LOG_CRITICAL( "No size found for large object:" << id.iCmdId
-                                           <<"/" << id.iItemIndex );
-                            responses.insert( id, SIZE_REQUIRED );
-                        }
-                        else if( !aStorageHandler.startLargeObjectReplace( *aTarget.getPlugin(), localKey,
-                                                                           parentKey, type, format,
-                                                                           item.meta.size ) ) {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-
-                    }
-
-                    if( aStorageHandler.buildingLargeObject() ) {
-
-                        if( aStorageHandler.appendLargeObjectData( item.Data.toUtf8() ) ) {
-                            aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
-                                                                             aTarget.getSourceDatabase(),
-                                                                             aTarget.getTargetDatabase() ) );
-                            responses.insert( id, CHUNKED_ITEM_ACCEPTED );
-                        }
-                        else {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-
-                    }
-
-
-                }
-                // Last chunk of large object
-                else if( aStorageHandler.buildingLargeObject() ) {
-
-                    if( !aStorageHandler.matchesLargeObject( localKey ) ) {
-                        aResponseGenerator.addPackage( new AlertPackage( NO_END_OF_DATA,
-                                                                         aTarget.getSourceDatabase(),
-                                                                         aTarget.getTargetDatabase() ) );
-                        responses.insert( id, COMMAND_NOT_ALLOWED );
-                    }
-                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
-                        if( !aStorageHandler.finishLargeObject( id ) ) {
-                            responses.insert( id, COMMAND_FAILED );
-                        }
-                    }
-                    else {
-                        responses.insert( id, COMMAND_FAILED );
-                    }
-
-                }
-                // Normal object
-                else if( !aStorageHandler.replaceItem( id, *aTarget.getPlugin(), localKey,
-                                                       parentKey, type, format, item.Data ) ) {
-                    responses.insert( id, COMMAND_FAILED );
-                }
-
-
-            }
-            else if( data.action == SYNCML_DELETE ) {
-
-                // Resolve item key
-                QString localKey;
-
-                if( iRole == ROLE_CLIENT ) {
-                    localKey = item.target;
-                }
-                else {
-                    localKey = aTarget.mapToLocalUID( item.source );
-                }
-
-                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
-
-                if( !aStorageHandler.deleteItem( id, localKey ) ) {
-                    responses.insert( id, COMMAND_FAILED );
-                }
-            }
-            else {
-                responses.insert( id, NOT_SUPPORTED );
-            }
-
-        }
-
-    }
-
-    // Commit batches
-
-    QMap<ItemId, CommitResult> results;
-
-    results.unite( aStorageHandler.commitAddedItems( *aTarget.getPlugin() ) );
-
-    ConflictResolver* resolver = NULL;;
-
-    if( resolveConflicts() ) {
-        resolver = &aConflictResolver;
-    }
-    else {
-        resolver = NULL;
-    }
-
-    results.unite( aStorageHandler.commitReplacedItems( *aTarget.getPlugin(), resolver ) );
-    results.unite( aStorageHandler.commitDeletedItems( *aTarget.getPlugin(), resolver ) );
-
-    // Process commit results and convert them to result codes
-
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
-
-        const SyncActionData& data = aSyncParams.actionList[i];
-
-        // Process items associated with the command
-        for( int a = 0; a < data.items.count(); ++a ) {
-
-            const ItemParams& item = data.items[a];
-            ItemId id;
-
-            id.iCmdId = data.cmdID;
-            id.iItemIndex = a;
-
-            if( !responses.contains( id ) ) {
-
-                if( results.contains( id ) ) {
-
-                    ResponseStatusCode statusCode = COMMAND_FAILED;
-
-                    const CommitResult& result = results.value( id );
-
-                    if( result.iStatus == COMMIT_ADDED ) {
-
-                        statusCode = ITEM_ADDED;
-                        addUIDMapping( aTarget, item.source, result.iItemKey );
-
-                    }
-                    else if( result.iStatus == COMMIT_REPLACED ) {
-
-                        if( result.iConflict == CONFLICT_LOCAL_WIN ) {
-
-                            if( iRole == ROLE_CLIENT ) {
-                                statusCode = RESOLVED_CLIENT_WINNING;
-                            }
-                            else {
-                                statusCode = RESOLVED_WITH_SERVER_DATA;
-                            }
-                        }
-                        else if( result.iConflict == CONFLICT_REMOTE_WIN ) {
-
-                            if( iRole == ROLE_CLIENT ) {
-                                statusCode = RESOLVED_WITH_SERVER_DATA;
-                            }
-                            else {
-                                statusCode = RESOLVED_CLIENT_WINNING;
-                            }
-                        }
-                        else {
-                            statusCode = SUCCESS;
-                        }
-
-                    }
-                    else if( result.iStatus == COMMIT_DELETED ) {
-
-                        if( result.iConflict == CONFLICT_LOCAL_WIN ) {
-
-                            if( iRole == ROLE_CLIENT ) {
-                                statusCode = RESOLVED_CLIENT_WINNING;
-                            }
-                            else {
-                                statusCode = RESOLVED_WITH_SERVER_DATA;
-                            }
-                        }
-                        else if( result.iConflict == CONFLICT_REMOTE_WIN ) {
-                            removeUIDMapping( aTarget, result.iItemKey );
-
-                            if( iRole == ROLE_CLIENT ) {
-                                statusCode = RESOLVED_WITH_SERVER_DATA;
-                            }
-                            else {
-                                statusCode = RESOLVED_CLIENT_WINNING;
-                            }
-                        }
-                        else {
-                            removeUIDMapping( aTarget, result.iItemKey );
-                            statusCode = SUCCESS;
-                        }
-
-                    }
-                    else if( result.iStatus == COMMIT_DUPLICATE ) {
-                        statusCode = ALREADY_EXISTS;
-                    }
-                    else if( result.iStatus == COMMIT_NOT_DELETED ) {
-                        statusCode = ITEM_NOT_DELETED;
-                        removeUIDMapping( aTarget, result.iItemKey );
-                    }
-                    else if( result.iStatus == COMMIT_UNSUPPORTED_FORMAT ) {
-                        statusCode = UNSUPPORTED_FORMAT;
-                    }
-                    else if( result.iStatus == COMMIT_ITEM_TOO_BIG ) {
-                        statusCode = REQUEST_SIZE_TOO_BIG;
-                    }
-                    else if( result.iStatus == COMMIT_NOT_ENOUGH_SPACE ) {
-                        statusCode = DEVICE_FULL;
-                    }
-                    else {
-                        statusCode = COMMAND_FAILED;
-                    }
-
-                    responses.insert( id, statusCode );
-
-                }
-                else {
-                    responses.insert( id, COMMAND_FAILED );
-                }
-
-            }
-        }
-
-    }
-
-    // Process result codes and write corresponding status elements
-
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
-
-        const SyncActionData& data = aSyncParams.actionList[i];
-
-        // Process items associated with the command
-        for( int a = 0; a < data.items.count(); ++a ) {
-
-            const ItemParams& item = data.items[a];
-
-            ItemId id;
-
-            id.iCmdId = data.cmdID;
-            id.iItemIndex = a;
-
-            ResponseStatusCode response = responses.value( id );
-
-            if( !data.noResp ) {
-                aResponseGenerator.addStatus( data, item, response );
-            }
-
-        }
-
-    }
+    manageNewMappings( aTarget, newMappings, aResponseGenerator, aFastMapsSend );
 
 }
 
@@ -546,9 +162,6 @@ void CommandHandler::handleStatus(StatusParams* aStatusParams )
           aStatusParams->cmd == SYNCML_ELEMENT_REPLACE ||
           aStatusParams->cmd == SYNCML_ELEMENT_DELETE ) ) {
         emit itemAcknowledged( aStatusParams->msgRef, aStatusParams->cmdRef, aStatusParams->sourceRef );
-    }
-    else if(aStatusParams != NULL && aStatusParams->cmd == SYNCML_ELEMENT_MAP) {
-        emit mappingAcknowledged( aStatusParams->msgRef, aStatusParams->cmdRef );
     }
 
 }
@@ -645,28 +258,463 @@ bool CommandHandler::resolveConflicts()
 
 }
 
-void CommandHandler::addUIDMapping( SyncTarget& aTarget, const QString& aRemoteUID, const SyncItemKey& aLocalUID )
-{
-    FUNCTION_CALL_TRACE;
-
-    UIDMapping mapping;
-    mapping.iRemoteUID = aRemoteUID;
-    mapping.iLocalUID = aLocalUID;
-    aTarget.addUIDMapping( mapping );
-
-}
-
-void CommandHandler::removeUIDMapping( SyncTarget& aTarget, const SyncItemKey& aLocalUID )
-{
-    FUNCTION_CALL_TRACE;
-
-    aTarget.removeUIDMapping( aLocalUID );
-
-}
-
 ResponseStatusCode CommandHandler::handleRedirection(ResponseStatusCode /*aRedirectionCode*/)
 {
     FUNCTION_CALL_TRACE;
 
     return NOT_IMPLEMENTED;
+}
+
+void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& aTarget,
+                                     StorageHandler& aStorageHandler, ResponseGenerator& aResponseGenerator,
+                                     QMap<ItemId, ResponseStatusCode>& aResponses )
+{
+    FUNCTION_CALL_TRACE;
+
+    // Batch updates
+    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+
+        const SyncActionData& data = aSyncParams.actionList[i];
+
+        QString defaultType = data.meta.type;
+        QString defaultFormat = data.meta.format;
+
+        // Process items associated with the command
+        for( int a = 0; a < data.items.count(); ++a ) {
+
+            const ItemParams& item = data.items[a];
+
+            // Resolve id of the item
+            ItemId id;
+            id.iCmdId = data.cmdID;
+            id.iItemIndex = a;
+
+            // Resolve type of the item
+            QString type;
+            if( !item.meta.type.isEmpty() ) {
+                type = item.meta.type;
+            }
+            else {
+                type = defaultType;
+            }
+
+            // Resolve format of the item
+            QString format;
+            if( !item.meta.format.isEmpty() ) {
+                format = item.meta.format;
+            }
+            else {
+                format = defaultFormat;
+            }
+
+            if( data.action == SYNCML_ADD ) {
+
+                // Resolve item key
+                QString remoteKey = item.source;
+
+                // Resolve parent
+                QString parentKey;
+
+                if( iRole == ROLE_CLIENT ) {
+                    // Client might receive SourceParent or TargetParent. SourceParent is used
+                    // when server does not yet know the id of parent. TargetParent is used if
+                    // server knows the id of the parent.
+
+                    if( !item.sourceParent.isEmpty() ) {
+                        parentKey = aTarget.mapToLocalUID( item.sourceParent );
+                    }
+                    else {
+                        parentKey = item.targetParent;
+                    }
+                }
+                else if( iRole == ROLE_SERVER && !item.sourceParent.isEmpty() ) {
+                    // Server always receives SourceParent, which must be mapped to local id
+                    parentKey = aTarget.mapToLocalUID( item.sourceParent );
+
+                }
+                // no else
+
+                LOG_DEBUG( "Processing ADD with item URL:" << remoteKey );
+
+                // Large object chunk
+                if( item.moreData ) {
+
+                    // First chunk of large object
+                    if( !aStorageHandler.buildingLargeObject() ) {
+
+                        // Size needs to be specified for first chunk
+                        if( item.meta.size == 0 ) {
+                            LOG_WARNING( "No size found for large object:" << id.iCmdId
+                                          <<"/" << id.iItemIndex );
+                        }
+                        if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey,
+                                                                       parentKey, type, format,
+                                                                       item.meta.size ) ) {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+
+                    }
+
+                    if( aStorageHandler.buildingLargeObject() ) {
+
+                        if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+
+                            aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
+                                                                             aTarget.getSourceDatabase(),
+                                                                             aTarget.getTargetDatabase() ) );
+                            aResponses.insert( id, CHUNKED_ITEM_ACCEPTED );
+                        }
+                        else {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+
+                    }
+
+
+                }
+                // Last chunk of large object
+                else if( aStorageHandler.buildingLargeObject() ) {
+
+                    if( !aStorageHandler.matchesLargeObject( remoteKey ) ) {
+                        aResponseGenerator.addPackage( new AlertPackage( NO_END_OF_DATA,
+                                                                         aTarget.getSourceDatabase(),
+                                                                         aTarget.getTargetDatabase() ) );
+                        aResponses.insert( id, COMMAND_NOT_ALLOWED );
+                    }
+                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+                        if( !aStorageHandler.finishLargeObject( id ) ) {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+                    }
+                    else {
+                        aResponses.insert( id, COMMAND_FAILED );
+                    }
+
+                }
+                // Normal object
+                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), QString(), parentKey,
+                                                   type, format, item.Data ) ) {
+                    aResponses.insert( id, COMMAND_FAILED );
+                }
+            }
+            else if( data.action == SYNCML_REPLACE ) {
+
+                // Resolve item key
+                QString localKey;
+
+                if( iRole == ROLE_CLIENT ) {
+                    localKey = item.target;
+                }
+                else {
+                    localKey = aTarget.mapToLocalUID( item.source );
+                }
+
+                // Resolve parent
+                QString parentKey;
+
+                if( iRole == ROLE_CLIENT ) {
+                    // Client might receive SourceParent or TargetParent. SourceParent is used
+                    // when server does not yet know the id of parent. TargetParent is used if
+                    // server knows the id of the parent.
+
+                    if( !item.sourceParent.isEmpty() ) {
+                        parentKey = aTarget.mapToLocalUID( item.sourceParent );
+                    }
+                    else {
+                        parentKey = item.targetParent;
+                    }
+                }
+                else if( iRole == ROLE_SERVER ) {
+                    // Server always receives SourceParent, which must be mapped to local id
+                    parentKey = aTarget.mapToLocalUID( item.sourceParent );
+
+                }
+                // no else
+
+                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
+
+                // Large object chunk
+                if( item.moreData ) {
+
+                    // First chunk of large object
+                    if( !aStorageHandler.buildingLargeObject() ) {
+
+                        // Size needs to be specified for first chunk
+                        if( item.meta.size == 0 ) {
+                            LOG_WARNING( "No size found for large object:" << id.iCmdId
+                                           <<"/" << id.iItemIndex );
+                        }
+                        if( !aStorageHandler.startLargeObjectReplace( *aTarget.getPlugin(), localKey,
+                                                                           parentKey, type, format,
+                                                                           item.meta.size ) ) {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+
+                    }
+
+                    if( aStorageHandler.buildingLargeObject() ) {
+
+                        if( aStorageHandler.appendLargeObjectData( item.Data.toUtf8() ) ) {
+                            aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
+                                                                             aTarget.getSourceDatabase(),
+                                                                             aTarget.getTargetDatabase() ) );
+                            aResponses.insert( id, CHUNKED_ITEM_ACCEPTED );
+                        }
+                        else {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+
+                    }
+
+
+                }
+                // Last chunk of large object
+                else if( aStorageHandler.buildingLargeObject() ) {
+
+                    if( !aStorageHandler.matchesLargeObject( localKey ) ) {
+                        aResponseGenerator.addPackage( new AlertPackage( NO_END_OF_DATA,
+                                                                         aTarget.getSourceDatabase(),
+                                                                         aTarget.getTargetDatabase() ) );
+                        aResponses.insert( id, COMMAND_NOT_ALLOWED );
+                    }
+                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+                        if( !aStorageHandler.finishLargeObject( id ) ) {
+                            aResponses.insert( id, COMMAND_FAILED );
+                        }
+                    }
+                    else {
+                        aResponses.insert( id, COMMAND_FAILED );
+                    }
+
+                }
+                // Normal object
+                else if( !aStorageHandler.replaceItem( id, *aTarget.getPlugin(), localKey,
+                                                       parentKey, type, format, item.Data ) ) {
+                    aResponses.insert( id, COMMAND_FAILED );
+                }
+
+
+            }
+            else if( data.action == SYNCML_DELETE ) {
+
+                // Resolve item key
+                QString localKey;
+
+                if( iRole == ROLE_CLIENT ) {
+                    localKey = item.target;
+                }
+                else {
+                    localKey = aTarget.mapToLocalUID( item.source );
+                }
+
+                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
+
+                if( !aStorageHandler.deleteItem( id, localKey ) ) {
+                    aResponses.insert( id, COMMAND_FAILED );
+                }
+            }
+            else {
+                aResponses.insert( id, NOT_SUPPORTED );
+            }
+
+        }
+
+    }
+
+}
+
+void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictResolver& aConflictResolver,
+                                    SyncTarget& aTarget, const SyncParams& aSyncParams,
+                                    QMap<ItemId, ResponseStatusCode>& aResponses,
+                                    QList<UIDMapping>& aNewMappings )
+{
+    FUNCTION_CALL_TRACE;
+
+    // Commit batches
+
+    QMap<ItemId, CommitResult> results;
+
+
+    ConflictResolver* resolver = NULL;
+
+    if( resolveConflicts() ) {
+        resolver = &aConflictResolver;
+    }
+    else {
+        resolver = NULL;
+    }
+
+    results.unite( aStorageHandler.commitAddedItems( *aTarget.getPlugin(), resolver ) );
+    results.unite( aStorageHandler.commitReplacedItems( *aTarget.getPlugin(), resolver ) );
+    results.unite( aStorageHandler.commitDeletedItems( *aTarget.getPlugin(), resolver ) );
+
+    // Process commit results and convert them to result codes
+
+    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+
+        const SyncActionData& data = aSyncParams.actionList[i];
+
+        // Process items associated with the command
+        for( int a = 0; a < data.items.count(); ++a ) {
+
+            const ItemParams& item = data.items[a];
+            ItemId id;
+
+            id.iCmdId = data.cmdID;
+            id.iItemIndex = a;
+
+            if( !aResponses.contains( id ) ) {
+
+                if( results.contains( id ) ) {
+
+                    ResponseStatusCode statusCode = COMMAND_FAILED;
+
+                    const CommitResult& result = results.value( id );
+
+                    if( result.iStatus == COMMIT_ADDED ) {
+
+                        statusCode = ITEM_ADDED;
+
+                        UIDMapping map;
+                        map.iRemoteUID = item.source;
+                        map.iLocalUID = result.iItemKey;
+                        aNewMappings.append( map );
+                    }
+                    else if( result.iStatus == COMMIT_REPLACED || result.iStatus == COMMIT_INIT_REPLACE ) {
+
+                        if( result.iConflict == CONFLICT_LOCAL_WIN ) {
+
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                            else {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                        }
+                        else if( result.iConflict == CONFLICT_REMOTE_WIN ) {
+
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                            else {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                        }
+                        else {
+                            statusCode = SUCCESS;
+                        }
+
+                    }
+                    else if( result.iStatus == COMMIT_DELETED || result.iStatus == COMMIT_INIT_DELETE ) {
+
+                        if( result.iConflict == CONFLICT_LOCAL_WIN ) {
+
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                            else {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                        }
+                        else if( result.iConflict == CONFLICT_REMOTE_WIN ) {
+                            aTarget.removeUIDMapping( result.iItemKey );
+
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                            else {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                        }
+                        else {
+                            aTarget.removeUIDMapping( result.iItemKey );
+                            statusCode = SUCCESS;
+                        }
+
+                    }
+                    else if( result.iStatus == COMMIT_DUPLICATE ) {
+                        statusCode = ALREADY_EXISTS;
+                    }
+                    else if( result.iStatus == COMMIT_NOT_DELETED ) {
+                        statusCode = ITEM_NOT_DELETED;
+                        aTarget.removeUIDMapping( result.iItemKey );
+                    }
+                    else if( result.iStatus == COMMIT_UNSUPPORTED_FORMAT ) {
+                        statusCode = UNSUPPORTED_FORMAT;
+                    }
+                    else if( result.iStatus == COMMIT_ITEM_TOO_BIG ) {
+                        statusCode = REQUEST_SIZE_TOO_BIG;
+                    }
+                    else if( result.iStatus == COMMIT_NOT_ENOUGH_SPACE ) {
+                        statusCode = DEVICE_FULL;
+                    }
+                    else {
+                        statusCode = COMMAND_FAILED;
+                    }
+
+                    aResponses.insert( id, statusCode );
+
+                }
+                else {
+                    aResponses.insert( id, COMMAND_FAILED );
+                }
+
+            }
+        }
+
+    }
+}
+
+void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<ItemId, ResponseStatusCode>& aResponses,
+                                     ResponseGenerator& aResponseGenerator )
+{
+    FUNCTION_CALL_TRACE;
+
+    // Process result codes and write corresponding status elements
+    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+
+        const SyncActionData& data = aSyncParams.actionList[i];
+
+        // Process items associated with the command
+        for( int a = 0; a < data.items.count(); ++a ) {
+
+            const ItemParams& item = data.items[a];
+
+            ItemId id;
+
+            id.iCmdId = data.cmdID;
+            id.iItemIndex = a;
+
+            ResponseStatusCode response = aResponses.value( id );
+
+            if( !data.noResp ) {
+                aResponseGenerator.addStatus( data, item, response );
+            }
+
+        }
+
+    }
+}
+
+void CommandHandler::manageNewMappings( SyncTarget& aTarget, const QList<UIDMapping>& aNewMappings,
+                                        ResponseGenerator& aResponseGenerator, bool aFastMapsSend )
+{
+    FUNCTION_CALL_TRACE;
+
+    // Manage new mappings: Save them to persistent storage. Also if we are acting as a client
+    // and we have been configured to fast-send mappings, compose LocalMappingsPackage
+
+    for( int i = 0; i < aNewMappings.size(); ++i )
+    {
+        aTarget.addUIDMapping( aNewMappings[i] );
+    }
+
+
+    if( iRole == ROLE_CLIENT && aFastMapsSend )
+    {
+        LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( aTarget.getSourceDatabase(),
+                                                                               aTarget.getTargetDatabase(),
+                                                                               aNewMappings );
+        aResponseGenerator.addPackage( localMappingsPackage );
+    }
 }

@@ -165,6 +165,16 @@ public:
      */
     virtual SyncItem* getSyncItem( const SyncItemKey& aKey ) = 0;
 
+    /*! \brief Returns a list of sync items identified by sync item keys
+     *
+     * This function takes the advantage of batch fetches from storage plug-in's
+     * that do support this.
+     *
+     * @param aKeyList Keys of the sync items
+     * @return Sync item list.
+     */
+    virtual QList<SyncItem*> getSyncItems( const QList<SyncItemKey>& aKeyList ) = 0;
+
     /*! \brief Adds new items
      *
      * Items must NOT have their keys set before calling this function. After successful
@@ -190,6 +200,14 @@ public:
      * @return List of status codes corresponding to each key
      */
     virtual QList<StoragePluginStatus> deleteItems( const QList<SyncItemKey>& aKeys ) = 0;
+
+#if 0
+    /*! \brief Delete all existing items
+     *
+     * @return true if all items were deleted, false otherwise.
+     */
+    virtual bool deleteAllItems() = 0;
+#endif
 
 };
 

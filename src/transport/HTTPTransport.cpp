@@ -1,20 +1,32 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
@@ -24,41 +36,60 @@
 #include <QtNetwork>
 
 #include "datatypes.h"
+#include "SyncAgentConfigProperties.h"
 
 #include "LogMacros.h"
 
 using namespace DataSync;
 
 HTTPTransport::HTTPTransport( QObject* aParent )
-: BaseTransport( aParent), iManager( 0 ), iProxy( 0 ), iFirstMessageSent( false ),
+: BaseTransport( aParent), iManager( 0 ), iFirstMessageSent( false ),
   iMaxNumberOfResendAttempts( 0 ), iNumberOfResendAttempts( 0 )
 {
     FUNCTION_CALL_TRACE;
 
     iManager = new QNetworkAccessManager;
-    iProxy = new QNetworkProxy;
+    // Workaround for NB #176070 -- QNetworkAccessManager cannot be used within
+    // QThreads. @todo: Remove this when the bug is completely fixed.
+    iManager->setConfiguration(QNetworkConfiguration());
+    iManager->proxy().setType( QNetworkProxy::NoProxy );
 }
 
 HTTPTransport::~HTTPTransport()
 {
     FUNCTION_CALL_TRACE;
 
-    delete iProxy;
-    iProxy = NULL;
-
     delete iManager;
     iManager = NULL;
+}
+
+void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue )
+{
+    FUNCTION_CALL_TRACE;
+
+    if( aProperty == HTTPNUMBEROFRESENDATTEMPTSPROP )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iMaxNumberOfResendAttempts = aValue.toInt();
+    }
+    else if( aProperty == HTTPPROXYHOSTPROP )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iManager->proxy().setType( QNetworkProxy::HttpProxy );
+        iManager->proxy().setHostName(HTTPPROXYHOSTPROP);
+    }
+    else if( aProperty == HTTPPROXYPORTPROP )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iManager->proxy().setType( QNetworkProxy::HttpProxy );
+        iManager->proxy().setPort( HTTPPROXYPORTPROP.toInt() );
+    }
+
 }
 
 void HTTPTransport::init()
 {
     FUNCTION_CALL_TRACE;
-
-    if( iProxy->type() == QNetworkProxy::DefaultProxy ) {
-        iProxy->setType( QNetworkProxy::NoProxy );
-    }
-
-    iManager->setProxy( *iProxy );
 
     connect( iManager, SIGNAL(finished(QNetworkReply *)),
               this, SLOT(httpRequestFinished(QNetworkReply *)), Qt::QueuedConnection);
@@ -71,18 +102,6 @@ void HTTPTransport::init()
 #endif
 
     iFirstMessageSent = false;
-}
-
-qint64 HTTPTransport::getMaxTxSize()
-{
-    FUNCTION_CALL_TRACE;
-    return HTTP_MAX_MESSAGESIZE;
-}
-
-qint64 HTTPTransport::getMaxRxSize()
-{
-    FUNCTION_CALL_TRACE;
-    return HTTP_MAX_MESSAGESIZE;
 }
 
 bool HTTPTransport::prepareSend()
@@ -125,22 +144,12 @@ bool HTTPTransport::doReceive( const QString& aContentType )
 void HTTPTransport::setProxyConfig( const QNetworkProxy& aProxy )
 {
     FUNCTION_CALL_TRACE;
-    *iProxy = aProxy;
+    iManager->setProxy( aProxy );
 }
 
-QNetworkProxy& HTTPTransport::getProxyConfig()
+QNetworkProxy HTTPTransport::getProxyConfig()
 {
-    return *iProxy;
-}
-
-void HTTPTransport::setResendAttempts( int aNumber )
-{
-    iMaxNumberOfResendAttempts = aNumber;
-}
-
-int HTTPTransport::getResendAttempts() const
-{
-    return iMaxNumberOfResendAttempts;
+    return iManager->proxy();
 }
 
 void HTTPTransport::setAuthToken( const QString &aToken )
@@ -151,6 +160,11 @@ void HTTPTransport::setAuthToken( const QString &aToken )
 QString HTTPTransport::getAuthToken() const
 {
     return iAuthToken;
+}
+
+void HTTPTransport::addXheader(const QString& aName, const QString& aValue)
+{
+    iXheaders.insert(aName, aValue);
 }
 
 void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray& aContentType,
@@ -171,6 +185,10 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
         aRequest.setRawHeader( HTTP_HDRSTR_TOKEN, iAuthToken.toAscii() );
     }
     aRequest.setHeader( QNetworkRequest::ContentLengthHeader, QVariant( aContentLength ) );
+    QMap<QString, QString>::const_iterator i;
+    for (i = iXheaders.constBegin(); i != iXheaders.constEnd(); i++) {
+	    aRequest.setRawHeader(i.key().toAscii(), i.value().toAscii());
+    }
 
 #ifndef QT_NO_OPENSSL
     //do it only for https
@@ -317,14 +335,14 @@ void HTTPTransport::httpRequestFinished( QNetworkReply *aReply ) {
 void HTTPTransport::authRequired(QNetworkReply* /*aReply*/, QAuthenticator* /*aAuth*/ ) {
     FUNCTION_CALL_TRACE
     LOG_DEBUG("Network Connection needs authentication");
-    emit sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, HTTP_ERROR_AUTH_NEEDED );
+    emit sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, "Authentication required" );
 }
 
 void HTTPTransport::handleProxyAuthentication(QNetworkProxy& /*aProxy*/, QAuthenticator* /*aAuth*/ )
 {
     FUNCTION_CALL_TRACE
     LOG_DEBUG( "Proxy needs authentication" );
-    sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, HTTP_ERROR_AUTH_NEEDED );
+    sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, "Authentication required" );
 }
 
 #ifndef QT_NO_OPENSSL

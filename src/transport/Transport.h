@@ -56,7 +56,8 @@ enum TransportStatusEvent {
     TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED,
     TRANSPORT_DATA_SENT,
     TRANSPORT_DATA_INVALID_CONTENT_TYPE,
-    TRANSPORT_DATA_INVALID_CONTENT
+    TRANSPORT_DATA_INVALID_CONTENT,
+    TRANSPORT_SESSION_REJECTED
 };
 
 /*! \brief Transport interface that is exposed to SyncML stack
@@ -80,23 +81,26 @@ public:
      */
     virtual ~Transport() { };
 
+    /*! \brief Sets a transport property
+     *
+     * Properties should usually be set before attempting to send or receive.
+     *
+     * @param aProperty Property to set
+     * @param aValue Value to set
+     */
+    virtual void setProperty( const QString& aProperty, const QString& aValue ) = 0;
+
     /*! \brief Sets the URI to use in next send operation
      *
      * @param aURI New URI to remote side
      */
     virtual void setRemoteLocURI( const QString& aURI ) = 0;
 
-    /*! \brief Get maximum size of output buffer
-     *
-     * @return
+    /*! \brief Returns true if this transport employes wbXML, and it should be taken
+     *         into account when the stack is estimating the size of the message to send.
+     * @return True if transport employs wbXML, otherwise false
      */
-    virtual qint64 getMaxTxSize() = 0;
-
-    /*! \brief Get maximum size of input buffer
-     *
-     * @return
-     */
-    virtual qint64 getMaxRxSize() = 0;
+    virtual bool usesWbXML() = 0;
 
     /*! \brief Send SyncML message using transport
      *
@@ -140,8 +144,10 @@ signals:
     /*! \brief Signal that is emitted when new XML data is available
      *
      * @param aDevice QIODevice that can be used to read data
+     * @param aIsNewPacket bool To indicate if this is a newly received packet
+     * or a purged one.
      */
-    void readXMLData( QIODevice* aDevice );
+    void readXMLData( QIODevice* aDevice, bool aIsNewPacket );
 
     /*! \brief Signal that is emitted when new SAN data is available
      *
@@ -149,6 +155,13 @@ signals:
      */
     void readSANData( QIODevice* aDevice );
 
+private slots:
+
+    /*! \brief Remove any illegal XML characters from the previous message
+     *
+     * Removes illegal XML characters (NULLs and control characters)
+     */
+    virtual void purgeAndResendBuffer() = 0;
 };
 
 }

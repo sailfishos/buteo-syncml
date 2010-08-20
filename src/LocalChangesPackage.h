@@ -46,6 +46,7 @@ namespace DataSync {
 class SyncMLSync;
 class SyncMLLocalChange;
 class SyncTarget;
+class SyncItem;
 
 /*! \brief LocalChangesPackage handles sending local modifications phase for
  *         a single sync target
@@ -126,6 +127,7 @@ private:
                               int& aItemsThatCanBeSent);
 
     bool processItem( const SyncItemKey& aItemKey,
+                      SyncItem *aSyncItem,
                       SyncMLLocalChange& aParent,
                       int aSizeThreshold,
                       SyncMLCommand aCommand,
@@ -138,6 +140,8 @@ private:
     LargeObjectState        iLargeObjectState;
     Role                    iRole;
     int 					iMaxChangesPerMessage;
+    QList<SyncItem*>        addeditems;
+    QList<SyncItem*>        modifieditems;
 
     friend class ::LocalChangesPackageTest;
 

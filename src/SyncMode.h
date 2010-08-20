@@ -102,6 +102,11 @@ public:
      */
     void toSlowSync();
 
+    /*! \brief Turn sync mode to refresh sync
+     *
+     */
+    void setRefresh();
+
     /*! \brief Turn sync mode to client initiated sync
      *
      */

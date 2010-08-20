@@ -65,6 +65,8 @@ public:
      */
     virtual ~HTTPTransport();
 
+    virtual void setProperty( const QString& aProperty, const QString& aValue );
+
     /*! \brief Initialize HTTP transport
      *
      * Should be called before attempting to use the rest of the API
@@ -77,23 +79,6 @@ public:
      * @param aProxy Proxy configuration
      */
     void setProxyConfig( const QNetworkProxy& aProxy );
-
-    /*! \brief Sets how many times re-sending of the first message should be attempted
-     *
-     * By setting non-zero value, re-sending of the first message will be enabled, and
-     * will be attempted the specified number of times. To. disable re-sending of the
-     * first message, value of 0 should be use. By default, re-sending of the first message
-     * is not attempted.
-     *
-     * @param aNumber Number of attempts
-     */
-    void setResendAttempts( int aNumber );
-
-    /*! \brief Returns how many times re-sending of the first message should be attempted
-     *
-     * @return Number of attempts
-     */
-    int getResendAttempts() const;
 
     /*! \brief Sets the authentication token used for SSO type
      * authentications.
@@ -113,11 +98,14 @@ public:
      *
      * @return Proxy configuration
      */
-    QNetworkProxy& getProxyConfig();
+    QNetworkProxy getProxyConfig();
 
-    virtual qint64 getMaxTxSize();
-
-    virtual qint64 getMaxRxSize();
+    /*! \brief Adds x-header in the form name - value
+     *
+     * @param aName X-header field name
+     * @param aValue X-header field value
+     */
+    void addXheader(const QString& aName, const QString& aValue);
 
 protected:
 
@@ -153,7 +141,6 @@ private:
 
 
     QNetworkAccessManager*  iManager;
-    QNetworkProxy*          iProxy;
 
     bool                    iFirstMessageSent;
     QByteArray              iFirstMessageData;
@@ -161,7 +148,7 @@ private:
     int                     iMaxNumberOfResendAttempts;
     int                     iNumberOfResendAttempts;
     QString                 iAuthToken;
-
+    QMap<QString, QString>  iXheaders;
 };
 
 }

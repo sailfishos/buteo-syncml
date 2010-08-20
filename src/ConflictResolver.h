@@ -41,6 +41,12 @@ namespace DataSync {
 
 class ConflictResolverTest;
 
+enum ConflictRevertPolicy {
+    CR_REMOVE_LOCAL,   /*!<Remove the local conflict change from local changes*/
+    CR_MODIFY_TO_ADD   /*!<Modify local change (send add instead of replace) */
+};
+
+
 /*! \brief Class for conflict resolution
  *
  *   This class resolves the conflicts of items based on the current conflict
@@ -51,10 +57,10 @@ public:
 
     /*! \brief Constructor
      *
-     * @param aLocalChanges Local changes to check conflicts against
+     * @param aLocalChanges Local changes to check conflicts against	
      * @param aPolicy Conflict resolution policy
      */
-    ConflictResolver( const LocalChanges& aLocalChanges,
+    ConflictResolver( LocalChanges& aLocalChanges,
                       ConflictResolutionPolicy aPolicy );
 
     /*! \brief Destructor
@@ -77,17 +83,37 @@ public:
      * @return True if the policy is set to prefer local side
      */
     bool localSideWins() const;
-
+    
+    /*! \brief Updates a local change from the list (added/modified/deleted)
+     *
+     * @param aLocalKey Local UID of the item to remove
+     * @param policy The conflict revert policy
+     */
+    void revertLocalChange( const SyncItemKey& aLocalKey, ConflictRevertPolicy policy ) ;
+    
 private:
 
     /**
      * \brief Set up conflict resolution rules
      */
     void setResolutionRules();
+    
+    /*! \brief Removes a local change from the list (added/modified/deleted)
+     *
+     * @param aLocalKey Local UID of the item to remove
+     */
+    void removeLocalChange( const SyncItemKey& aLocalKey ) ;
+    
+    /*! \brief Updates a modified local change to added item
+     *
+     * @param aLocalKey Local UID of the item to update
+     */
+    void changeLocalModifyToLocalAdd( const SyncItemKey& aLocalKey );
+
 
 private:
 
-    const LocalChanges&         iLocalChanges;
+    LocalChanges&    iLocalChanges;
     ConflictResolutionPolicy    iPolicy;
 
     friend class ConflictResolverTest;

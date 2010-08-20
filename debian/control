@@ -1,0 +1,47 @@
+Source: libmeegosyncml
+Priority: extra
+Maintainer: Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>
+Build-Depends: debhelper (>= 5),doxygen, cdbs ,libqt4-dev (>= 4.5), libwbxml2-dev, libsqlite3-dev, libopenobex1-dev, libqt4-sql-sqlite
+Standards-Version: 3.7.2
+Section: libs
+
+Package: libmeegosyncml
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqt4-sql-sqlite (>= 4.5)
+Replaces: libmaemosyncml
+Conflicts: libmaemosyncml
+Description: SyncML library for Harmattan sync.
+ Package holds SyncmL library for Harmattan sync.
+
+Package: libmeegosyncml-dev
+Section: libdevel
+Architecture: any
+Depends: libmeegosyncml (= ${binary:Version}), libqt4-dev (>= 4.5)
+Replaces: libmaemosyncml-dev
+Conflicts: libmaemosyncml-dev
+Description: Header files for SyncML library for synchronization.
+ Package holds h-files for Harmattan SyncML.
+
+Package: libmeegosyncml-dbg
+Section: libs
+Architecture: any
+Depends: libmeegosyncml (= ${binary:Version})
+Description: Debug symbols for libmeegosyncml.
+ Debug symbols for libmeegosyncml.
+
+Package: libmeegosyncml-doc
+Section: doc
+Architecture: any
+Description: API documentation for libmeegosyncml.
+ Empty documentation package for libmeegosyncml.
+
+Package: libmeegosyncml-tests
+Section: tests
+Priority: optional
+Architecture: any
+Depends: ${shlibs:Depends},libmeegosyncml, testrunner
+XB-Maemo-CI-Stage: staging
+XB-Maemo-CI-Packages: libmeegosyncml-tests 
+Description: Module test package for libmeegosyncml.
+ Module test package for libmeegosyncml. 

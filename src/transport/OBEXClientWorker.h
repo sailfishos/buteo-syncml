@@ -112,6 +112,11 @@ signals:
      */
     void connectionError();
 
+    /*! \brief Emitted when remote side has rejected the session
+     *
+     */
+    void sessionRejected();
+
 private:
 
     int process();

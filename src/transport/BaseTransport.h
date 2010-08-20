@@ -62,6 +62,8 @@ public:
 
     virtual void setRemoteLocURI( const QString& aURI );
 
+    virtual bool usesWbXML();
+
     virtual bool sendSyncML( SyncMLMessage* aMessage );
 
     virtual bool sendSAN( const QByteArray& aMessage );
@@ -73,6 +75,13 @@ public:
      * @param aUse True/false to enable/disable WbXML encoding
      */
     void setWbXml( bool aUse );
+
+private slots:
+    /*! \brief Remove any illegal XML characters from the previous message
+     *
+     * Removes illegal XML characters (NULLs and control characters)
+     */
+    void purgeAndResendBuffer();
 
 protected:
 

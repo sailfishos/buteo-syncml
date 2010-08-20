@@ -34,9 +34,12 @@
 #ifndef COMMANDHANDLER_H
 #define COMMANDHANDLER_H
 
+#include <QMap>
+
+#include "SyncMLGlobals.h"
 #include "internals.h"
 #include "SyncAgentConsts.h"
-#include <QMap>
+#include "StorageHandler.h"
 
 namespace DataSync {
 
@@ -93,12 +96,14 @@ public:
      * @param aStorageHandler Storage handler to use in manipulating local database
      * @param aResponseGenerator Response generator to use
      * @param aConflictResolver Conflict resolver to use
+     * @param aFastMapsSend True if possible mappings should be sent immediately
      */
     void handleSync( const SyncParams& aSyncParams,
                      SyncTarget& aTarget,
                      StorageHandler& aStorageHandler,
                      ResponseGenerator& aResponseGenerator,
-                     ConflictResolver& aConflictResolver );
+                     ConflictResolver& aConflictResolver,
+                     bool aFastMapsSend);
 
     /*! \brief Reject SyncML SYNC command
      *
@@ -147,21 +152,6 @@ protected: // functions
      */
     bool resolveConflicts();
 
-    /*! \brief Adds a new remote/local UID mapping
-     *
-     * @param aTarget Target associated with the mapping
-     * @param aRemoteUID Remote UID
-     * @param aLocalUID Local UID
-     */
-    void addUIDMapping( SyncTarget& aTarget, const QString& aRemoteUID, const SyncItemKey& aLocalUID );
-
-    /*! \brief Removes an existing UID mapping
-     *
-     * @param aTarget Target associated with the mapping
-     * @param aLocalUID Local UID of the mapping to remove
-     */
-    void removeUIDMapping( SyncTarget& aTarget, const SyncItemKey& aLocalUID );
-
 private: // functions
 
     /**
@@ -183,6 +173,21 @@ private: // functions
      * @return The type of the status code
      */
     StatusCodeType getStatusType(ResponseStatusCode aStatus);
+
+    void composeBatches( const SyncParams& aSyncParams, SyncTarget& aTarget,
+                         StorageHandler& aStorageHandler, ResponseGenerator& aResponseGenerator,
+                         QMap<ItemId, ResponseStatusCode>& aResponses );
+
+    void commitBatches( StorageHandler& aStorageHandler, ConflictResolver& aConflictResolver,
+                        SyncTarget& aTarget, const SyncParams& aSyncParams,
+                        QMap<ItemId, ResponseStatusCode>& aResponses,
+                        QList<UIDMapping>& aNewMappings );
+
+    void processResults( const SyncParams& aSyncParams, const QMap<ItemId, ResponseStatusCode>& aResponses,
+                         ResponseGenerator& aResponseGenerator );
+
+    void manageNewMappings( SyncTarget& aTarget, const QList<UIDMapping>& aNewMappings,
+                            ResponseGenerator& aResponseGenerator, bool aFastMapsSend );
 
 
 private: // data

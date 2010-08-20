@@ -30,6 +30,7 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
+
 #ifndef SYNCMLMESSAGEPARSER_H
 #define SYNCMLMESSAGEPARSER_H
 
@@ -48,6 +49,7 @@ enum ParserError {
     PARSER_ERROR_UNEXPECTED_DATA,   /*!< Parser encountered unexpected data*/
     PARSER_ERROR_INCOMPLETE_DATA,   /*!< Parser encountered incomplete data*/
     PARSER_ERROR_INVALID_DATA,      /*!< Parser encountered invalid data*/
+    PARSER_ERROR_INVALID_CHARS,     /*!< Parser encountered invalid XML characters in data */
     PARSER_ERROR_LAST               /*!< Placeholder for last parser error*/
 };
 
@@ -84,8 +86,10 @@ public slots:
 	/*! \brief Parse incoming data
 	 *
 	 * @param aDevice QIODevice from which to retrieve data
+	 * @param aIsNewPacket To indicate if the packet is a newly received or a
+     * purged one
 	 */
-    void parseResponse( QIODevice *aDevice );
+    void parseResponse( QIODevice *aDevice, bool aIsNewPacket );
 
 signals:
 
@@ -146,9 +150,9 @@ private:
 
     void readMapItem( MapItem& aParams );
 
-	void readDevInfData( DevInfData& aParams );
+	void readDevInfData();
 
-	void readDevInfItem( DevInfData& aParams );
+	void readDevInfItem();
 
 	void readSyncActionData( const QString& aAction, SyncActionData& aParams );
 
@@ -180,7 +184,7 @@ private:
     QHash<int, QString>         iStatusCodeMap;
     bool                        iSyncHdrFound;
     bool                        iSyncBodyFound;
-
+    bool                        iIsNewPacket;
 };
 }
 

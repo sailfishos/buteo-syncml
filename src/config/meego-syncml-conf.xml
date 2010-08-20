@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meego-syncml-conf xmlns="http://meego.org/meego-syncml-conf">
+    <dbpath>syncml.db</dbpath>
+    <local-device-name>MeegoDevice</local-device-name>
+    <agent-props>
+    	<max-message-size>16384</max-message-size>
+        <max-changes-per-message>22</max-changes-per-message>
+        <conflict-resolution-policy>0</conflict-resolution-policy>
+        <fast-maps-send>0</fast-maps-send>
+    </agent-props>
+    <transport-props>
+    	<bt-obex-mtu>1024</bt-obex-mtu>
+    	<usb-obex-mtu>1024</usb-obex-mtu>
+    	<http-number-of-resend-attempts>3</http-number-of-resend-attempts>
+    </transport-props>
+</meego-syncml-conf>

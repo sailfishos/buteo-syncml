@@ -1,34 +1,47 @@
 /*
-* This file is part of meego-syncml package
+* This file is part of buteo-syncml package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+* Redistributions of source code must retain the above copyright notice, 
+* this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+* this list of conditions and the following disclaimer in the documentation 
+* and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may 
+* be used to endorse or promote products derived from this software without 
+* specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
-* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
 
 #include "SyncMLMessageParser.h"
-
 #include "LogMacros.h"
+#include "RemoteDeviceInfo.h"
 
 using namespace DataSync;
 
 
 SyncMLMessageParser::SyncMLMessageParser()
  : iLastMessageInPackage( false ), iError( PARSER_ERROR_LAST ),
-   iSyncHdrFound( false ), iSyncBodyFound( false )
+   iSyncHdrFound( false ), iSyncBodyFound( false ),
+   iIsNewPacket( false )
 {
     FUNCTION_CALL_TRACE
 
@@ -59,10 +72,11 @@ QList<DataSync::Fragment*> SyncMLMessageParser::takeFragments()
 }
 
 
-void SyncMLMessageParser::parseResponse( QIODevice *aDevice )
+void SyncMLMessageParser::parseResponse( QIODevice *aDevice, bool aIsNewPacket )
 {
     FUNCTION_CALL_TRACE
 
+    iIsNewPacket = aIsNewPacket;
     if( aDevice->bytesAvailable() == 0 ) {
         LOG_CRITICAL( "Zero-sized message detected, aborting parsing");
         emit parsingError( PARSER_ERROR_INVALID_DATA );
@@ -145,6 +159,15 @@ void SyncMLMessageParser::startParsing()
     if( iError != PARSER_ERROR_LAST )
     {
         LOG_CRITICAL( "Error while parsing SyncML document:" << iError );
+        // Check if the parsing error happened due to invalid XML characters
+        if( iIsNewPacket && ( QXmlStreamReader::PrematureEndOfDocumentError  == iReader.error()
+                || QXmlStreamReader::NotWellFormedError == iReader.error() ) )
+        {
+            // Change error here to Invalid character found error
+            // so that session handler can retry after removing illegal
+            // characters
+            iError = PARSER_ERROR_INVALID_CHARS;
+        }
         emit parsingError( iError );
     }
     else if( !iSyncHdrFound || !iSyncBodyFound )
@@ -635,7 +658,7 @@ void SyncMLMessageParser::readResults()
                 results->sourceRef = readString();
             }
             else if (name == SYNCML_ELEMENT_ITEM) {
-                readDevInfData( results->devData );
+                readDevInfData();
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in RESULTS:NOT HANDLED BY PARSER" << name);
@@ -649,7 +672,7 @@ void SyncMLMessageParser::readResults()
 
 }
 
-void SyncMLMessageParser::readDevInfData( DevInfData& aParams )
+void SyncMLMessageParser::readDevInfData()
 {
     FUNCTION_CALL_TRACE
 
@@ -666,16 +689,18 @@ void SyncMLMessageParser::readDevInfData( DevInfData& aParams )
         if( iReader.isStartElement() ) {
 
             if (name == SYNCML_ELEMENT_META) {
-                readMeta( aParams.meta );
+                MetaParams meta;
+                readMeta( meta );
+                RemoteDeviceInfo::instance()->populateMeta( meta );
             }
             else if (name == SYNCML_ELEMENT_TARGET) {
-                aParams.target = readURI();
+                RemoteDeviceInfo::instance()->populateTargetURI( readURI() );
             }
             else if (name == SYNCML_ELEMENT_SOURCE) {
-                aParams.source = readURI();
+                RemoteDeviceInfo::instance()->populateSourceURI( readURI() );
             }
             else if (name == SYNCML_ELEMENT_DATA) {
-                readDevInfItem( aParams );
+                readDevInfItem();
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);
@@ -688,7 +713,7 @@ void SyncMLMessageParser::readDevInfData( DevInfData& aParams )
 }
 
 
-void SyncMLMessageParser::readDevInfItem( DevInfData& aParams )
+void SyncMLMessageParser::readDevInfItem()
 {
     FUNCTION_CALL_TRACE
 
@@ -705,7 +730,19 @@ void SyncMLMessageParser::readDevInfItem( DevInfData& aParams )
         if( iReader.isStartElement() ) {
 
             if( name == SYNCML_ELEMENT_SUPPORTLARGEOBJS ) {
-                aParams.supportsLargeObjects = true;
+                RemoteDeviceInfo::instance()->setLargeObjectSupported();
+            }
+            else if( name == SYNCML_ELEMENT_SYNCTYPE ) {
+                RemoteDeviceInfo::instance()->populateSupportedSyncType( static_cast<DataSync::SyncTypes>(readInt()) );
+            }
+            else if( name == SYNCML_ELEMENT_MAN ) {
+                RemoteDeviceInfo::instance()->populateManufacturer( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_MOD ) {
+                RemoteDeviceInfo::instance()->populateModel( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_SWVERSION ) {
+                RemoteDeviceInfo::instance()->populateSwVersion( readString() );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINFDATA:NOT HANDLED BY PARSER" << name);
@@ -903,6 +940,21 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
             }
             else if (name == SYNCML_ELEMENT_MOREDATA) {
                 aParams.moreData = true;
+            }
+	    else if( name == SYNCML_ELEMENT_SUPPORTLARGEOBJS ) {
+                RemoteDeviceInfo::instance()->setLargeObjectSupported();
+            }
+            else if( name == SYNCML_ELEMENT_SYNCTYPE ) {
+                RemoteDeviceInfo::instance()->populateSupportedSyncType( static_cast<DataSync::SyncTypes>(readInt()) );
+            }
+            else if( name == SYNCML_ELEMENT_MAN ) {
+                RemoteDeviceInfo::instance()->populateManufacturer( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_MOD ) {
+                RemoteDeviceInfo::instance()->populateModel( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_SWVERSION ) {
+                RemoteDeviceInfo::instance()->populateSwVersion( readString() );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);

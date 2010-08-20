@@ -70,21 +70,6 @@ public:
 
     virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold );
 
-signals:
-
-    /*! \brief Signal that is transmitted when map has been added to an outgoing message
-     *
-     * Information supplied in this signal can be used to track the map.
-     *
-     * @param aMsgId Message Id of the message where the map was written
-     * @param aCmdId Command Id of the command where the map was written
-     * @param aLocalDatabase Local database of the sent maps
-     * @param aRemoteDatabase Remote database to where to send maps
-     */
-    void newMapWritten( int aMsgId, int aCmdId,
-                        const QString& aLocalDatabase,
-                        const QString& aRemoteDatabase );
-
 protected:
 
 private:
