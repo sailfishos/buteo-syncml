@@ -71,7 +71,7 @@ void SyncAgentTest::testSync()
 
     // Create signal spies.
     QSignalSpy status_spy(agent, SIGNAL(stateChanged(DataSync::SyncState)));
-    QSignalSpy processed_spy(agent, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy(agent, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
     // Initialize SyncAgent in client mode.
     SyncAgentConfig config;
@@ -95,7 +95,7 @@ void SyncAgentTest::testSync()
     QCOMPARE(agent->startSync(config), false);
 
     // Processed.
-    agent->receiveItemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE, DB , MIMETYPE );
+    agent->receiveItemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE, DB , MIMETYPE, 1 );
     const SyncResults& results = agent->getResults();
     const QMap<QString, DatabaseResults>* dbResults_p = results.getDatabaseResults();
     const QMap<QString, DatabaseResults>& dbResults = *dbResults_p;

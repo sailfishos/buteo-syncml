@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meego-syncml-conf xmlns="http://meego.org/meego-syncml-conf">
+    <dbpath>/fooland/syncml.db</dbpath>
+    <local-device-name>FoolandDevice</local-device-name>
+    <agent-props>
+    	<max-message-size>32768</max-message-size>
+        <max-changes-per-message>10</max-changes-per-message>
+        <conflict-resolution-policy>1</conflict-resolution-policy>
+        <fast-maps-send>1</fast-maps-send>
+    </agent-props>
+    <transport-props>
+    	<bt-obex-mtu>1024</bt-obex-mtu>
+    	<usb-obex-mtu>2048</usb-obex-mtu>
+    	<http-number-of-resend-attempts>3</http-number-of-resend-attempts>
+    	<http-proxy-host>http://www.google.com</http-proxy-host>
+    	<http-proxy-port>666</http-proxy-port>
+    </transport-props>
+    <extensions>
+        <emi-tags>
+            <token>InqMe</token>
+            <response>AckMe</response>
+        </emi-tags>
+        <sync-without-init-phase/>
+    </extensions>    
+</meego-syncml-conf>

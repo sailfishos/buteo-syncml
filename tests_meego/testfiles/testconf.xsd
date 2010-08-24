@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://meego.org/meego-syncml-conf"
+           xmlns="http://meego.org/meego-syncml-conf">
+          
+    <xs:element name="dbpath">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:minLength value="1"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    
+    <xs:element name="local-device-name" type="xs:string"/>
+    
+    <xs:element name="max-message-size">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minExclusive value="0"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    
+    <xs:element name="max-changes-per-message">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minExclusive value="0"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="conflict-resolution-policy">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <!-- PREFER_LOCAL_CHANGES -->
+                <xs:enumeration value="0"/>
+                <!-- PREFER_REMOTE_CHANGES -->
+                <xs:enumeration value="1"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="fast-maps-send">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <!-- false -->
+                <xs:enumeration value="0"/>
+                <!-- true -->
+                <xs:enumeration value="1"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+        
+    <xs:element name="bt-obex-mtu">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minInclusive value="255"/>
+                <xs:maxInclusive value="65535"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    
+    <xs:element name="usb-obex-mtu">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minInclusive value="255"/>
+                <xs:maxInclusive value="65535"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="http-number-of-resend-attempts">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minExclusive value="0"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+    
+    <xs:element name="http-proxy-host" type="xs:string"/>
+    
+    <xs:element name="http-proxy-port" type="xs:integer"/>
+        
+    <xs:element name="agent-props">
+        <xs:complexType>
+            <xs:sequence>
+            	<xs:element ref="max-message-size"/>
+                <xs:element ref="max-changes-per-message"/>
+                <xs:element ref="conflict-resolution-policy"/>
+                <xs:element ref="fast-maps-send"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="transport-props">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="bt-obex-mtu"/>
+                <xs:element ref="usb-obex-mtu"/>
+                <xs:element ref="http-number-of-resend-attempts"/>
+                <xs:element ref="http-proxy-host" minOccurs="0"/>
+                <xs:element ref="http-proxy-port" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <xs:element name="extensions">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:any minOccurs="0" processContents="lax"/>
+                <xs:any maxOccurs="unbounded" processContents="lax"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+        
+    <xs:element name="meego-syncml-conf">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="dbpath"/>
+                <xs:element ref="local-device-name"/>
+                <xs:element ref="agent-props"/>
+                <xs:element ref="transport-props"/>
+                <xs:element ref="extensions" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

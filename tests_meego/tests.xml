@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
   <!-- Test suite, name mandatory - the same as test package name -->
-  <suite name="libameegosyncml-tests" domain="synchronization"> 
+  <suite name="libmeegosyncml-tests" domain="synchronization"> 
     <!-- At least one set per suite, name and description mandatory -->
     <set name="SyncmlStack " description="tests for syncml-stack" feature="Sync ML 1.1">
 

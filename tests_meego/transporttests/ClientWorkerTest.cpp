@@ -44,7 +44,6 @@
 #include "OBEXUsbConnection.h"
 #include "OBEXClientWorker.h"
 
-#include "Logger.h"
 #include "LogMacros.h"
 
 using namespace DataSync;

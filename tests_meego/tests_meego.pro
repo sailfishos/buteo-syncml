@@ -32,8 +32,6 @@ CONFIG += qtestlib \
 # So if remember to compile them when debugging
 LIBS += -lmeegosyncml \
     -L../src/
-#         -lsynccommon \
-#     -L../../sync-fw/libsynccommon/ \    
 
 # This is needed to avoid adding the /usr/lib link directory before the
 # newer version in meegosyncml
@@ -91,7 +89,6 @@ SOURCES += Tests.cpp \
     ResponseGeneratorTest.cpp \
     NonceStorageTest.cpp \
     CommandHandlerTest.cpp \
-#    ../testapp/common/Logger.cpp \
     TestUtils.cpp \
     SANTest.cpp 
 QMAKE_CLEAN += tests-junit.xml \

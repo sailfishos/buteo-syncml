@@ -69,7 +69,6 @@ private slots:
     void testComposeServerModificationsPackage();
     void testAcknowledgeTarget();
     void testSyncFinished();
-    void testNewMapReference();
     void testHandleMapElement();
     void testHandleInformativeAlert();
 
@@ -77,6 +76,8 @@ private slots:
     void regression_NB166841_02();
     void regression_NB166841_03();
     void regression_NB166841_04();
+
+    void testSetClientRefresh();
 
 private:
     StoragePlugin* iStorage;

@@ -31,69 +31,28 @@
 * 
 */
 
-#include "SyncTargetTest.h"
-#include "SyncTarget.h"
-#include "DatabaseHandler.h"
-#include "Mock.h"
-#include "TestLoader.h"
-#include "ChangeLog.h"
+#ifndef DEVINFHANDLERTEST_H
+#define DEVINFHANDLERTEST_H
 
-using namespace DataSync;
+#include <QTest>
 
-void SyncTargetTest::initTestCase()
+class DevInfHandlerTest : public QObject
 {
-    iDbHandler = new DatabaseHandler( "/tmp/synctargettest.db");
-    QString remoteDevice = "remotedevice";
-    QString localDb = "localcontacts";
-    const SyncMode syncMode;
+    Q_OBJECT;
 
-    iChangeLog = new ChangeLog( remoteDevice, localDb,
-                                syncMode.syncDirection() );
+private slots:
+    void testComposeLocalInitiatedDevInfExchange1();
+    void testComposeLocalInitiatedDevInfExchange2();
 
-    iStorage = new MockStorage( localDb );
-    QVERIFY( iStorage != 0 );
-    iSyncTarget = new SyncTarget( iChangeLog, iStorage, syncMode, "fooanchor" );
-    QVERIFY( iSyncTarget != 0 );
-}
+    void testHandleGet1();
+    void testHandleGet2();
+    void testHandleGet3();
 
-void SyncTargetTest::cleanupTestCase()
-{
-    delete iSyncTarget;
-    iSyncTarget = 0;
-    delete iDbHandler;
-    iDbHandler = 0;
-    delete iStorage;
-    iStorage = 0;
-}
+    void testHandlePut1();
+    void testHandlePut2();
 
-void SyncTargetTest::testSetGetRemoteNextAnchor()
-{
-    const QString next = "foo";
-    iSyncTarget->setRemoteNextAnchor(next);
-    QString next_received = iSyncTarget->getRemoteNextAnchor();
-    QVERIFY(next == next_received);
-}
+    void testHandleResults1();
 
-void SyncTargetTest::testRevertSyncMode()
-{
-    iSyncTarget->revertSyncMode();
-}
+};
 
-void SyncTargetTest::testReverted()
-{
-    iSyncTarget->iReverted = true;
-    bool reverted = iSyncTarget->reverted();
-    QVERIFY(reverted);
-}
-
-void SyncTargetTest::testClearUIDMappings()
-{
-    iSyncTarget->clearUIDMappings();
-}
-
-void SyncTargetTest::testSetRefreshFromClient()
-{
-    QCOMPARE( iSyncTarget->setRefreshFromClient(), false );
-}
-
-TESTLOADER_ADD_TEST(SyncTargetTest);
+#endif  //  DEVINFHANDLERTEST_H

@@ -41,7 +41,20 @@ class DevInfPackageTest : public QObject
     Q_OBJECT
 
 private slots:
-    void testPackage();
+    void testPutGet();
+    void testResults();
+    void testResultsGet();
+
+
+private:
+
+    QByteArray extractElement( const QByteArray& aData,
+                               const QByteArray& startElement,
+                               const QByteArray& endElement );
+
+    void verifyDevInf( const QByteArray& aData );
+
+    void verifyGet( const QByteArray& aData );
 };
 
 #endif // DEVINFPACKAGETEST_H

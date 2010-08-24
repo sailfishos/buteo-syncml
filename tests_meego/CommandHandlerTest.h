@@ -109,6 +109,14 @@ public:
         return NULL;
     }
 
+    virtual QList<SyncItem*> getSyncItems( const QList<SyncItemKey>& aKeyList )
+    {
+        Q_UNUSED( aKeyList );
+        QList<SyncItem*> items;
+        Q_ASSERT( 0 );
+        return items;
+    }
+
     virtual QList<StoragePluginStatus> addItems( const QList<SyncItem*>& aItems )
     {
         QList<StoragePluginStatus> statuses;
@@ -146,6 +154,13 @@ public:
         return statuses;
     }
 
+#if 0
+    virtual bool deleteAllItems()
+    {
+        return true;
+    }
+#endif
+
     friend class CommandHandlerTest;
 
 private:
@@ -169,9 +184,6 @@ public:
     virtual ~CommandHandlerTest();
 
 private slots:
-
-//    void testPut();
-//    void testGet();
 
     void testAdd_Client01();
     void testAdd_Server01();

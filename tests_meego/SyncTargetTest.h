@@ -55,6 +55,7 @@ class SyncTargetTest: public QObject {
         void testRevertSyncMode();
         void testReverted();
         void testClearUIDMappings();
+        void testSetRefreshFromClient();
 
     private:
         StoragePlugin* iStorage;

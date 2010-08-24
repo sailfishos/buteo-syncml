@@ -39,33 +39,13 @@
 
 namespace DataSync {
 
-class SyncAgentConfig;
-
 class SyncAgentConfigTest : public QObject
 {
-    Q_OBJECT
+Q_OBJECT
 
-    private slots:
-        void initTestCase();
-        void cleanupTestCase();
-        
-        void testSetLocalDevice();
-        void testSetRemoteDevice();
-        void testSetAuthenticationType();
-        void testSetUsername();
-        void testGetUsername();
-        void testSetPassword();
-        void testGetPassword();
-        void testSetConflictResolutionPolicy();
-        void testGetConflictResolutionPolicy();
-        void testClearProtocolAttribute();
-        void testGetTargets();
-        void testGetMaxChangesToSend();
-        void testSetMaxChangesToSend();
-        
-    private:
-        SyncAgentConfig* iSyncAgentConfig;
-        
+private slots:
+    void testConfParsing();
+
 };
 
 }

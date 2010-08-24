@@ -60,6 +60,7 @@ private slots:
     void regression_NB153701_01();
     void regression_NB153701_02();
     void regression_NB153701_03();
+    void regression_NB153701_04();
 
 private:
 

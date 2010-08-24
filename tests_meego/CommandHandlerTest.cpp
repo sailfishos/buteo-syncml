@@ -44,7 +44,6 @@
 #include "DeviceInfo.h"
 #include "Mock.h"
 #include "TestUtils.h"
-#include "Logger.h"
 #include "LogMacros.h"
 
 #include "TestLoader.h"
@@ -214,9 +213,9 @@ void CommandHandlerTest::testAdd_Client01()
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
-    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
-    commandHandler.handleSync( syncParams, target, storageHandler, generator, conflictResolver );
+    commandHandler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
 
     // Check that item was added to storage
     QCOMPARE( storage.iAddedItems.count(), 1 );
@@ -289,9 +288,9 @@ void CommandHandlerTest::testAdd_Server01()
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
-    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
-    commandHandler.handleSync( syncParams, target, storageHandler, generator, conflictResolver );
+    commandHandler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
 
     // Check that item was added to storage
     QCOMPARE( storage.iAddedItems.count(), 1 );
@@ -372,9 +371,9 @@ void CommandHandlerTest::testSyncAdd()
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
-    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
-    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver );
+    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
 
     QCOMPARE( processed_spy.count(), 3 );
 
@@ -461,9 +460,9 @@ void CommandHandlerTest::testSyncReplace()
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
-    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
-    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver );
+    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
 
     QCOMPARE( processed_spy.count(), 3 );
 
@@ -535,9 +534,9 @@ void CommandHandlerTest::testSyncDelete()
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
-    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString ) ));
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
 
-    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver );
+    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
 
     QCOMPARE( processed_spy.count(), 2 );
 

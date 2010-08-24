@@ -151,6 +151,7 @@ void SessionHandlerTest::testBase()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
+    config.setDatabaseFilePath( "/tmp/sessionhandlertest.db" );
     config.addSyncTarget( "storage", DB );
 
     // Create session handler and prepare.
@@ -190,6 +191,7 @@ void SessionHandlerTest::testErrorStatuses()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
+    config.setDatabaseFilePath( "/tmp/sessionhandlertest.db" );
     config.addSyncTarget( "storage", "target" );
 
     // Create session handler and prepare.
@@ -239,12 +241,9 @@ void SessionHandlerTest::testClientWithClientInitiated()
     config.setTransport(&transport);
     config.setStorageProvider( this );
     config.addSyncTarget( "calendar", "calendar" );
-    //FIXME! Add extra headers here
     config.setDatabaseFilePath("/tmp/sessionhandler.db");
 
-    config.setUsername( "user" );
-    config.setPassword( "password" );
-    config.setAuthenticationType( AUTH_BASIC );
+    config.setAuthParams( AUTH_BASIC, "user", "password" );
 
     // Start.
     ClientSessionHandler session_handler(&config, NULL);
@@ -318,9 +317,9 @@ void SessionHandlerTest::testClientWithServerInitiated()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
+    config.setSyncParams( "", DS_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
     config.addSyncTarget( "contacts", DB );
     config.setDatabaseFilePath("/tmp/sessionhandler.db");
-    config.setSyncMode(SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER));
 
     // Start.
     ClientSessionHandler session_handler(&config, NULL);
@@ -332,7 +331,6 @@ void SessionHandlerTest::testClientWithServerInitiated()
     hp1->sourceDevice = "Source device";
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    //FIXME! Add extra headers here
 
     fragments.append(hp1);
 
@@ -386,11 +384,8 @@ void SessionHandlerTest::testServerWithClientInitiated()
     config.setStorageProvider( this );
     config.addSyncTarget( "calendar" );
     config.setDatabaseFilePath( "/tmp/sessionhandler.db" );
-    config.setLocalDevice( "Local device" );
-
-    config.setUsername( "user" );
-    config.setPassword( "password" );
-    config.setAuthenticationType( AUTH_BASIC );
+    config.setLocalDeviceName( "Local device" );
+    config.setAuthParams( AUTH_BASIC, "user", "password" );
 
     // Prepare
     ServerSessionHandler sessionHandler( &config, NULL );
@@ -408,7 +403,7 @@ void SessionHandlerTest::testServerWithClientInitiated()
     hp1->targetDevice = "Target device";
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = HTTP_MAX_MESSAGESIZE;
+    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     hp1->cred.meta.type = SYNCML_FORMAT_AUTH_BASIC;
     hp1->cred.meta.format = SYNCML_FORMAT_ENCODING_B64;
     hp1->cred.data = QByteArray( "user:password" ).toBase64();
@@ -468,7 +463,7 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     config.setStorageProvider( this );
     config.addSyncTarget( "Contacts", DB );
     config.setDatabaseFilePath("/tmp/sessionhandler.db");
-    config.setSyncMode(SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER));
+    config.setSyncParams( "", DS_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
 
     QByteArray message;
     QVERIFY( readFile( "testfiles/SAN01.bin", message ) );
@@ -530,14 +525,16 @@ void SessionHandlerTest::regression_NB153701_01()
     // regression_NB153701_01:
     // Test handling of source device when receiving server initiated
     // sync message with unknown source device and local device name is not set
-        
+
     MockTransport transport( "transport" );
-        
+
     SyncAgentConfig config;
+    DeviceInfo deviceInfo;
     config.setTransport( &transport );
     config.setStorageProvider( this );
     config.setDatabaseFilePath( NB153701DB );
-    config.getDeviceInfo().setDeviceID( NB153701SOURCEDEVICE );
+    deviceInfo.setDeviceID( NB153701SOURCEDEVICE );
+    config.setDeviceInfo(deviceInfo);
 
     // Prepare
     ClientSessionHandler sessionHandler( &config, NULL );
@@ -550,7 +547,7 @@ void SessionHandlerTest::regression_NB153701_01()
     hp1->targetDevice = NB153701UNKNOWNDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = HTTP_MAX_MESSAGESIZE;
+    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
@@ -566,7 +563,6 @@ void SessionHandlerTest::regression_NB153701_01()
 
 void SessionHandlerTest::regression_NB153701_02()
 {
-
     // regression_NB153701_02:
     // Test handling of source device when receiving server initiated
     // sync message with unknown source device and local device name is set
@@ -574,11 +570,13 @@ void SessionHandlerTest::regression_NB153701_02()
     MockTransport transport( "transport" );
 
     SyncAgentConfig config;
+    DeviceInfo deviceInfo;
     config.setTransport( &transport );
     config.setStorageProvider( this );
     config.setDatabaseFilePath( NB153701DB );
-    config.getDeviceInfo().setDeviceID( NB153701SOURCEDEVICE );
-    config.setLocalDevice( NB153701FORCEDEVICE );
+    deviceInfo.setDeviceID( NB153701SOURCEDEVICE );
+    config.setDeviceInfo(deviceInfo);
+    config.setLocalDeviceName( NB153701FORCEDEVICE );
 
     // Prepare
     ClientSessionHandler sessionHandler( &config, NULL );
@@ -591,7 +589,7 @@ void SessionHandlerTest::regression_NB153701_02()
     hp1->targetDevice = NB153701UNKNOWNDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = HTTP_MAX_MESSAGESIZE;
+    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
@@ -607,6 +605,7 @@ void SessionHandlerTest::regression_NB153701_02()
 
 void SessionHandlerTest::regression_NB153701_03()
 {
+
     // regression_NB153701_03:
     // Test handling of device id when receiving server initiated
     // sync message that includes a source device
@@ -617,7 +616,7 @@ void SessionHandlerTest::regression_NB153701_03()
     config.setTransport( &transport );
     config.setStorageProvider( this );
     config.setDatabaseFilePath( NB153701DB );
-    config.setLocalDevice( NB153701SOURCEDEVICE );
+    config.setLocalDeviceName( NB153701SOURCEDEVICE );
 
     // Prepare
     ClientSessionHandler sessionHandler( &config, NULL );
@@ -630,7 +629,50 @@ void SessionHandlerTest::regression_NB153701_03()
     hp1->targetDevice = NB153701FORCEDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = HTTP_MAX_MESSAGESIZE;
+    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+    fragments.append(hp1);
+
+    sessionHandler.handleNotificationXML(fragments);
+    QVERIFY(fragments.isEmpty());
+
+    QVERIFY( sessionHandler.getDevInfHandler().getDeviceInfo().getDeviceID().isEmpty() );
+    QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
+    QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
+    QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
+    QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().targetDevice, NB153701TARGETDEVICE );
+
+}
+
+void SessionHandlerTest::regression_NB153701_04()
+{
+    // regression_NB153701_04:
+    // Test handling of target device after sent server initiated
+    // sync message
+
+    MockTransport transport( "transport" );
+
+    SyncAgentConfig config;
+    config.setTransport( &transport );
+    config.setStorageProvider( this );
+    config.setDatabaseFilePath( NB153701DB );
+    config.setLocalDeviceName( NB153701SOURCEDEVICE );
+    config.setSyncParams( "", DS_1_1, SyncMode(DIRECTION_TWO_WAY, INIT_SERVER, TYPE_FAST) );
+    config.addSyncTarget( "./calendar", "./calendar" );
+
+    ClientSessionHandler sessionHandler( &config, NULL );
+
+    sessionHandler.initiateSync();
+
+    QList<Fragment*> fragments;
+
+    // Receive header
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_1;
+    hp1->sourceDevice = NB153701TARGETDEVICE;
+    hp1->targetDevice = NB153701FORCEDEVICE;
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);

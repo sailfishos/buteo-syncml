@@ -52,10 +52,12 @@ void StorageHandlerTest::testAddItem()
     QString type( "text/x-vcard" );
     QString format("");
     QString data( "fasdaagadtadg" );
+    LocalChanges changes;
+    ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
 
-    QVERIFY( iStorageHandler.addItem( id, storage, parent, type, format, data ) );
+    QVERIFY( iStorageHandler.addItem( id, storage, QString(), parent, type, format, data ) );
 
-    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage );
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
 
     QVERIFY( results.count() == 1 );
@@ -179,7 +181,7 @@ void StorageHandlerTest::regression_NB153991_01()
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitReplacedItems( storage, &resolver );
     QVERIFY( commits.count() == 0 );
 
-    commits = iStorageHandler.commitAddedItems( storage );
+    commits = iStorageHandler.commitAddedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
 
     QVERIFY( results.count() == 1 );

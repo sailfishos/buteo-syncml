@@ -70,9 +70,7 @@ public:
 
     virtual ~TestTransport();
 
-    virtual qint64 getMaxTxSize();
-
-    virtual qint64 getMaxRxSize();
+    virtual void setProperty( const QString& aProperty, const QString& aValue );
 
 protected:
 

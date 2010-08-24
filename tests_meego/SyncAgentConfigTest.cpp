@@ -32,116 +32,65 @@
 */
 
 #include "SyncAgentConfigTest.h"
-#include "TestLoader.h"
+
 #include "SyncAgentConfig.h"
+#include "SyncAgentConfigProperties.h"
+
+#include "TestLoader.h"
 
 using namespace DataSync;
 
-void SyncAgentConfigTest::initTestCase()
-{
-    iSyncAgentConfig = new SyncAgentConfig();
-}
-
-void SyncAgentConfigTest::cleanupTestCase()
-{
-    delete iSyncAgentConfig;
-    iSyncAgentConfig = NULL;
-}
-
-void SyncAgentConfigTest::testSetLocalDevice()
-{
-    QString localDevice = "foo";
-    iSyncAgentConfig->setLocalDevice(localDevice);
-    QVERIFY(iSyncAgentConfig->getLocalDevice() == localDevice);
-}
-
-void SyncAgentConfigTest::testSetRemoteDevice()
-{
-    QString remoteDevice = "foo";
-    iSyncAgentConfig->setRemoteDevice(remoteDevice);
-    QVERIFY(iSyncAgentConfig->getRemoteDevice() == remoteDevice);
-
-}
-
-void SyncAgentConfigTest::testSetAuthenticationType()
-{
-    AuthenticationType authType = AUTH_NONE;
-    iSyncAgentConfig->setAuthenticationType(authType);
-    QVERIFY(iSyncAgentConfig->iAuthenticationType == authType);
-}
-
-
-void SyncAgentConfigTest::testSetUsername()
-{
-    QString username = "foo";
-    iSyncAgentConfig->setUsername(username);
-    QVERIFY(iSyncAgentConfig->iUsername == username);
-
-}
-
-void SyncAgentConfigTest::testGetUsername()
-{
-    QString username = iSyncAgentConfig->getUsername();
-    QVERIFY(iSyncAgentConfig->iUsername == username);
-}
-
-void SyncAgentConfigTest::testSetPassword()
-{
-    QString pw = "foo";
-    iSyncAgentConfig->setPassword(pw);
-    QVERIFY(iSyncAgentConfig->iPassword == pw);
-
-}
-
-void SyncAgentConfigTest::testGetPassword()
-{
-    QString pw = iSyncAgentConfig->getPassword();
-    QVERIFY(iSyncAgentConfig->iPassword == pw);
-}
-
-void SyncAgentConfigTest::testSetConflictResolutionPolicy()
-{
-    ConflictResolutionPolicy policy = PREFER_LOCAL_CHANGES;
-    iSyncAgentConfig->setConflictResolutionPolicy(policy);
-    QVERIFY(iSyncAgentConfig->iConflictResolutionPolicy == policy);
-
-}
-
-void SyncAgentConfigTest::testGetConflictResolutionPolicy()
-{
-    ConflictResolutionPolicy policy = iSyncAgentConfig->getConflictResolutionPolicy();
-    QVERIFY(iSyncAgentConfig->iConflictResolutionPolicy == policy);
-}
-
-void SyncAgentConfigTest::testClearProtocolAttribute()
-{
-    iSyncAgentConfig->clearProtocolAttribute(0);
-}
-
-void SyncAgentConfigTest::testGetTargets()
-{
-    const QMap<QString, QString>* target = iSyncAgentConfig->getTargets();
-    Q_UNUSED(target);
-}
-
-void SyncAgentConfigTest::testGetMaxChangesToSend()
-{
-    QVERIFY(iSyncAgentConfig->getMaxChangesToSend() == DEFAULT_MAX_CHANGES_TO_SEND);
-}
-
-void SyncAgentConfigTest::testSetMaxChangesToSend()
+void SyncAgentConfigTest::testConfParsing()
 {
 
-	iSyncAgentConfig->setMaxChangesToSend(-20);
+    const QString xsdFile( "testfiles/testconf.xsd" );
+    const QString configFile( "testfiles/testconf1.xml" );
+    const QString dbFile( "/fooland/syncml.db" );
+    const QString localDeviceName( "FoolandDevice" );
+    const QString proxyHost( "http://www.google.com" );
+    const QString inq( "InqMe" );
+    const QString ack( "AckMe" );
 
-    QVERIFY(iSyncAgentConfig->getMaxChangesToSend() == DEFAULT_MAX_CHANGES_TO_SEND);
+    SyncAgentConfig config;
 
-    iSyncAgentConfig->setMaxChangesToSend(20);
+    QVERIFY( config.fromFile( configFile, xsdFile ) );
 
-    QVERIFY(iSyncAgentConfig->getMaxChangesToSend() == 20);
+    QCOMPARE( config.getDatabaseFilePath(), dbFile );
+
+    QCOMPARE( config.getLocalDeviceName(), localDeviceName );
+
+    QCOMPARE( config.getAgentProperty( MAXMESSAGESIZEPROP ).toInt(), 32768 );
+
+    QCOMPARE( config.getAgentProperty( MAXCHANGESPERMESSAGEPROP ).toInt(), 10 );
+
+    QCOMPARE( static_cast<ConflictResolutionPolicy>( config.getAgentProperty( CONFLICTRESOLUTIONPOLICYPROP ).toInt() ), PREFER_REMOTE_CHANGES );
+
+    QCOMPARE( config.getAgentProperty( FASTMAPSSENDPROP ).toInt(), 1 );
+
+    QCOMPARE( config.getTransportProperty( BTOBEXMTUPROP ).toInt(), 1024 );
+
+    QCOMPARE( config.getTransportProperty( USBOBEXMTUPROP ).toInt(), 2048 );
+
+    QCOMPARE( config.getTransportProperty( HTTPNUMBEROFRESENDATTEMPTSPROP ).toInt(), 3 );
+
+    QCOMPARE( config.getTransportProperty( HTTPPROXYHOSTPROP ), proxyHost );
+
+    QCOMPARE( config.getTransportProperty( HTTPPROXYPORTPROP ).toInt(), 666 );
+
+    QVERIFY( config.extensionEnabled( EMITAGSEXTENSION ) );
+
+    QVariant data = config.getExtensionData( EMITAGSEXTENSION );
+
+    QVERIFY( data.isValid() );
+
+    QStringList tags = data.toStringList();
+
+    QCOMPARE( tags.count(), 2 );
+    QCOMPARE( tags[0], inq );
+    QCOMPARE( tags[1], ack );
+
+    QVERIFY( config.extensionEnabled( SYNCWITHOUTINITPHASEEXTENSION ) );
 
 }
-
-
 
 TESTLOADER_ADD_TEST(SyncAgentConfigTest);

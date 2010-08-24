@@ -53,7 +53,6 @@ void ClientSessionHandlerTest::initTestCase()
     iConfig = new MockConfig();
     iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
-    iConfig->setProtocolVersion(DS_1_1);
     const SyncAgentConfig *tempConstConfig = iConfig;
     iHandler = new ClientSessionHandler(tempConstConfig);
 }
@@ -118,7 +117,7 @@ void ClientSessionHandlerTest::testSyncReceived()
     iHandler->setSyncState(REMOTE_INIT);
     result = iHandler->syncReceived();
     QVERIFY(result == false);
-    iHandler->setProtocolAttribute( NO_INIT_PHASE );
+    iHandler->setSyncWithoutInitPhase( true );
     iHandler->setSyncState(REMOTE_INIT);
     result = iHandler->syncReceived();
     QVERIFY(result == true);
@@ -146,7 +145,7 @@ void ClientSessionHandlerTest::testFinalReceived()
 
     iHandler->setSyncState(RECEIVING_ITEMS);
     iHandler->finalReceived();
-    iHandler->setProtocolAttribute( NO_INIT_PHASE );
+    iHandler->setSyncWithoutInitPhase( true );
     iHandler->finalReceived();
 
     iHandler->setSyncState(RECEIVING_MAPPINGS);

@@ -43,7 +43,6 @@
 #include "ChangeLog.h"
 
 #include "LogMacros.h"
-#include "Logger.h"
 
 
 using namespace DataSync;
@@ -57,7 +56,6 @@ void ServerSessionHandlerTest::initTestCase()
     iStorage = new MockStorage( localDb );
     iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
-    iConfig->setProtocolVersion(DS_1_1);
     const SyncAgentConfig *tempConstConfig = iConfig;
     iHandler = new ServerSessionHandler(tempConstConfig);
 }
@@ -148,7 +146,6 @@ void ServerSessionHandlerTest::testMessageReceived()
 {
     HeaderParams headerParams;
     iHandler->setSyncState(PREPARED);
-    //FIXME! Add extra headers here
     iHandler->messageReceived(headerParams);
 
 }
@@ -222,8 +219,6 @@ void ServerSessionHandlerTest::testFinalReceived()
 
     iHandler->setSyncState(RECEIVING_ITEMS);
     iHandler->finalReceived();
-    iHandler->setProtocolAttribute( NO_INIT_PHASE );
-    iHandler->finalReceived();
 
     iHandler->setSyncState(RECEIVING_MAPPINGS);
     iHandler->finalReceived();
@@ -287,21 +282,6 @@ void ServerSessionHandlerTest::testSyncFinished()
     bool actual   = iHandler->syncFinished();
     QCOMPARE(expected, actual);
 }
-
-void ServerSessionHandlerTest::testNewMapReference()
-{
-    int msgID = 1;
-    int cmdID = 1;
-    QString localDB = "foo";
-    QString remoteDB = "bar";
-
-    int sizeBefore = iHandler->iMapReferences.size();
-    iHandler->newMapReference(msgID, cmdID, localDB, remoteDB);
-    int sizeAfter = iHandler->iMapReferences.size();
-
-    QVERIFY(sizeAfter == sizeBefore+1);
-}
-
 
 void ServerSessionHandlerTest::testHandleMapElement()
 {
@@ -418,6 +398,32 @@ void ServerSessionHandlerTest::regression_NB166841_04()
     alert.sourceDatabase = targetURI;
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
     QCOMPARE( status, INCOMPLETE_COMMAND );
+}
+
+void ServerSessionHandlerTest::testSetClientRefresh()
+{
+    QString remoteDevice = "aremotedevice";
+    QString localDb = "localdb";
+    const QString sourceURI( "./targetURI" );
+    const QString targetURI( "./sourceURI" );
+    const QString nextAnchor( "0" );
+    SyncMode syncMode(DIRECTION_FROM_CLIENT,INIT_CLIENT,TYPE_SLOW);
+    SyncMode nextSyncMode(DIRECTION_FROM_CLIENT,INIT_CLIENT,TYPE_FAST);
+    AlertParams alert;
+    SyncAgentConfig config;
+    ServerSessionHandler sessionHandler(&config);
+
+    MockStorage* storage = new MockStorage( sourceURI );
+    sessionHandler.iStorages.append( storage );
+    ChangeLog* changeLog = new ChangeLog( remoteDevice, localDb, DIRECTION_FROM_CLIENT );
+    SyncTarget* target = new SyncTarget( changeLog, storage, syncMode, "lastanchor" );
+    sessionHandler.addSyncTarget(target);
+    alert.targetDatabase = sourceURI;
+    alert.sourceDatabase = targetURI;
+    alert.nextAnchor = nextAnchor;
+
+    ResponseStatusCode status = sessionHandler.setupTargetByClient(nextSyncMode,alert);
+    QCOMPARE( status, REFRESH_REQUIRED );
 }
 
 TESTLOADER_ADD_TEST(ServerSessionHandlerTest);

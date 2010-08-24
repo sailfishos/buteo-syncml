@@ -265,14 +265,10 @@ TestTransport::~TestTransport()
 
 }
 
-qint64 TestTransport::getMaxTxSize()
+void TestTransport::setProperty( const QString& aProperty, const QString& aValue )
 {
-    return 0;
-}
-
-qint64 TestTransport::getMaxRxSize()
-{
-    return 0;
+    Q_UNUSED( aProperty );
+    Q_UNUSED( aValue );
 }
 
 bool TestTransport::prepareSend()

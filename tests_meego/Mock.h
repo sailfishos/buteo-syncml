@@ -201,6 +201,16 @@ public:
         }
     }
 
+    virtual QList<SyncItem*> getSyncItems( const QList<SyncItemKey>& aKeyList)
+    {
+        QList<SyncItem*> items;
+        foreach( SyncItemKey key, aKeyList )
+        {
+            items.append( getSyncItem( key ) );
+        }
+        return items;
+    }
+
     virtual QList<StoragePluginStatus> addItems( const QList<SyncItem*>& aItems )
     {
         QList<StoragePluginStatus> results;
@@ -234,6 +244,13 @@ public:
         return results;
     }
 
+#if 0
+    virtual bool deleteAllItems()
+    {
+        return true;
+    }
+#endif
+
 protected:
     QString                 iSourceURI;
     qint64                  iMaxObjSize;
@@ -247,9 +264,9 @@ public:
     MockTransport(const QString& file, QObject* parent  = 0) : Transport(parent), iFile(file)
     {}
     virtual ~MockTransport() { };
+    virtual void setProperty( const QString&, const QString& ) { }
     virtual void setRemoteLocURI( const QString& )  {};
-    virtual qint64 getMaxTxSize() { return 12220; }
-    virtual qint64 getMaxRxSize() { return 312312;}
+    virtual bool usesWbXML() { return false; }
     virtual bool sendSyncML( SyncMLMessage* aMessage) { delete aMessage; aMessage = NULL; return true; }
     virtual bool sendSAN( const QByteArray& /*aMessage*/ ) { return true; }
     virtual bool receive() {
@@ -259,10 +276,12 @@ public:
             qDebug() << "File Cannot be opened";
         } else  {
             qDebug() << "Handling incoming data.. from " << iFile;
-            emit readXMLData(&syncmlFile);
+            emit readXMLData(&syncmlFile, true);
         }
         return true;
     }
+private slots:
+    virtual void purgeAndResendBuffer() {};
 
 private:
     QIODevice* data;

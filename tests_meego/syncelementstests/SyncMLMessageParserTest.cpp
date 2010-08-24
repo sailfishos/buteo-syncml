@@ -40,11 +40,14 @@
 #include "SyncMLMessageParser.h"
 #include "TestLoader.h"
 #include "TestUtils.h"
+#include "RemoteDeviceInfo.h"
 
 using namespace DataSync;
 
 void SyncMLMessageParserTest::testResp1()
 {
+    RemoteDeviceInfo::instance();
+
     SyncMLMessageParser parser;
 
     QByteArray data;
@@ -57,7 +60,7 @@ void SyncMLMessageParserTest::testResp1()
     QSignalSpy parsingSpy( &parser, SIGNAL(parsingComplete(bool)) );
     QSignalSpy errorSpy( &parser, SIGNAL(parsingError(DataSync::ParserError)) );
 
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
 
     buffer.close();
 
@@ -149,10 +152,11 @@ void SyncMLMessageParserTest::testResp1()
 
     ResultsParams* results = static_cast<ResultsParams*>( fragment );
 
-    QCOMPARE( results->devData.supportsLargeObjects, true );
+    QCOMPARE( RemoteDeviceInfo::instance()->isLargeObjectSupported(), true );
 
     delete results;
     results = NULL;
+    RemoteDeviceInfo::destroyInstance();
 
     // Map
     QVERIFY( !fragments.isEmpty() );
@@ -186,7 +190,6 @@ void SyncMLMessageParserTest::testResp1()
 
     bool final = signal1.at(0).toBool();
     QCOMPARE( final, true );
-
 }
 
 void SyncMLMessageParserTest::testInvalid1()
@@ -200,37 +203,37 @@ void SyncMLMessageParserTest::testInvalid1()
     QVERIFY( readFile( "testfiles/respinvalid1.txt", data ) );
     QBuffer buffer(&data );
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QVERIFY( readFile( "testfiles/respinvalid2.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QVERIFY( readFile( "testfiles/respinvalid3.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QVERIFY( readFile( "testfiles/respinvalid4.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QVERIFY( readFile( "testfiles/respinvalid5.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QVERIFY( readFile( "testfiles/respinvalid6.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
-    parser.parseResponse( &buffer );
+    parser.parseResponse( &buffer, true );
     buffer.close();
 
     QCOMPARE( parsingSpy.count(), 0 );
