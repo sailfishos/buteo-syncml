@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.9-28) unstable; urgency=low
+
+  * Tag for Meego  
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 24 Aug 2010 16:00:00 +0300
+
 libmeegosyncml (0.4.9-27) unstable; urgency=low
 
   * Fixes: NB#182304 - Some data not transfered message displayed when
