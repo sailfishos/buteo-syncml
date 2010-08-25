@@ -80,20 +80,6 @@ public:
      */
     void setProxyConfig( const QNetworkProxy& aProxy );
 
-    /*! \brief Sets the authentication token used for SSO type
-     * authentications.
-     *
-     * @param aToken The authentication token
-     */
-    void setAuthToken( const QString &aToken );
-
-    /*! \brief Returns the authentication token used for SSO type
-     * authentications.
-     *
-     * @return The authentication token
-     */
-    QString getAuthToken() const;
-
     /*! \brief Returns the proxy config in use
      *
      * @return Proxy configuration
@@ -147,7 +133,6 @@ private:
     QString                 iFirstMessageContentType;
     int                     iMaxNumberOfResendAttempts;
     int                     iNumberOfResendAttempts;
-    QString                 iAuthToken;
     QMap<QString, QString>  iXheaders;
 };
 

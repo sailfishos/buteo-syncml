@@ -152,16 +152,6 @@ QNetworkProxy HTTPTransport::getProxyConfig()
     return iManager->proxy();
 }
 
-void HTTPTransport::setAuthToken( const QString &aToken )
-{
-    iAuthToken = aToken;
-}
-
-QString HTTPTransport::getAuthToken() const
-{
-    return iAuthToken;
-}
-
 void HTTPTransport::addXheader(const QString& aName, const QString& aValue)
 {
     iXheaders.insert(aName, aValue);
@@ -179,11 +169,6 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
     aRequest.setRawHeader( HTTP_HDRSTR_UA, HTTP_UA_VALUE);
     aRequest.setRawHeader( SYNCML_CONTENT_TYPE, aContentType );
     aRequest.setRawHeader( HTTP_HDRSTR_ACCEPT,HTTP_ACCEPT_VALUE );
-    aRequest.setRawHeader( HTTP_HDRSTR_AUTHTYPE, HTTP_AUTHTYPE_VALUE );
-    if(false == iAuthToken.isEmpty())
-    {
-        aRequest.setRawHeader( HTTP_HDRSTR_TOKEN, iAuthToken.toAscii() );
-    }
     aRequest.setHeader( QNetworkRequest::ContentLengthHeader, QVariant( aContentLength ) );
     QMap<QString, QString>::const_iterator i;
     for (i = iXheaders.constBegin(); i != iXheaders.constEnd(); i++) {

@@ -3,6 +3,7 @@ libmeegosyncml (0.4.9-28) unstable; urgency=low
   * Tag for Meego  
   * Made fixes for NB#185704: The bug can't yet be resolved due to
     dependencies, though.
+  * Removed some proprietary HTTP headers.
 
  -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 24 Aug 2010 16:00:00 +0300
 
