@@ -308,7 +308,7 @@ namespace DataSync
     #define HTTP_ACCEPT_VALUE  "*/*"
     #define HTTP_HDRSTR_AUTHTYPE "auth-type"
     #define HTTP_AUTHTYPE_VALUE "global"
-    #define HTTP_HDRSTR_TOKEN "token"
+    #define HTTP_HDRSTR_TOKEN "Access_Token"
 
     #define DEFAULT_MAX_CHANGES_TO_SEND 22
     #define DEFAULT_MAX_MESSAGESIZE     16384
