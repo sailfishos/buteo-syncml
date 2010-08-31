@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-30) unstable; urgency=low
+
+  * Fixes: NB#188615 - Characters with codes above U+00FF get corrupted
+    during sync
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 31 Aug 2010 13:30:00 +0530
+
 libmeegosyncml (0.4.9-29) unstable; urgency=low
 
   * Fixes: NB#183589 -  Development packages libmeegosyncml-dev and
