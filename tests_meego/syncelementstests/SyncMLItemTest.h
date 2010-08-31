@@ -38,6 +38,9 @@ class SyncMLItemTest: public QObject {
     Q_OBJECT
 private slots:
     void testSycnMLItem();
+    void regressionNB188615_01();
+    void regressionNB188615_02();
+    void regressionNB188615_03();
 };
 
 #endif // SYNCMLITEMTEST_H

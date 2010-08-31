@@ -47,7 +47,7 @@ SyncMLCred::SyncMLCred( const QString& aFormat, const QString& aType, const QByt
     metaObject->addType( aType );
     addChild( metaObject );
 
-    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, QString( aData ) );
+    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, QString::fromUtf8( aData.constData() ) );
     addChild( dataObject );
 
 }

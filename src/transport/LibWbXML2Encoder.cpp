@@ -244,6 +244,7 @@ WBXMLTree* LibWbXML2Encoder::createTree( const SyncMLCmdObject& aObject,
     WBXMLLanguage language = namespaceToLanguage( aObject, aVersion );
 
     if( language == WBXML_LANG_UNKNOWN ) {
+        LOG_CRITICAL( "Cannot create tree, unknown language!" );
         return NULL;
     }
     else {

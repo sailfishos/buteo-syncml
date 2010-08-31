@@ -87,7 +87,11 @@ void SyncMLItem::insertSourceParent( const SyncItemKey& aLocURI )
 
 void SyncMLItem::insertData( const QByteArray& aData )
 {
-    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, aData );
+
+    // Data is always encoded in UTF-8, so make sure it's being read as such instead
+    // of default behavior of latin
+    QString data = QString::fromUtf8( aData.constData() );
+    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, data );
 
     dataObject->setCDATA( true );
 

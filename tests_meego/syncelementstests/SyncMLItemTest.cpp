@@ -39,6 +39,7 @@
 #include "internals.h"
 #include "SyncItemKey.h"
 #include "QtEncoder.h"
+#include "LibWbXML2Encoder.h"
 #include "TestUtils.h"
 
 using namespace DataSync;
@@ -66,4 +67,69 @@ void SyncMLItemTest::testSycnMLItem()
     QCOMPARE( output.simplified(), data.simplified() );
 
 }
+
+void SyncMLItemTest::regressionNB188615_01()
+{
+    // Regression test for NB#188615: make sure that data encoded
+    // in UTF-8 is written properly when constructing XML using
+    // Qt
+    const char utf[] = { 0xC5, 0x9F, 0 };
+
+    QByteArray data( utf );
+
+    SyncMLItem item;
+
+    item.insertData( data );
+
+    QtEncoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( item, output, false ) );
+
+    QVERIFY( output.contains( data ) );
+
+}
+
+void SyncMLItemTest::regressionNB188615_02()
+{
+    // Regression test for NB#188615: make sure that data encoded
+    // in UTF-8 is written properly when constructing XML using
+    // libwbxml2
+    const char utf[] = { 0xC5, 0x9F, 0 };
+    QByteArray data( utf );
+
+    SyncMLItem item;
+    // Add namespace attribute, needed by libwbxml2
+    item.addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML12 );
+    item.insertData( data );
+
+    LibWbXML2Encoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( item, DS_1_2, output, false ) );
+
+    QVERIFY( output.contains( data ) );
+
+}
+
+void SyncMLItemTest::regressionNB188615_03()
+{
+    // Regression test for NB#188615: make sure that data encoded
+    // in UTF-8 is written properly when constructing WnXML using
+    // libwbxml2
+    const char utf[] = { 0xC5, 0x9F, 0 };
+
+    QByteArray data( utf );
+
+    SyncMLItem item;
+    // Add namespace attribute, needed by libwbxml2
+    item.addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML12 );
+    item.insertData( data );
+
+    LibWbXML2Encoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToWbXML( item, DS_1_2, output ) );
+
+    QVERIFY( output.contains( data ) );
+
+}
+
 TESTLOADER_ADD_TEST(SyncMLItemTest);
