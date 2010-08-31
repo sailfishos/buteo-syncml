@@ -1,6 +1,5 @@
 libmeegosyncml (0.4.9-29) unstable; urgency=low
 
-  * TODO : PR
   * Fixes: NB#183589 -  Development packages libmeegosyncml-dev and
     sync-fw-dev does not contain .pc files
 
