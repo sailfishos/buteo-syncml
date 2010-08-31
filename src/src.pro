@@ -16,12 +16,6 @@ CONFIG += dll \
     create_pc \
     create_prl
 
-QMAKE_PKGCONFIG_DESTDIR = pkgconfig
-QMAKE_PKGCONFIG_LIBDIR  = $$target.path
-QMAKE_PKGCONFIG_INCDIR  = $$headers.path
-pkgconfig.files = $${TARGET}.pc
-
-
 INCLUDEPATH += . \
 	syncelements \
 	server \
@@ -145,6 +139,11 @@ config.files  = config/meego-syncml-conf.xsd \
 INSTALLS += target \
     	    headers \
     	    config
+
+QMAKE_PKGCONFIG_DESTDIR = pkgconfig
+QMAKE_PKGCONFIG_LIBDIR  = $$target.path
+QMAKE_PKGCONFIG_INCDIR  = $$headers.path
+pkgconfig.files = $${TARGET}.pc
 
 # #####################################################################
 # make coverage (debug)

@@ -1,3 +1,11 @@
+libmeegosyncml (0.4.9-29) unstable; urgency=low
+
+  * TODO : PR
+  * Fixes: NB#183589 -  Development packages libmeegosyncml-dev and
+    sync-fw-dev does not contain .pc files
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 31 Aug 2010 09:32:56 +0530
+
 libmeegosyncml (0.4.9-28) unstable; urgency=low
 
   * Tag for Meego  
