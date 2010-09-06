@@ -33,80 +33,39 @@
 #ifndef OBEXCONNECTION_H
 #define OBEXCONNECTION_H
 
-#include <QObject>
-#include <openobex/obex.h>
-
 namespace DataSync {
 
-/*! \brief Base class for OBEX transport layer
+/*! \brief Interface for OBEX transport layer
  *
  */
-class OBEXConnection : public QObject
+class OBEXConnection
 {
-    Q_OBJECT;
 public:
 
-    /*! \brief Constructor
+    /*! \brief Connect transport layer
      *
+     * Invoked by SyncAgent when it requires a transport connection
+     *
+     * @return File descriptor of the opened connection on success, otherwise -1
      */
-    OBEXConnection();
+    virtual int connect() = 0;
+
+    /*! \brief Returns whether connection is established
+     *
+     * @return True if currently connected, otherwise false
+     */
+    virtual bool isConnected() const = 0;
+
+    /*! \brief Disconnects connection
+     *
+     * Invoked by SyncAgent when it no longer requires a transport connection
+     */
+    virtual void disconnect() = 0;
 
     /*! \brief Destructor
      *
      */
-    virtual ~OBEXConnection();
-
-    /*! \brief Sets the maximum transfer unit to use in session
-     *
-     * @param aMTU Maximum transfer unit to use
-     */
-    void setMTU( qint32 aMTU );
-
-    /*! \brief Connect transport layer
-     *
-     * @param aEventHandler OpenObex event handler to register to transport layer
-     * @return Openobex handle if successful, otherwise false
-     */
-    obex_t* connect( obex_event_t aEventHandler );
-
-    /*! \brief Disconnect transport layer
-     *
-     */
-    void disconnect();
-
-signals:
-    /*! \brief Signal that is emitted when transport layer is connected
-     *
-     */
-    void connected();
-
-    /*! \brief Signal that is emitted when transport layer is disconnected
-     *
-     */
-    void disconnected();
-
-protected:
-
-    /*! \brief Connects a link
-     *
-     * @return File descriptor on success, otherwise -1
-     */
-    virtual int connectLink() = 0;
-
-    /*! \brief Disconnects a link
-     *
-     */
-    virtual void disconnectLink() = 0;
-
-private:
-
-    bool setupOpenOBEX( int aFd, obex_event_t aEventHandler );
-
-    void closeOpenOBEX();
-
-    obex_t*         iTransportHandle;
-    qint32          iMTU;
-
+    virtual ~OBEXConnection() { }
 };
 
 }

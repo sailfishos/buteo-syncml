@@ -40,13 +40,13 @@
 
 #include "TestLoader.h"
 
-#include "OBEXUsbConnection.h"
 #include "OBEXServerWorker.h"
 
 #include "LogMacros.h"
 
 using namespace DataSync;
 
+const int MTU = 1024;
 const int TIMEOUT = 5;
 
 ServerWorkerTest::ServerWorkerTest()

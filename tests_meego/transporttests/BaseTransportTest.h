@@ -72,6 +72,10 @@ public:
 
     virtual void setProperty( const QString& aProperty, const QString& aValue );
 
+    virtual bool init();
+
+    virtual void close();
+
 protected:
 
     virtual bool prepareSend();

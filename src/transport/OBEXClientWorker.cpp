@@ -42,20 +42,15 @@
 
 using namespace DataSync;
 
-OBEXClientWorker::OBEXClientWorker( OBEXConnection* aConnection, int aTimeOut )
- : iConnection( aConnection ), iTimeOut( aTimeOut ), iConnected( false ),
-   iConnectionId( -1 ), iTransportHandle( 0 ), iProcessing( false )
+OBEXClientWorker::OBEXClientWorker( int aFd, qint32 aMTU, int aTimeOut )
+ : iFd( aFd ), iMTU( aMTU ), iTimeOut( aTimeOut ), iConnectionId( -1 ),
+   iProcessing( false )
 {
 }
 
 OBEXClientWorker::~OBEXClientWorker()
 {
 
-}
-
-bool OBEXClientWorker::isConnected()
-{
-    return iConnected;
 }
 
 void OBEXClientWorker::connect()
@@ -68,15 +63,13 @@ void OBEXClientWorker::connect()
         return;
     }
 
-    iTransportHandle = iConnection->connect( OBEXClientWorker::handleEvent );
-
-    if( !iTransportHandle )
+    if( !setupOpenOBEX( iFd, iMTU, OBEXClientWorker::handleEvent ) )
     {
         LOG_CRITICAL( "Could not set up OBEX link, aborting CONNECT" );
         return;
     }
 
-    OBEX_SetUserData( iTransportHandle, this );
+    OBEX_SetUserData( getHandle(), this );
 
     LOG_DEBUG("Sending OBEX CONNECT");
 
@@ -84,9 +77,9 @@ void OBEXClientWorker::connect()
     OBEXDataHandler::ConnectCmdData data;
     data.iTarget = SYNCMLTARGET;
 
-    obex_object_t* object = handler.createConnectCmd( iTransportHandle, data );
+    obex_object_t* object = handler.createConnectCmd( getHandle(), data );
 
-    if( !object || !OBEX_Request( iTransportHandle, object ) < 0 )
+    if( !object || !OBEX_Request( getHandle(), object ) < 0 )
     {
         LOG_CRITICAL( "Failed in OBEX_Request while doing CONNECT" );
         return;
@@ -106,9 +99,9 @@ void OBEXClientWorker::disconnect()
         OBEXDataHandler::DisconnectCmdData data;
         data.iConnectionId = iConnectionId;
 
-        obex_object_t* object = handler.createDisconnectCmd( iTransportHandle, data );
+        obex_object_t* object = handler.createDisconnectCmd( getHandle(), data );
 
-        if( !object || !OBEX_Request( iTransportHandle, object ) < 0 )
+        if( !object || !OBEX_Request( getHandle(), object ) < 0 )
         {
             // Cannot send disconnect, then we have no choice but to force transport
             // disconnection
@@ -119,13 +112,13 @@ void OBEXClientWorker::disconnect()
         {
             process();
         }
+
+        closeOpenOBEX();
     }
     else
     {
         LOG_DEBUG( "Not connected, ignoring sending OBEX DISCONNECT" );
     }
-
-    iConnection->disconnect();
 
 }
 
@@ -147,9 +140,9 @@ void OBEXClientWorker::send( const QByteArray& aBuffer, const QString& aContentT
     data.iLength = aBuffer.size();
     data.iBody = aBuffer;
 
-    obex_object_t* object = handler.createPutCmd( iTransportHandle, data );
+    obex_object_t* object = handler.createPutCmd( getHandle(), data );
 
-    if( !object || OBEX_Request( iTransportHandle, object ) < 0 )
+    if( !object || OBEX_Request( getHandle(), object ) < 0 )
     {
         LOG_WARNING( "Failed in OBEX_Request while doing PUT" );
         emit connectionError();
@@ -187,9 +180,9 @@ void OBEXClientWorker::receive( const QString& aContentType )
     data.iConnectionId = iConnectionId;
     data.iContentType = aContentType.toAscii();
 
-    obex_object_t* object = handler.createGetCmd( iTransportHandle, data );
+    obex_object_t* object = handler.createGetCmd( getHandle(), data );
 
-    if( !object || OBEX_Request( iTransportHandle, object ) < 0 ) {
+    if( !object || OBEX_Request( getHandle(), object ) < 0 ) {
         LOG_WARNING( "Failed in OBEX_Request while doing GET" );
         emit connectionError();
         return;
@@ -222,7 +215,7 @@ int OBEXClientWorker::process()
 
     while( iProcessing )
     {
-        result = OBEX_HandleInput( iTransportHandle, iTimeOut );
+        result = OBEX_HandleInput( getHandle(), iTimeOut );
 
         if( result <= 0 )
         {
@@ -274,11 +267,10 @@ void OBEXClientWorker::linkError()
 
     iProcessing = false;
 
-    if( iConnected )
+    if( isConnected() )
     {
-        iConnected = false;
-        // Close the OBEX link
-        iConnection->disconnect();
+        setConnected( false );
+        closeOpenOBEX();
         emit connectionError();
     }
 
@@ -331,10 +323,10 @@ void OBEXClientWorker::ConnectResponse( obex_object_t *aObject, int aObexRsp )
         OBEXDataHandler handler;
         OBEXDataHandler::ConnectRspData data;
 
-        if( handler.parseConnectRsp( iTransportHandle, aObject, data ) ) {
+        if( handler.parseConnectRsp( getHandle(), aObject, data ) ) {
             iConnectionId = data.iConnectionId;
             LOG_DEBUG("OBEX session established as client");
-            iConnected = true;
+            setConnected( true );
         }
         else
         {
@@ -355,7 +347,7 @@ void OBEXClientWorker::DisconnectResponse( obex_object_t */*aObject*/, int /*aOb
 
     LOG_DEBUG("OBEX session disconnected as client");
     iConnectionId = -1;
-    iConnected = false;
+    setConnected( false );
 
     iProcessing = false;
 }
@@ -390,7 +382,7 @@ void OBEXClientWorker::GetResponse( obex_object_t *aObject, int aObexRsp )
         OBEXDataHandler handler;
         OBEXDataHandler::GetRspData rspData;
 
-        if( handler.parseGetRsp( iTransportHandle, aObject, rspData ) )
+        if( handler.parseGetRsp( getHandle(), aObject, rspData ) )
         {
             emit incomingData( rspData.iBody, iGetContentType );
         }

@@ -41,13 +41,13 @@
 #include "TestLoader.h"
 #include "TestUtils.h"
 
-#include "OBEXUsbConnection.h"
 #include "OBEXClientWorker.h"
 
 #include "LogMacros.h"
 
 using namespace DataSync;
 
+const int MTU = 1024;
 const int TIMEOUT = 5;
 
 
@@ -68,7 +68,6 @@ ClientWorkerTest::~ClientWorkerTest()
 
 void ClientWorkerTest::init()
 {
-    //Logger::createInstance();
 
     iServerThread = new ServerThread;
     iServerThread->start();
@@ -98,7 +97,6 @@ void ClientWorkerTest::cleanup()
     delete iServerThread;
     iServerThread = 0;
 
-    //Logger::deleteInstance();
 }
 
 void ClientWorkerTest::testConnectSuccess()
@@ -110,8 +108,7 @@ void ClientWorkerTest::testConnectSuccess()
     QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );
@@ -133,8 +130,7 @@ void ClientWorkerTest::testConnectLinkFailure()
     // Case to test unsuccessful OBEX CONNECT due to link failure.
     // As connection is not up yet, stack should not send error signals
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );
@@ -162,8 +158,7 @@ void ClientWorkerTest::testConnectRefused()
     QVERIFY( readFile( "testfiles/obexresp02.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );
@@ -192,8 +187,7 @@ void ClientWorkerTest::testDisconnectSuccess()
     QVERIFY( readFile( "testfiles/obexresp03.bin", rsp2 ) );
     iServerThread->addResponse( rsp2 );
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );
@@ -227,8 +221,7 @@ void ClientWorkerTest::testDisconnectLinkFailure()
     QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );
@@ -266,8 +259,7 @@ void ClientWorkerTest::testDisconnectRefused()
     QVERIFY( readFile( "testfiles/obexresp02.bin", rsp2 ) );
     iServerThread->addResponse( rsp2 );
 
-    OBEXUsbConnection connection( iClientSocket->socketDescriptor() );
-    OBEXClientWorker worker( &connection, TIMEOUT );
+    OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
 
     QSignalSpy dataSpy( &worker, SIGNAL(incomingData( QByteArray, QString )) );
     QSignalSpy connFailureSpy( &worker, SIGNAL(connectionFailed()) );

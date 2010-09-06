@@ -706,7 +706,7 @@ private: // data
     bool                                iSessionClosed;             ///< Set to true when Session tearing down started.
     bool                                iSessionAuthenticated;      ///< Set to true when session has been authenticated
     bool                                iAuthenticationPending;     ///< True if authentication is pending from remote side
-    bool                                iParsing;                   ///< Set to true when we are parsing a message
+    bool                                iProcessing;                ///< Set to true when we are processing a message
     ProtocolVersion                     iProtocolVersion;           ///< Protocol version in use in current session
     bool				iRemoteReportedBusy;        ///< indicates that server reported busy
     Role                                iRole;                      ///< Role in use

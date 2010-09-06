@@ -81,14 +81,6 @@ public:
      */
     virtual ~Transport() { };
 
-    /*! \brief Sets a transport property
-     *
-     * Properties should usually be set before attempting to send or receive.
-     *
-     * @param aProperty Property to set
-     * @param aValue Value to set
-     */
-    virtual void setProperty( const QString& aProperty, const QString& aValue ) = 0;
 
     /*! \brief Sets the URI to use in next send operation
      *
@@ -130,6 +122,38 @@ public:
      * @return True if listening for incoming data was started, false otherwise
      */
     virtual bool receive() = 0;
+
+    /*! \brief Sets a transport property
+     *
+     * This function is called by SyncAgent to enable properties set with
+     * SyncAgentConfig::setTransportProperty(). Users generally should not
+     * call this function directly.
+     *
+     * @param aProperty Property to set
+     * @param aValue Value to set
+     */
+    virtual void setProperty( const QString& aProperty, const QString& aValue ) = 0;
+
+    /*! \brief Initiates the transport
+     *
+     * This function is called by SyncAgent when it is sure that transport
+     * layer is required to proceed with the synchronization. Users generally
+     * should not call this function directly. This function should take care
+     * of any operations needed to be performed before data can be sent or
+     * received, such as establishing a link layer connection and/or session.
+     *
+     * @return True if initiation was successful, otherwise false
+     */
+    virtual bool init() = 0;
+
+    /*! \brief Closes the transport
+     *
+     * This function is called by SyncAgent when it is sure that transport layer
+     * is no longer required to proceed with the synchronization. Users generally
+     * should not call this function directly. This function should take care of
+     * any operations needed to close link layer connection and/or session.
+     */
+    virtual void close() = 0;
 
 signals:
 

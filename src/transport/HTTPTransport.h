@@ -67,12 +67,9 @@ public:
 
     virtual void setProperty( const QString& aProperty, const QString& aValue );
 
-    /*! \brief Initialize HTTP transport
-     *
-     * Should be called before attempting to use the rest of the API
-     *
-     */
-    void init();
+    virtual bool init();
+
+    virtual void close();
 
     /*! \brief Sets proxy config to use
      *

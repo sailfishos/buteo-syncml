@@ -265,6 +265,8 @@ public:
     {}
     virtual ~MockTransport() { };
     virtual void setProperty( const QString&, const QString& ) { }
+    virtual bool init() { return true; }
+    virtual void close() { }
     virtual void setRemoteLocURI( const QString& )  {};
     virtual bool usesWbXML() { return false; }
     virtual bool sendSyncML( SyncMLMessage* aMessage) { delete aMessage; aMessage = NULL; return true; }

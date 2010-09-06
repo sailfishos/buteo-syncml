@@ -70,7 +70,7 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
     iSessionClosed(false) ,
     iSessionAuthenticated( false ),
     iAuthenticationPending( false ),
-    iParsing( false ),
+    iProcessing( false ),
     iProtocolVersion( DS_1_2 ),
     iRemoteReportedBusy(false),
     iRole( aRole )
@@ -168,10 +168,10 @@ void SessionHandler::abortSync( SyncState aSyncState, const QString& aDescriptio
         iSyncFinished = true;
         iSyncError = aDescription;
 
-        // If we are parsing a message, emit signals after whole message has been parsed
-        // (and in server mode response has been sent). If we are not parsing a message, we must
-        // emit signal right away.
-        if( !iParsing ) {
+        // If we are processing a message, we must wait until the whole message has been processed
+        // (and in server mode response has been sent). If we are not processing a message, we can
+        // abort right away.
+        if( !iProcessing ) {
             exitSync();
         }
     }
@@ -276,6 +276,7 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
     FUNCTION_CALL_TRACE;
 
     LOG_DEBUG( "Beginning to process received message..." );
+    iProcessing = true;
 
     while( !aFragments.isEmpty() )
     {
@@ -331,6 +332,7 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
         handleFinal();
     }
 
+    iProcessing = false;
     LOG_DEBUG( "Received message processed" );
 
     handleEndOfMessage();
@@ -388,9 +390,6 @@ void SessionHandler::SANPackageReceived( QIODevice* aDevice )
 void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams )
 {
     FUNCTION_CALL_TRACE;
-
-    // Message parsing started
-    iParsing = true;
 
     // Common handling for header parameters
 
@@ -803,12 +802,11 @@ void SessionHandler::handleEndOfMessage()
 {
     FUNCTION_CALL_TRACE;
 
-    // Message parsing ended
     messageParsed();
     if( iSyncFinished ) {
         exitSync();
     }
-    iParsing = false;
+
 }
 
 void SessionHandler::sendNextMessage()
@@ -881,17 +879,25 @@ void SessionHandler::setLocalNextAnchor( const QString& aLocalNextAnchor )
 void SessionHandler::exitSync()
 {
     FUNCTION_CALL_TRACE;
+
     if(!iSessionClosed) {
 
     	iSessionClosed = true;
 
-    	LOG_DEBUG("Tearing down the session started " << getRemoteDeviceName());
+        // Transport can be closed before doing cleaning
+        getTransport().close();
 
+        // In case of successful session, save sync anchors
+        if( iSyncState == SYNC_FINISHED )
+        {
+            saveSession();
+        }
+
+        // Release everything
     	releaseStoragesAndTargets();
+
     	emit syncFinished( getRemoteDeviceName(), iSyncState, iSyncError);
 
-    } else {
-     	LOG_DEBUG("Sync Session Already Closed ");
     }
 }
 

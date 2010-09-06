@@ -73,6 +73,20 @@ void ServerSessionHandler::initiateSync()
 
     LOG_DEBUG("Using protocol version " << protocolVersion);
 
+    if( getStorages().count() != iConfig->getSourceDbs().count() )
+    {
+        LOG_CRITICAL( "Could not create all targets, aborting sync" );
+        abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
+        return;
+    }
+
+    if( !getTransport().init() )
+    {
+        LOG_CRITICAL( "Could not initialize transport" );
+        abortSync( CONNECTION_ERROR, "Could not initiate transport" );
+        return;
+    }
+
     if( protocolVersion == DS_1_1 ) {
         serverInitiatedSyncDS11();
     }
@@ -334,10 +348,8 @@ void ServerSessionHandler::messageParsed()
             sendNextMessage();
 
             // Check if we've finished sending everything we need to send to client
-            if( getResponseGenerator().packageQueueEmpty() ) {
-
-                // Sync session has finished, store everything to persistent storage
-                saveSession();
+            if( getResponseGenerator().packageQueueEmpty() )
+            {
                 finishSync();
             }
 
@@ -620,45 +632,21 @@ void ServerSessionHandler::serverInitiatedSyncDS11()
 {
     FUNCTION_CALL_TRACE;
 
-    bool storareCountsMatch = false;
+    // Send initialization package to client
+    composeSyncML11ServerAlertedSyncPackage();
+    setSyncState( PREPARED );
+    sendNextMessage();
+    getTransport().receive();
 
-    if (iConfig != NULL &&
-        getStorages().count() == iConfig->getSourceDbs().count() ) {
-        storareCountsMatch = true;
-    }
-
-    if(storareCountsMatch) {
-        // Send initialization package to client
-        composeSyncML11ServerAlertedSyncPackage();
-        setSyncState( PREPARED );
-        sendNextMessage();
-        getTransport().receive();
-    }
-    else {
-        LOG_CRITICAL( "Could not create all targets, aborting sync" );
-        abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
-    }
 }
 
 void ServerSessionHandler::serverInitiatedSyncDS12()
 {
     FUNCTION_CALL_TRACE;
 
-    bool storageCountsMatch = false;
+    // Send initialization package to client
+    composeAndSendSyncML12ServerAlertedSyncPackage();
+    setSyncState( PREPARED );
+    getTransport().receive();
 
-    if (iConfig != NULL &&
-        getStorages().count() == iConfig->getSourceDbs().count() ) {
-        storageCountsMatch = true;
-    }
-
-    if(storageCountsMatch) {
-        // Send initialization package to client
-        composeAndSendSyncML12ServerAlertedSyncPackage();
-        setSyncState( PREPARED );
-        getTransport().receive();
-    }
-    else {
-        LOG_CRITICAL( "Could not create all targets, aborting sync" );
-        abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
-    }
 }

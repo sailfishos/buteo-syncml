@@ -33,38 +33,30 @@
 #ifndef OBEXCLIENTWORKER_H
 #define OBEXCLIENTWORKER_H
 
-#include <QObject>
-#include <openobex/obex.h>
+#include "OBEXWorker.h"
 
 namespace DataSync {
-
-class OBEXConnection;
 
 /*! \brief Worker class for handling OBEX client functionality
  *
  */
-class OBEXClientWorker : public QObject
+class OBEXClientWorker : public OBEXWorker
 {
     Q_OBJECT;
 public:
 
     /*! \brief Constructor
      *
-     * @param aConnection Connection to use
+     * @param aFd File descriptor to use
+     * @param aMTU MTU to use
      * @param aTimeOut Timeout to use in OBEX operations
      */
-    OBEXClientWorker( OBEXConnection* aConnection, int aTimeOut );
+    OBEXClientWorker( int aFd, qint32 aMTU, int aTimeOut );
 
     /*! \brief Destructor
      *
      */
     virtual ~OBEXClientWorker();
-
-    /*! \brief Returns whether connection is current established
-     *
-     * @return True if connected, otherwise false
-     */
-    bool isConnected();
 
 public slots:
 
@@ -136,12 +128,11 @@ private:
 
     void GetResponse( obex_object_t *aObject, int aObexRsp );
 
-    OBEXConnection* iConnection;
+    int             iFd;
+    qint32          iMTU;
     int             iTimeOut;
-    bool            iConnected;
     int             iConnectionId;
 
-    obex_t*         iTransportHandle;
     bool            iProcessing;
 
     QString         iGetContentType;

@@ -39,8 +39,8 @@
  * (OMA DS), formerly known as SyncML. This library offers:
  * - Support for OMA DS 1.1.2 and 1.2.1
  * - Both OMA DS Client and Server functionality
- * - Bindings for HTTP and OBEX (over Bluetooth and USB)
- * - WbXML support using libwbxml
+ * - Bindings for HTTP and OBEX
+ * - WbXML support using libwbxml2
  *
  * \section guides_sec Guides
  *
@@ -97,8 +97,11 @@
  *   for each type of data they wish to synchronize. Libmeegosyncml does not provide readymade
  *   StoragePlugin implementations, as these are highly dependant on the underlying storage
  *   backend.
- * - Transport. Libmeegosyncml includes readymade transports for HTTP and OBEX over USB and
- *   Bluetooth. Custom transports can be created by deriving them from BaseTransport.
+ * - Transport. Libmeegosyncml includes readymade transport for HTTP. For OBEX, SyncML bindings
+ *   are provided. Users must provide an implementation for OBEXConnection interface to
+ *   to use whatever transport layer is wanted ( for example Bluetooth, USB, IrDA, etc ). Creation
+ *   of totally custom transports is also supported, they can be implemented by inheriting from
+ *   Transport interface (or from BaseTransport abstract class that includes WbXML support).
  * - Location of database. Libmeegosyncml maintains an SQL database that includes SyncML sync
  *   anchors, item ID mappings, MD5 nonces and suspend/resume information. By default this
  *   database is placed to /etc/sync/, but is highly recommended that synchronization applications

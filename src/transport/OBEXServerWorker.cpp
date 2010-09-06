@@ -33,7 +33,6 @@
 
 #include "OBEXServerWorker.h"
 
-#include "OBEXConnection.h"
 #include "OBEXDataHandler.h"
 
 #include "LogMacros.h"
@@ -42,23 +41,16 @@
 
 using namespace DataSync;
 
-OBEXServerWorker::OBEXServerWorker( OBEXConnection* aConnection,
-                                    OBEXServerDataSource& aSource,
-                                    int aTimeOut )
- : iConnection( aConnection ), iSource( aSource ), iTimeOut( aTimeOut ),
-   iConnected( false ), iConnectionId( 1 ), iTransportHandle( 0 ),
-   iProcessing( false ), iState( STATE_IDLE )
+OBEXServerWorker::OBEXServerWorker( OBEXServerDataSource& aSource,
+                                    int aFd, qint32 aMTU, int aTimeOut )
+ : iSource( aSource ), iFd( aFd ), iMTU( aMTU ), iTimeOut( aTimeOut ),
+   iConnectionId( 1 ), iProcessing( false ), iState( STATE_IDLE )
 {
 }
 
 OBEXServerWorker::~OBEXServerWorker()
 {
 
-}
-
-bool OBEXServerWorker::isConnected()
-{
-    return iConnected;
 }
 
 void OBEXServerWorker::waitForConnect()
@@ -71,19 +63,18 @@ void OBEXServerWorker::waitForConnect()
         return;
     }
 
-    iTransportHandle = iConnection->connect( OBEXServerWorker::handleEvent );
-
-    if( !iTransportHandle )
+    if( !setupOpenOBEX( iFd, iMTU, OBEXServerWorker::handleEvent ) )
     {
         LOG_CRITICAL( "Could not set up OBEX link, aborting CONNECT" );
         return;
     }
 
-    OBEX_SetUserData( iTransportHandle, this );
+    OBEX_SetUserData( getHandle(), this );
 
     LOG_DEBUG("Waiting for OBEX CONNECT");
 
     process( STATE_CONNECT );
+
 }
 
 void OBEXServerWorker::waitForDisconnect()
@@ -100,7 +91,7 @@ void OBEXServerWorker::waitForDisconnect()
         LOG_DEBUG( "Not connected, ignoring disconnect attempt" );
     }
 
-    iConnection->disconnect();
+    closeOpenOBEX();
 }
 
 void OBEXServerWorker::waitForPut()
@@ -148,7 +139,7 @@ int OBEXServerWorker::process( State aNextState )
 
     while( iProcessing )
     {
-        result = OBEX_HandleInput( iTransportHandle, iTimeOut );
+        result = OBEX_HandleInput( getHandle(), iTimeOut );
 
         if( result <= 0 )
         {
@@ -207,10 +198,10 @@ void OBEXServerWorker::linkError()
     iState = STATE_IDLE;
     iProcessing = false;
 
-    if( iConnected )
+    if( isConnected() )
     {
-        iConnected = false;
-
+        setConnected( false );
+        closeOpenOBEX();
         emit connectionError();
     }
 }
@@ -277,7 +268,7 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
 {
     FUNCTION_CALL_TRACE;
 
-    if( iConnected )
+    if( isConnected() )
     {
         LOG_WARNING( "Already connected, ignoring CONNECT");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
@@ -288,7 +279,7 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
     OBEXDataHandler handler;
     OBEXDataHandler::ConnectCmdData cmdData;
 
-    if( !handler.parseConnectCmd( iTransportHandle, aObject, cmdData ) ) {
+    if( !handler.parseConnectCmd( getHandle(), aObject, cmdData ) ) {
         LOG_WARNING( "Could not parse CONNECT request, ignoring");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
@@ -307,7 +298,7 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
     rspData.iConnectionId = iConnectionId;
     rspData.iWho = cmdData.iTarget;
 
-    if( !handler.createConnectRsp( iTransportHandle, aObject, rspData ) )
+    if( !handler.createConnectRsp( getHandle(), aObject, rspData ) )
     {
         LOG_CRITICAL( "Internal error when creating CONNECT response" );
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_INTERNAL_SERVER_ERROR, OBEX_RSP_INTERNAL_SERVER_ERROR );
@@ -317,7 +308,7 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
     OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
 
     LOG_DEBUG("OBEX session established as server");
-    iConnected = true;
+    setConnected( true );
 
     iProcessing = false;
     iState = STATE_IDLE;
@@ -328,7 +319,7 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iConnected )
+    if( !isConnected() )
     {
         LOG_WARNING( "Not connected, ignoring DISCONNECT");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
@@ -339,7 +330,7 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
     OBEXDataHandler handler;
     OBEXDataHandler::DisconnectCmdData data;
 
-    if( !handler.parseDisconnectCmd( iTransportHandle, aObject, data ) )
+    if( !handler.parseDisconnectCmd( getHandle(), aObject, data ) )
     {
         LOG_WARNING( "Could not parse DISCONNECT request, ignoring");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
@@ -362,7 +353,7 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
     }
 
     LOG_DEBUG("OBEX session disconnected as server");
-    iConnected = false;
+    setConnected( false );
 
     iProcessing = false;
     iState = STATE_IDLE;
@@ -373,7 +364,7 @@ void OBEXServerWorker::PutRequest( obex_object_t *aObject )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iConnected )
+    if( !isConnected() )
     {
         LOG_WARNING( "Not connected, ignoring PUT");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
@@ -384,7 +375,7 @@ void OBEXServerWorker::PutRequest( obex_object_t *aObject )
     OBEXDataHandler handler;
     OBEXDataHandler::PutCmdData data;
 
-    if( !handler.parsePutCmd( iTransportHandle, aObject, data ) ) {
+    if( !handler.parsePutCmd( getHandle(), aObject, data ) ) {
         LOG_WARNING( "Could not parse PUT request, ignoring");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
@@ -419,7 +410,7 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iConnected )
+    if( !isConnected() )
     {
         LOG_WARNING( "Not connected, ignoring GET");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
@@ -430,7 +421,7 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
     OBEXDataHandler handler;
     OBEXDataHandler::GetCmdData cmdData;
 
-    if( !handler.parseGetCmd( iTransportHandle, aObject, cmdData ) ) {
+    if( !handler.parseGetCmd( getHandle(), aObject, cmdData ) ) {
         LOG_WARNING( "Could not parse GET request, ignoring");
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
@@ -452,7 +443,7 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
         rspData.iBody = data;
         rspData.iLength = data.length();
 
-        if( handler.createGetRsp( iTransportHandle, aObject, rspData ) )
+        if( handler.createGetRsp( getHandle(), aObject, rspData ) )
         {
             OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
             LOG_DEBUG( "Responded to GET request for content type" << cmdData.iContentType << "with response of" << data.length() << "bytes" );

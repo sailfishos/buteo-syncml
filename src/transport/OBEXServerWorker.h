@@ -33,12 +33,9 @@
 #ifndef OBEXSERVERWORKER_H
 #define OBEXSERVERWORKER_H
 
-#include <QObject>
-#include <openobex/obex.h>
+#include "OBEXWorker.h"
 
 namespace DataSync {
-
-class OBEXConnection;
 
 /*! \brief Data source for OBEX Server
  *
@@ -64,32 +61,27 @@ public:
 /*! \brief Worker class for handling OBEX server functionality
  *
  */
-class OBEXServerWorker : public QObject
+class OBEXServerWorker : public OBEXWorker
 {
     Q_OBJECT;
 public:
 
     /*! \brief Constructor
      *
-     * @param aConnection Connection to use
-     * @param aSource Data source to user
+     * @param aSource Data source to use
+     * @param aFd File descriptor to use
+     * @param aMTU MTU to use
      * @param aTimeOut Timeout to use in OBEX operations
      */
-    OBEXServerWorker( OBEXConnection* aConnection,
-                      OBEXServerDataSource& aSource,
+    OBEXServerWorker( OBEXServerDataSource& aSource,
+                      int aFd,
+                      qint32 aMTU,
                       int aTimeOut );
 
     /*! \brief Destructor
      *
      */
     virtual ~OBEXServerWorker();
-
-    /*! \brief Returns whether connection is current established
-     *
-     * @return True if connected, otherwise false
-     */
-    bool isConnected();
-
 
 public slots:
 
@@ -165,13 +157,12 @@ private:
 
     void GetRequest( obex_object_t *aObject );
 
-    OBEXConnection*         iConnection;
     OBEXServerDataSource&   iSource;
+    int                     iFd;
+    qint32                  iMTU;
     int                     iTimeOut;
-    bool                    iConnected;
     unsigned int            iConnectionId;
 
-    obex_t*                 iTransportHandle;
     bool                    iProcessing;
     State                   iState;
 

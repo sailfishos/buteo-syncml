@@ -41,10 +41,9 @@
 
 namespace DataSync {
 
-class OBEXConnection;
-class OBEXClientWorker;
-class OBEXServerWorker;
+class OBEXWorker;
 class OBEXWorkerThread;
+class OBEXConnection;
 
 /*! \brief Transport that implements OBEX functionality
  *
@@ -62,51 +61,41 @@ public:
         MODE_OBEX_SERVER     //!< Act as OBEX Server
     };
 
-    /*! \brief Type for transport
+    /*! \brief Connection type hint for transport
+     *
+     * Transport can use this information about the type of connection
+     * to optimize for example used Maximum Transfer Unit (MTU).
      *
      */
-    enum Type
+    enum ConnectionTypeHint
     {
-        TYPE_USB,       //!< Operate over USB
-        TYPE_BT         //!< Operate over BT
+        TYPEHINT_USB,       //!< Operating over USB transport
+        TYPEHINT_BT,        //!< Operating over BT transport
+        TYPEHINT_OTHER      //!< Operating over other transport
     };
 
-    /*! \brief Constructor using file descriptor
+    /*! \brief Constructor
      *
+     * @param aConnection OBEX connection to use
      * @param aOpMode Operation mode for transport
-     * @param aType Type for transport
-     * @param aFd File descriptor to device
      * @param aTimeOut Timeout to use in OBEX operations (in seconds)
+     * @param aTypeHint Connection type hint
      * @param aParent Parent of this QObject
      */
-    OBEXTransport( Mode aOpMode, Type aType, int aFd, int aTimeOut, QObject* aParent = NULL );
-
-    /*! \brief Convenience constructor for OBEX Client over BT
-     *
-     * @param aBTAddress Address of the BT device to connect to
-     * @param aServiceUUID UUID of the service (SyncML client or server) to connect to
-     * @param aTimeOut Timeout to use in OBEX operations (in seconds)
-     * @param aParent Parent of this QObject
-     */
-    OBEXTransport( const QString& aBTAddress, const QString& aServiceUUID,
-                   int aTimeOut, QObject* aParent = NULL );
+    OBEXTransport( OBEXConnection& aConnection, Mode aOpMode, int aTimeOut,
+                   ConnectionTypeHint aTypeHint = TYPEHINT_OTHER,
+                   QObject* aParent = NULL );
 
     /*! \brief Destructor
      *
      */
     virtual ~OBEXTransport();
 
-    /* \brief Sets a transport property
-     *
-     * Properties should usually be set before attempting to send or receive.
-     * Supported properties:
-     * bt-obex-mtu: MTU in OBEX over BT
-     * usb-obex-mtu: MTU in OBEX over USB
-     *
-     * @param aProperty Property to set
-     * @param aValue Value to set
-     */
     virtual void setProperty( const QString& aProperty, const QString& aValue );
+
+    virtual bool init();
+
+    virtual void close();
 
     virtual bool sendSyncML( SyncMLMessage* aMessage );
 
@@ -134,18 +123,18 @@ private slots:
 
 private:
 
-    void setupClient( OBEXConnection* connection );
+    void setupClient( int aFd );
 
-    void setupServer( OBEXConnection* connection );
+    void setupServer( int aFd );
 
+    OBEXConnection&     iConnection;
     Mode                iMode;
-    Type                iType;
-    OBEXWorkerThread*   iWorkerThread;
-    OBEXClientWorker*   iClientWorker;
-    OBEXServerWorker*   iServerWorker;
-
     int                 iTimeOut;
+    ConnectionTypeHint  iTypeHint;
 
+    OBEXWorkerThread*   iWorkerThread;
+    OBEXWorker*         iWorker;
+    qint32              iMTU;
     SyncMLMessage*      iMessage;
 };
 
@@ -157,30 +146,16 @@ class OBEXWorkerThread : public QThread
     Q_OBJECT;
 public:
 
-    /*! \brief Constructor for client
+    /*! \brief Constructor
      *
-     * @param aConnection Connection to use
      * @param aWorker Worker to use
      */
-    OBEXWorkerThread( OBEXConnection* aConnection, OBEXClientWorker* aWorker );
-
-    /*! \brief Constructor for server
-     *
-     * @param aConnection Connection to use
-     * @param aWorker Worker to use
-     */
-    OBEXWorkerThread( OBEXConnection* aConnection, OBEXServerWorker* aWorker );
+    OBEXWorkerThread( OBEXWorker* aWorker );
 
     /*! \brief Destructor
      *
      */
     virtual ~OBEXWorkerThread();
-
-    /*! \brief Retrieves the connection
-     *
-     * @return
-     */
-    OBEXConnection* getConnection();
 
 protected:
 
@@ -190,9 +165,7 @@ protected:
     virtual void run();
 
 private:
-    OBEXConnection*     iConnection;
-    OBEXClientWorker*   iClientWorker;
-    OBEXServerWorker*   iServerWorker;
+    OBEXWorker* iWorker;
 
 };
 

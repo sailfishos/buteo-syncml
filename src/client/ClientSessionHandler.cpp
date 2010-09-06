@@ -72,33 +72,33 @@ void ClientSessionHandler::initiateSync()
 
     setupSyncTargets();
 
-    bool storareCountsMatch = false;
-
-    if (iConfig != NULL &&
-        getStorages().count() == iConfig->getSourceDbs().count() ) {
-        storareCountsMatch = true;
-    }
-
-    if(storareCountsMatch) {
-
-        composeClientInitializationPackage();
-
-        // If doing sync without init phase, move to sending items state
-        if( isSyncWithoutInitPhase() ) {
-            setSyncState( SENDING_ITEMS );
-        }
-        else {
-            setSyncState( LOCAL_INIT );
-        }
-
-        sendNextMessage();
-        getTransport().receive();
-
-    }
-    else {
+    if( getStorages().count() != iConfig->getSourceDbs().count() )
+    {
         LOG_CRITICAL( "Could not create all targets, aborting sync" );
         abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
+        return;
     }
+
+    if( !getTransport().init() )
+    {
+        LOG_CRITICAL( "Could not initialize transport" );
+        abortSync( CONNECTION_ERROR, "Could not initiate transport" );
+        return;
+    }
+
+    composeClientInitializationPackage();
+
+    // If doing sync without init phase, move to sending items state
+    if( isSyncWithoutInitPhase() ) {
+        setSyncState( SENDING_ITEMS );
+    }
+    else {
+        setSyncState( LOCAL_INIT );
+    }
+
+    sendNextMessage();
+    getTransport().receive();
+
 }
 
 void ClientSessionHandler::handleNotificationXML( QList<Fragment*>& aFragments )
@@ -402,41 +402,41 @@ void ClientSessionHandler::finalReceived()
 
 	switch( syncState )
 	{
-	case PREPARED:
-	{
-		composeClientInitializationPackage();
-		setSyncState( LOCAL_INIT );
-		break;
-	}
-	case REMOTE_INIT:
-	{
+        case PREPARED:
+        {
+            composeClientInitializationPackage();
+            setSyncState( LOCAL_INIT );
+            break;
+        }
+        case REMOTE_INIT:
+        {
 
-		composeClientModificationsPackage();
-		setSyncState( SENDING_ITEMS );
+            composeClientModificationsPackage();
+            setSyncState( SENDING_ITEMS );
 
-		break;
-	}
-	case RECEIVING_ITEMS:
-	{
+            break;
+        }
+        case RECEIVING_ITEMS:
+        {
 
-		composeDataUpdateStatusPackage();
-		setSyncState( SENDING_MAPPINGS );
+            composeDataUpdateStatusPackage();
+            setSyncState( SENDING_MAPPINGS );
 
-		break;
-	}
-	case SENDING_ITEMS:
-	case SENDING_MAPPINGS:
-	{
-		setSyncState( FINALIZING );
-		break;
-	}
-	default:
-	{
-                QString errorMsg;
-                SyncState state = getLastError(errorMsg);
-                abortSync( state, errorMsg );
-                break;
-	}
+            break;
+        }
+        case SENDING_ITEMS:
+        case SENDING_MAPPINGS:
+        {
+            setSyncState( FINALIZING );
+            break;
+        }
+        default:
+        {
+            QString errorMsg;
+            SyncState state = getLastError(errorMsg);
+            abortSync( state, errorMsg );
+            break;
+        }
 	}
 }
 
@@ -455,29 +455,27 @@ void ClientSessionHandler::messageParsed()
 
 	switch( syncState )
 	{
-	case PREPARED:
-	case LOCAL_INIT:
-	case REMOTE_INIT:
-	case SENDING_ITEMS:
-	case RECEIVING_ITEMS:
-	case SENDING_MAPPINGS:
-	{
-		sendNextMessage();
-		getTransport().receive();
+        case PREPARED:
+        case LOCAL_INIT:
+        case REMOTE_INIT:
+        case SENDING_ITEMS:
+        case RECEIVING_ITEMS:
+        case SENDING_MAPPINGS:
+        {
+            sendNextMessage();
+            getTransport().receive();
 
-		break;
-	}
-	case FINALIZING:
-	{
-		saveSession();
-		finishSync();
-
-		break;
-	}
-	default:
-	{
-		break;
-	}
+            break;
+        }
+        case FINALIZING:
+        {
+            finishSync();
+            break;
+        }
+        default:
+        {
+            break;
+        }
 	}
 
 }

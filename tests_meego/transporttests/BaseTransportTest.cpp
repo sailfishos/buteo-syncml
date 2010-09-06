@@ -271,6 +271,16 @@ void TestTransport::setProperty( const QString& aProperty, const QString& aValue
     Q_UNUSED( aValue );
 }
 
+bool TestTransport::init()
+{
+    return true;
+}
+
+void TestTransport::close()
+{
+
+}
+
 bool TestTransport::prepareSend()
 {
     return true;

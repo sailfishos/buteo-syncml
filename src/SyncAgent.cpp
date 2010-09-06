@@ -445,6 +445,12 @@ bool SyncAgent::initiateListen( const SyncAgentConfig& aConfig )
         return false;
     }
 
+    if( !aConfig.getTransport()->init() )
+    {
+        LOG_CRITICAL( "SyncAgent: Could not initiate transport" );
+        return false;
+    }
+
     // * Create & start request listener object
 
     RequestListener* listener = new RequestListener(this);

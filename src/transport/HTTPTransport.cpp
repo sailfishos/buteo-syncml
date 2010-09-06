@@ -87,7 +87,7 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
 
 }
 
-void HTTPTransport::init()
+bool HTTPTransport::init()
 {
     FUNCTION_CALL_TRACE;
 
@@ -102,6 +102,13 @@ void HTTPTransport::init()
 #endif
 
     iFirstMessageSent = false;
+
+    return true;
+}
+
+void HTTPTransport::close()
+{
+    FUNCTION_CALL_TRACE;
 }
 
 bool HTTPTransport::prepareSend()
