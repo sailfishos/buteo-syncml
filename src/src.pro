@@ -55,7 +55,8 @@ SOURCES += SyncItem.cpp \
 	NonceStorage.cpp \
 	ServerAlertedNotification.cpp \
 	RequestListener.cpp \
-	DevInfHandler.cpp
+    DevInfHandler.cpp \
+    SyncItemPrefetcher.cpp
 
 HEADERS += SyncItem.h \
 	StoragePlugin.h \
@@ -95,7 +96,8 @@ HEADERS += SyncItem.h \
     SyncMLGlobals.h \
     RequestListener.h \
     DevInfHandler.h \
-    SyncAgentConfigProperties.h
+    SyncAgentConfigProperties.h \
+    SyncItemPrefetcher.h
     
 OTHER_FILES += config/meego-syncml-conf.xsd \
                config/meego-syncml-conf.xml \

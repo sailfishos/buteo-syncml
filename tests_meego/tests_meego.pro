@@ -67,7 +67,8 @@ HEADERS += SyncAgentTest.h \
     NonceStorageTest.h \
     CommandHandlerTest.h \
     TestUtils.h \
-    SANTest.h 
+    SANTest.h \
+    SyncItemPrefetcherTest.h
 SOURCES += Tests.cpp \
     SyncAgentTest.cpp \
     ChangeLogTest.cpp \
@@ -90,7 +91,8 @@ SOURCES += Tests.cpp \
     NonceStorageTest.cpp \
     CommandHandlerTest.cpp \
     TestUtils.cpp \
-    SANTest.cpp 
+    SANTest.cpp \
+    SyncItemPrefetcherTest.cpp
 QMAKE_CLEAN += tests-junit.xml \
     changelog-test.db \
     changelog-test2.db \

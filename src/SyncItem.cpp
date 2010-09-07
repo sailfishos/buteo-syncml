@@ -39,27 +39,19 @@ using namespace DataSync;
 
 SyncItem::SyncItem ()
 {
-    FUNCTION_CALL_TRACE
-
 }
 
 SyncItem::~SyncItem()
 {
-    FUNCTION_CALL_TRACE
-
 }
 
 const SyncItemKey* SyncItem::getKey() const
 {
-    FUNCTION_CALL_TRACE
-
     return &iKey;
 }
 
 void SyncItem::setKey( const SyncItemKey& aKey )
 {
-    FUNCTION_CALL_TRACE
-
     iKey = aKey;
 }
 
@@ -70,34 +62,25 @@ const SyncItemKey* SyncItem::getParentKey() const
 
 void SyncItem::setParentKey( const SyncItemKey& aParentKey )
 {
-    FUNCTION_CALL_TRACE
     iParentKey = aParentKey;
 }
 
 QString SyncItem::getType() const
 {
-    FUNCTION_CALL_TRACE
-
     return iType;
 }
 
 void SyncItem::setType( const QString& aType )
 {
-    FUNCTION_CALL_TRACE
-
     iType = aType;
 }
 
 QString SyncItem::getFormat() const
 {
-    FUNCTION_CALL_TRACE
-
     return iFormat;
 }
 
 void SyncItem::setFormat( const QString& aFormat )
 {
-    FUNCTION_CALL_TRACE
-
     iFormat = aFormat;
 }

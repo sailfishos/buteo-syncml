@@ -38,6 +38,7 @@
 #include "SyncMLCommand.h"
 #include "SyncItemKey.h"
 #include "SyncAgentConsts.h"
+#include "SyncItemPrefetcher.h"
 
 class LocalChangesPackageTest;
 
@@ -105,10 +106,10 @@ private:
 
     struct LargeObjectState
     {
-        SyncItemKey iItemKey;
+        SyncItem*   iItem;
         qint64      iSize;
         qint64      iOffset;
-        LargeObjectState() : iSize(0), iOffset(0) {}
+        LargeObjectState() : iItem( 0 ), iSize(0), iOffset(0) {}
     };
 
     bool processAddedItems( SyncMLMessage& aMessage,
@@ -127,7 +128,6 @@ private:
                               int& aItemsThatCanBeSent);
 
     bool processItem( const SyncItemKey& aItemKey,
-                      SyncItem *aSyncItem,
                       SyncMLLocalChange& aParent,
                       int aSizeThreshold,
                       SyncMLCommand aCommand,
@@ -140,8 +140,7 @@ private:
     LargeObjectState        iLargeObjectState;
     Role                    iRole;
     int 					iMaxChangesPerMessage;
-    QList<SyncItem*>        addeditems;
-    QList<SyncItem*>        modifieditems;
+    SyncItemPrefetcher      iPrefetcher;
 
     friend class ::LocalChangesPackageTest;
 

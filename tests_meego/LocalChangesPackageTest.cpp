@@ -32,148 +32,354 @@
 */
 
 #include "LocalChangesPackageTest.h"
-#include "LocalChangesPackage.h"
+
+#include <QTest>
+
 #include "TestLoader.h"
-#include "internals.h"
-#include "Mock.h"
+#include "SyncItem.h"
+#include "SyncTarget.h"
+#include "LocalChangesPackage.h"
 #include "SyncMLMessage.h"
 #include "QtEncoder.h"
+#include "Mock.h"
+#include "LogMacros.h"
 
-//#include <Logger.h>
-//#include <LogMacros.h>
 
-#include <iostream>
-
-using namespace DataSync;
-
-// Mock class for storage.
-class LCPTStorage: public MockStorage
+LocalChangesPackageStorage::LocalChangesPackageStorage( const QString& aSourceURI )
+    : iSourceURI( aSourceURI )
 {
-public:
-    LCPTStorage(QString id) : MockStorage(id) { }
+    StoragePlugin::ContentFormat format;
+    format.iType = "text/foo";
+    format.iVersion = "1.0";
+    iFormats.append( format );
+}
 
-    virtual SyncItem* getSyncItem ( const SyncItemKey& aKey )
+LocalChangesPackageStorage::~LocalChangesPackageStorage()
+{
+    qDeleteAll( iSyncItems );
+    iSyncItems.clear();
+}
+
+void LocalChangesPackageStorage::setItems( const QList<SyncItem*> aSyncItems )
+{
+    iSyncItems = aSyncItems;
+}
+
+const QString& LocalChangesPackageStorage::getSourceURI() const
+{
+    return iSourceURI;
+}
+
+qint64 LocalChangesPackageStorage::getMaxObjSize() const
+{
+    return 0;
+}
+
+const QList<StoragePlugin::ContentFormat>& LocalChangesPackageStorage::getSupportedFormats() const
+{
+    return iFormats;
+}
+
+const StoragePlugin::ContentFormat& LocalChangesPackageStorage::getPreferredFormat() const
+{
+    return iFormats[0];
+}
+
+QByteArray LocalChangesPackageStorage::getPluginCTCaps( ProtocolVersion aVersion ) const
+{
+    Q_UNUSED( aVersion );
+    return QByteArray();
+}
+
+bool LocalChangesPackageStorage::getAll( QList<SyncItemKey>& aKeys )
+{
+    Q_UNUSED( aKeys );
+    return true;
+}
+
+bool LocalChangesPackageStorage::getModifications( QList<SyncItemKey>& aNewKeys,
+                                                   QList<SyncItemKey>& aReplacedKeys,
+                                                   QList<SyncItemKey>& aDeletedKeys,
+                                                   const QDateTime& aTimeStamp )
+{
+    Q_UNUSED( aNewKeys );
+    Q_UNUSED( aReplacedKeys );
+    Q_UNUSED( aDeletedKeys );
+    Q_UNUSED( aTimeStamp );
+    return true;
+}
+
+SyncItem* LocalChangesPackageStorage::newItem()
+{
+    return NULL;
+}
+
+SyncItem* LocalChangesPackageStorage::getSyncItem( const SyncItemKey& aKey )
+{
+    SyncItem* item = 0;
+
+    for( int i = 0; i < iSyncItems.count(); ++i )
     {
-        if (aKey == "invalid") {
-            return NULL;
-        }
-        else {
-            MockSyncItem* item = new MockSyncItem( aKey );
-            item->write(0, QByteArray( "dataadataa" ) );
-            return item;
+        if( iSyncItems[i] && iSyncItems[i]->getKey() == aKey )
+        {
+            item = iSyncItems[i];
+            iSyncItems.removeAt(i);
+            break;
         }
     }
-};
 
-
-void LocalChangesPackageTest::initTestCase()
-{
-//	Logger::createInstance("/tmp/sync-tests-log" , true);
+    return item;
 }
 
-void LocalChangesPackageTest::cleanupTestCase()
+QList<SyncItem*> LocalChangesPackageStorage::getSyncItems( const QList<SyncItemKey>& aKeyList )
 {
-//    Logger::deleteInstance();
+    QList<SyncItem*> items;
+
+    for( int i = 0; i < aKeyList.count(); ++i )
+    {
+        SyncItem* item = 0;
+
+        for( int a = 0; a < iSyncItems.count(); ++a )
+        {
+            if( iSyncItems[a] && iSyncItems[a]->getKey() == aKeyList[i] )
+            {
+                item = iSyncItems[a];
+                iSyncItems.removeAt(a);
+                break;
+            }
+        }
+
+        items.append( item );
+    }
+
+    return items;
 }
 
-
-void LocalChangesPackageTest::testPackage()
+QList<StoragePlugin::StoragePluginStatus> LocalChangesPackageStorage::addItems( const QList<SyncItem*>& aItems )
 {
-    // Create a mock SyncTarget.
-    const QString source_db = "source";
-    const QString target_db = "target";
+    Q_UNUSED( aItems );
+    QList<StoragePluginStatus> status;
+    return status;
+}
 
-    LCPTStorage storage( source_db );
-    SyncMode mode;
-    SyncTarget target(NULL, &storage, mode, "" );
+QList<StoragePlugin::StoragePluginStatus> LocalChangesPackageStorage::replaceItems( const QList<SyncItem*>& aItems )
+{
+    Q_UNUSED( aItems );
+    QList<StoragePluginStatus> status;
+    return status;
+}
+
+QList<StoragePlugin::StoragePluginStatus> LocalChangesPackageStorage::deleteItems( const QList<SyncItemKey>& aKeys )
+{
+    Q_UNUSED( aKeys );
+    QList<StoragePluginStatus> status;
+    return status;
+}
+
+LocalChangesPackageTest::LocalChangesPackageTest()
+{
+
+}
+
+LocalChangesPackageTest::~LocalChangesPackageTest()
+{
+
+}
+
+void LocalChangesPackageTest::testSimpleClient()
+{
+    // Simple test for LocalChangesPackage for sending few
+    // modifications in a single message in client mode
+
+    const int msgSize = 65535;
+    const int maxChanges = 50;
+
+    LocalChangesPackageStorage storage( "./LocalContacts" );
 
     LocalChanges changes;
-    changes.added.append("added");
-    changes.modified.append("modified");
-    changes.removed.append("removed");
+    QList<SyncItem*> items;
+    const QString itemTypes( "text/foo" );
 
-    LocalChangesPackage pkg(target, changes, 25, ROLE_CLIENT, 22);
-    QCOMPARE(pkg.iNumberOfChanges, 3);
+    const QString addedItemId( "addedItem" );
+    const QByteArray addedItemData ( "addedData" );
+    MockSyncItem* addedItem = new MockSyncItem( addedItemId );
+    addedItem->setType( itemTypes );
+    addedItem->write( 0, addedItemData );
+    items.append( addedItem );
+    changes.added.append( addedItemId );
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
-    const int SIZE_TRESHOLD = 1000;
-    int remaining = SIZE_TRESHOLD;
 
-    QCOMPARE(pkg.write(msg, remaining), true);
-    QVERIFY(remaining < SIZE_TRESHOLD);
+    const QString replacedItemId( "replacedItem" );
+    const QByteArray replacedItemData ( "replacedData" );
+    MockSyncItem* replacedItem = new MockSyncItem( replacedItemId );
+    replacedItem->setType( itemTypes );
+    replacedItem->write( 0, replacedItemData );
+    items.append( replacedItem );
+    changes.modified.append( replacedItemId );
+
+    const QString deletedItemId( "deletedItem" );
+    changes.removed.append( deletedItemId );
+
+    storage.setItems( items );
+
+    SyncMode syncMode;
+    SyncTarget target( NULL, &storage, syncMode, "localAnchor" );
+    target.setTargetDatabase( "./RemoteContacts");
+
+    LocalChangesPackage package( target, changes, msgSize, ROLE_CLIENT, maxChanges );
+
+    SyncMLMessage msg( HeaderParams(), DS_1_2 );
+
+    int remaining = msgSize;
+    QVERIFY( package.write( msg, remaining ) );
+    QVERIFY( remaining < msgSize );
 
     QtEncoder encoder;
     QByteArray result_xml;
     QVERIFY( encoder.encodeToXML( msg, result_xml, true ) );
 
-    QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_ADD) != -1);
-    QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_REPLACE) != -1);
-    QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_DELETE) != -1);
-
-    QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_SIZE) == -1);
+    // Check that the items were written
+    QVERIFY( result_xml.contains( addedItemId.toAscii() ) );
+    QVERIFY( result_xml.contains( addedItemData ) );
+    QVERIFY( result_xml.contains( replacedItemId.toAscii() ) );
+    QVERIFY( result_xml.contains( replacedItemData ) );
+    QVERIFY( result_xml.contains( deletedItemId.toAscii() ) );
 
 }
 
-void LocalChangesPackageTest::testItemsProcessed()
+void LocalChangesPackageTest::testSimpleServer()
 {
-    // Create a mock SyncTarget.
-    const QString source_db = "source";
-    const QString target_db = "target";
+    // Simple test for LocalChangesPackage for sending few
+    // modifications in a single message in server mode
 
-    LCPTStorage storage( source_db );
-    SyncMode mode;
-    SyncTarget target(NULL, &storage, mode, "" );
+    const int msgSize = 65535;
+    const int maxChanges = 50;
 
-	LocalChanges moreChanges;
-	for(int i = 1;i <= 25; i++) {
-		moreChanges.added.append("added" + QString::number(i));
-		moreChanges.modified.append("modified" + QString::number(i));
-		moreChanges.removed.append("removed" + QString::number(i));
-	}
+    LocalChangesPackageStorage storage( "./LocalContacts" );
 
-	LocalChangesPackage pkg(target, moreChanges, 25, ROLE_CLIENT,22);
-	QCOMPARE(pkg.iNumberOfChanges, 75);
+    LocalChanges changes;
+    QList<SyncItem*> items;
+    const QString itemTypes( "text/foo" );
+
+    const QString addedItemId( "addedItem" );
+    const QByteArray addedItemData ( "addedData" );
+    MockSyncItem* addedItem = new MockSyncItem( addedItemId );
+    addedItem->setType( itemTypes );
+    addedItem->write( 0, addedItemData );
+    items.append( addedItem );
+    changes.added.append( addedItemId );
 
 
-	SyncMLMessage msg1(HeaderParams(), DS_1_2);
-	const int SIZE_TRESHOLD = 65536;
-	int remaining = SIZE_TRESHOLD;
+    const QString replacedItemId( "replacedItem" );
+    const QByteArray replacedItemData ( "replacedData" );
+    MockSyncItem* replacedItem = new MockSyncItem( replacedItemId );
+    replacedItem->setType( itemTypes );
+    replacedItem->write( 0, replacedItemData );
+    items.append( replacedItem );
+    changes.modified.append( replacedItemId );
 
-	QCOMPARE(pkg.write(msg1, remaining), false);
-	QVERIFY(remaining < SIZE_TRESHOLD);
+    const QString deletedItemId( "deletedItem" );
+    changes.removed.append( deletedItemId );
+
+    storage.setItems( items );
+
+    SyncMode syncMode;
+    SyncTarget target( NULL, &storage, syncMode, "localAnchor" );
+    target.setTargetDatabase( "./RemoteContacts");
+
+    const QString mappedReplacedItemId( "replacedItemMapped" );
+    UIDMapping replacedMap;
+    replacedMap.iLocalUID = replacedItemId;
+    replacedMap.iRemoteUID = mappedReplacedItemId;
+    target.addUIDMapping( replacedMap );
+
+    const QString mappedDeletedItemId( "deletedItemMapped" );
+    UIDMapping deletedMap;
+    deletedMap.iLocalUID = deletedItemId;
+    deletedMap.iRemoteUID = mappedDeletedItemId;
+    target.addUIDMapping( deletedMap );
+
+    LocalChangesPackage package( target, changes, msgSize, ROLE_SERVER, maxChanges );
+
+    SyncMLMessage msg( HeaderParams(), DS_1_2 );
+
+    int remaining = msgSize;
+    QVERIFY( package.write( msg, remaining ) );
+    QVERIFY( remaining < msgSize );
 
     QtEncoder encoder;
     QByteArray result_xml;
-    QVERIFY( encoder.encodeToXML( msg1, result_xml, true ) );
-//    LOG_DEBUG(result_xml);
+    QVERIFY( encoder.encodeToXML( msg, result_xml, true ) );
 
-    SyncMLMessage msg2(HeaderParams(), DS_1_2);
+    // Check that the items were written
 
-	QCOMPARE(pkg.write(msg2, remaining), false);
-	QVERIFY(remaining < SIZE_TRESHOLD);
-
-	result_xml.clear();
-    QVERIFY( encoder.encodeToXML( msg2, result_xml, true ) );
-//    LOG_DEBUG(result_xml);
-
-    SyncMLMessage msg3(HeaderParams(), DS_1_2);
-
-	QCOMPARE(pkg.write(msg3, remaining), false);
-	QVERIFY(remaining < SIZE_TRESHOLD);
-
-	result_xml.clear();
-    QVERIFY( encoder.encodeToXML( msg3, result_xml, true ) );
-//    LOG_DEBUG(result_xml);
-
-    SyncMLMessage msg4(HeaderParams(), DS_1_2);
-
-	QCOMPARE(pkg.write(msg4, remaining), true);
-	QVERIFY(remaining < SIZE_TRESHOLD);
+    QVERIFY( result_xml.contains( addedItemId.toAscii() ) );
+    QVERIFY( result_xml.contains( addedItemData ) );
+    QVERIFY( result_xml.contains( mappedReplacedItemId.toAscii() ) );
+    QVERIFY( result_xml.contains( replacedItemData ) );
+    QVERIFY( result_xml.contains( mappedDeletedItemId.toAscii() ) );
 
 
-	result_xml.clear();
-    QVERIFY( encoder.encodeToXML( msg4, result_xml, true ) );
-//    LOG_DEBUG(result_xml);
 }
 
+void LocalChangesPackageTest::testLargeObjects()
+{
+    // Test for LocalChangesPackage for checking if sending of large objects
+    // functions properly
+
+    const int msgSize = 1024;
+    const int objSize = 1536;
+    const int maxChanges = 50;
+
+    LocalChangesPackageStorage storage( "./LocalContacts" );
+
+    LocalChanges changes;
+    QList<SyncItem*> items;
+    const QString itemTypes( "text/foo" );
+
+    const QString addedItemId( "addedItem" );
+    QByteArray addedItemData;
+    addedItemData.fill( '0', objSize );
+    MockSyncItem* addedItem = new MockSyncItem( addedItemId );
+    addedItem->setType( itemTypes );
+    addedItem->write( 0, addedItemData );
+    items.append( addedItem );
+    changes.added.append( addedItemId );
+
+    storage.setItems( items );
+
+    SyncMode syncMode;
+    SyncTarget target( NULL, &storage, syncMode, "localAnchor" );
+    target.setTargetDatabase( "./RemoteContacts");
+
+    LocalChangesPackage package( target, changes, msgSize, ROLE_CLIENT, maxChanges );
+
+    int remaining = msgSize;
+    SyncMLMessage msg1( HeaderParams(), DS_1_2 );
+    QVERIFY( !package.write( msg1, remaining ) );
+    QVERIFY( remaining < msgSize );
+
+    QtEncoder encoder;
+    QByteArray result_xml1;
+    QVERIFY( encoder.encodeToXML( msg1, result_xml1, true ) );
+
+    // Check that the item was written with MoreData
+
+    QVERIFY( result_xml1.contains( addedItemId.toAscii() ) );
+    QVERIFY( result_xml1.contains( "MoreData" ) );
+
+    remaining = msgSize;
+    SyncMLMessage msg2( HeaderParams(), DS_1_2 );
+    QVERIFY( package.write( msg2, remaining ) );
+    QVERIFY( remaining < msgSize );
+
+    QByteArray result_xml2;
+    QVERIFY( encoder.encodeToXML( msg2, result_xml2, true ) );
+
+    // Check that the rest of the item was written
+
+    QVERIFY( result_xml2.contains( addedItemId.toAscii() ) );
+    QVERIFY( !result_xml2.contains( "MoreData" ) );
+
+}
 TESTLOADER_ADD_TEST(LocalChangesPackageTest);
