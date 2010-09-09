@@ -44,6 +44,7 @@
 #include "SyncAgent.h"
 #include "TestUtils.h"
 #include "ServerAlertedNotification.h"
+#include "SyncAgentConfigProperties.h"
 
 using namespace DataSync;
 
@@ -465,12 +466,15 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     config.setDatabaseFilePath("/tmp/sessionhandler.db");
     config.setSyncParams( "", DS_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
 
+    QStringList mappings;
+    mappings << "Contacts" << "text/x-vcard";
+    config.setExtension( SANMAPPINGSEXTENSION, QVariant( mappings ) );
+
     QByteArray message;
     QVERIFY( readFile( "testfiles/SAN01.bin", message ) );
 
     // Start.
     ClientSessionHandler session_handler(&config, NULL);
-    session_handler.initiateSync();
 
     // Fake SAN
 

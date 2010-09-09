@@ -291,10 +291,6 @@ namespace DataSync
 
     #define SYNCML_FORMAT_ENCODING_B64 "b64"
 
-    // Silly Ovi.com developers don't want to follow standards. This encoding
-    // is the same as "b64"
-    #define OVI_FORMAT_ENCODING_B64 "bin"
-
     #define SYNCML_FORMAT_AUTH_BASIC "syncml:auth-basic"
     #define SYNCML_FORMAT_AUTH_MD5 "syncml:auth-md5"
 
@@ -309,11 +305,10 @@ namespace DataSync
 
     #define DEFAULT_MAX_CHANGES_TO_SEND 22
     #define DEFAULT_MAX_MESSAGESIZE     16384
-    #define DEFAULT_OBEX_MTU            1024
 
-    #define MAXMSGOVERHEADRATIO      0.1f
-    #define MINMSGOVERHEADBYTES      256
-    #define WBXMLCOMPRESSIONRATE     0.66f
+    #define MAXMSGOVERHEADRATIO         0.1f
+    #define MINMSGOVERHEADBYTES         256
+    #define WBXMLCOMPRESSIONRATE        0.66f
 
 } // end namespace DataSync
 

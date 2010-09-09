@@ -51,7 +51,7 @@
         </xs:simpleType>
     </xs:element>
         
-    <xs:element name="bt-obex-mtu">
+    <xs:element name="obex-mtu-bt">
         <xs:simpleType>
             <xs:restriction base="xs:integer">
                 <xs:minInclusive value="255"/>
@@ -60,11 +60,28 @@
         </xs:simpleType>
     </xs:element>
     
-    <xs:element name="usb-obex-mtu">
+    <xs:element name="obex-mtu-usb">
         <xs:simpleType>
             <xs:restriction base="xs:integer">
                 <xs:minInclusive value="255"/>
                 <xs:maxInclusive value="65535"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="obex-mtu-other">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minInclusive value="255"/>
+                <xs:maxInclusive value="65535"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
+    <xs:element name="obex-timeout">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <xs:minExclusive value="0"/>
             </xs:restriction>
         </xs:simpleType>
     </xs:element>
@@ -95,8 +112,10 @@
     <xs:element name="transport-props">
         <xs:complexType>
             <xs:sequence>
-                <xs:element ref="bt-obex-mtu"/>
-                <xs:element ref="usb-obex-mtu"/>
+                <xs:element ref="obex-mtu-bt"/>
+                <xs:element ref="obex-mtu-usb"/>
+                <xs:element ref="obex-mtu-other"/>
+                <xs:element ref="obex-timeout"/>
                 <xs:element ref="http-number-of-resend-attempts"/>
                 <xs:element ref="http-proxy-host" minOccurs="0"/>
                 <xs:element ref="http-proxy-port" minOccurs="0"/>

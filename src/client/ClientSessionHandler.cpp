@@ -185,32 +185,15 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
 
         QString mime = aData.iSyncInfo[i].iContentType;
 
-        // Hacks for content types (OVI Suite, S60)
-        // OVI Suite and S60 do not use WSP Content Types to give mime information,
-        // because WSP's define mime codes only for contacts, calendar and notes.
-        // They only send hardcoded server URI's, which we must convert to respective
-        // mime types
-        if( mime.isEmpty() ) {
+        if( mime.isEmpty() )
+        {
+            mime = convertSANURItoMIME( serverURI );
+        }
 
-            if( serverURI.contains( "Contacts", Qt::CaseInsensitive ) ) {
-                mime = "text/x-vcard";
-            }
-            else if( serverURI.contains( "Calendar", Qt::CaseInsensitive ) ) {
-                mime = "text/x-vcalendar";
-            }
-            else if( serverURI.contains( "Notes", Qt::CaseInsensitive ) ) {
-                mime = "text/plain";
-            }
-            else if( serverURI.contains( "Bookmarks", Qt::CaseInsensitive ) ) {
-                mime = "text/x-vbookmark";
-            }
-            else if( serverURI.contains( "sms", Qt::CaseInsensitive ) ) {
-                mime = "text/x-vmsg";
-            }
-            else {
-                LOG_CRITICAL( "Could not find MIME for server URI:" << serverURI );
-            }
-
+        if( mime.isEmpty() )
+        {
+            LOG_CRITICAL( "Could not find MIME for server URI:" << serverURI );
+            continue;
         }
 
         LOG_DEBUG( "Searching for storage with MIME type" << mime );
@@ -759,6 +742,8 @@ void ClientSessionHandler::composeResultAlert()
 
 void ClientSessionHandler::discoverClientLocalChanges()
 {
+    FUNCTION_CALL_TRACE;
+
 	// @todo: check what we should do if discovering local changes fails. Probably
 	//        internal abort as we can't reliable achieve synchronization?
 
@@ -771,4 +756,29 @@ void ClientSessionHandler::discoverClientLocalChanges()
             }
         }
     }
+}
+
+QString ClientSessionHandler::convertSANURItoMIME( const QString& aServerURI )
+{
+    FUNCTION_CALL_TRACE;
+
+    QString mime;
+    if( getConfig()->extensionEnabled( SANMAPPINGSEXTENSION ) )
+    {
+
+        QStringList mappings = getConfig()->getExtensionData( SANMAPPINGSEXTENSION ).toStringList();
+
+        for( int i = 0; i < mappings.count(); i+=2 )
+        {
+            if( aServerURI.contains( mappings[i], Qt::CaseInsensitive ) )
+            {
+                mime = mappings[i+1];
+                LOG_DEBUG( "Found mapping for server URI" << aServerURI <<":" << mime );
+                break;
+            }
+        }
+
+    }
+
+    return mime;
 }

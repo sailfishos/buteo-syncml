@@ -296,6 +296,20 @@ void SyncAgentConfig::setExtension( const QString& aName, const QVariant& aData 
             LOG_WARNING( "Sync without init phase extension: data should be invalid!" );
         }
     }
+    else if( aName == SANMAPPINGSEXTENSION )
+    {
+        QStringList mappings = aData.toStringList();
+
+        if( !mappings.isEmpty() && mappings.count() % 2 == 0 )
+        {
+            valid = true;
+        }
+        else
+        {
+            LOG_WARNING( "SAN mappings extension: missing required data!" );
+        }
+
+    }
     else
     {
         LOG_WARNING( "Unknown extension" << aName );
@@ -457,19 +471,33 @@ bool SyncAgentConfig::parseTransportProps( QXmlStreamReader& aReader )
         if( aReader.tokenType() == QXmlStreamReader::StartElement )
         {
 
-            if( aReader.name() == BTOBEXMTUPROP )
+            if( aReader.name() == OBEXMTUBTPROP )
             {
                 aReader.readNext();
                 QString btObexMtu = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << BTOBEXMTUPROP <<":" << btObexMtu );
-                setTransportProperty( BTOBEXMTUPROP, btObexMtu );
+                LOG_DEBUG( "Found transport property" << OBEXMTUBTPROP <<":" << btObexMtu );
+                setTransportProperty( OBEXMTUBTPROP, btObexMtu );
             }
-            else if( aReader.name() == USBOBEXMTUPROP )
+            else if( aReader.name() == OBEXMTUUSBPROP )
             {
                 aReader.readNext();
                 QString usbObexMtu = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << USBOBEXMTUPROP <<":" << usbObexMtu );
-                setTransportProperty( USBOBEXMTUPROP, usbObexMtu );
+                LOG_DEBUG( "Found transport property" << OBEXMTUUSBPROP <<":" << usbObexMtu );
+                setTransportProperty( OBEXMTUUSBPROP, usbObexMtu );
+            }
+            else if( aReader.name() == OBEXMTUOTHERPROP )
+            {
+                aReader.readNext();
+                QString otherObexMtu = aReader.text().toString();
+                LOG_DEBUG( "Found transport property" << OBEXMTUOTHERPROP <<":" << otherObexMtu );
+                setTransportProperty( OBEXMTUOTHERPROP, otherObexMtu );
+            }
+            else if( aReader.name() == OBEXTIMEOUTPROP )
+            {
+                aReader.readNext();
+                QString obexTimeout= aReader.text().toString();
+                LOG_DEBUG( "Found transport property" << OBEXTIMEOUTPROP <<":" << obexTimeout );
+                setTransportProperty( OBEXTIMEOUTPROP, obexTimeout );
             }
             else if( aReader.name() == HTTPNUMBEROFRESENDATTEMPTSPROP )
             {
@@ -512,16 +540,13 @@ bool SyncAgentConfig::parseSyncExtensions( QXmlStreamReader& aReader )
     FUNCTION_CALL_TRACE
 
     const QString EXTENSIONS( "extensions" );
-    const QString EMITAGS( "emi-tags" );
-    const QString EMITAGSTOKEN( "token" );
-    const QString EMITAGSRESPONSE( "response" );
 
     while( !aReader.atEnd() )
     {
         if( aReader.tokenType() == QXmlStreamReader::StartElement )
         {
 
-            if( aReader.name() == EMITAGS )
+            if( aReader.name() == EMITAGSEXTENSION )
             {
                 parseEMITagsExtension( aReader );
             }
@@ -532,6 +557,10 @@ bool SyncAgentConfig::parseSyncExtensions( QXmlStreamReader& aReader )
 
                 QVariant data;
                 setExtension( SYNCWITHOUTINITPHASEEXTENSION, data );
+            }
+            else if( aReader.name() == SANMAPPINGSEXTENSION )
+            {
+                parseSANMappingsExtension( aReader );
             }
 
         }
@@ -551,7 +580,6 @@ bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
 {
     FUNCTION_CALL_TRACE
 
-    const QString EMITAGS( "emi-tags" );
     const QString EMITAGSTOKEN( "token" );
     const QString EMITAGSRESPONSE( "response" );
 
@@ -579,7 +607,7 @@ bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
 
         }
         else if( aReader.tokenType() == QXmlStreamReader::EndElement &&
-                 aReader.name() == EMITAGS )
+                 aReader.name() == EMITAGSEXTENSION )
         {
             break;
         }
@@ -589,7 +617,79 @@ bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
 
     QStringList data;
     data << token << response;
-    setExtension( EMITAGS, QVariant( data ) );
+    setExtension( EMITAGSEXTENSION, QVariant( data ) );
+
+    return true;
+}
+
+bool SyncAgentConfig::parseSANMappingsExtension( QXmlStreamReader& aReader )
+{
+    FUNCTION_CALL_TRACE;
+
+    const QString SANMAPPING( "san-mapping" );
+
+    QStringList data;
+
+    while( !aReader.atEnd() )
+    {
+        if( aReader.tokenType() == QXmlStreamReader::StartElement &&
+            aReader.name() == SANMAPPING )
+        {
+            parseSANMappingData( aReader, data );
+        }
+        else if( aReader.tokenType() == QXmlStreamReader::EndElement &&
+                 aReader.name() == SANMAPPINGSEXTENSION )
+        {
+            break;
+        }
+        aReader.readNext();
+    }
+
+    setExtension( SANMAPPINGSEXTENSION, QVariant( data ) );
+
+    return true;
+
+}
+
+bool SyncAgentConfig::parseSANMappingData( QXmlStreamReader& aReader,
+                                           QStringList& aMappings )
+{
+    FUNCTION_CALL_TRACE;
+
+    const QString SANMAPPING( "san-mapping" );
+    const QString URI( "uri" );
+    const QString MIME( "mime" );
+
+    QString uri;
+    QString mime;
+
+    while( !aReader.atEnd() )
+    {
+        if( aReader.tokenType() == QXmlStreamReader::StartElement )
+        {
+            if( aReader.name() == URI )
+            {
+                aReader.readNext();
+                uri = aReader.text().toString();
+                LOG_DEBUG( "Found SAN URI:" << uri );
+            }
+            else if( aReader.name() == MIME )
+            {
+                aReader.readNext();
+                mime = aReader.text().toString();
+                LOG_DEBUG( "Found SAN MIME:" << mime );
+            }
+        }
+        else if( aReader.tokenType() == QXmlStreamReader::EndElement &&
+                 aReader.name() == SANMAPPING )
+        {
+            break;
+        }
+
+        aReader.readNext();
+    }
+
+    aMappings << uri << mime;
 
     return true;
 }

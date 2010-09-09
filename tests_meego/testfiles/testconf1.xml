@@ -9,8 +9,10 @@
         <fast-maps-send>1</fast-maps-send>
     </agent-props>
     <transport-props>
-    	<bt-obex-mtu>1024</bt-obex-mtu>
-    	<usb-obex-mtu>2048</usb-obex-mtu>
+        <obex-mtu-bt>1024</obex-mtu-bt>
+        <obex-mtu-usb>2048</obex-mtu-usb>
+        <obex-mtu-other>4096</obex-mtu-other>
+        <obex-timeout>120</obex-timeout>
     	<http-number-of-resend-attempts>3</http-number-of-resend-attempts>
     	<http-proxy-host>http://www.google.com</http-proxy-host>
     	<http-proxy-port>666</http-proxy-port>
@@ -21,5 +23,15 @@
             <response>AckMe</response>
         </emi-tags>
         <sync-without-init-phase/>
+        <san-mappings>
+            <san-mapping>
+                <uri>Map1</uri>
+                <mime>text/foo1</mime>
+            </san-mapping>
+            <san-mapping>
+                <uri>Map2</uri>
+                <mime>text/foo2</mime>
+            </san-mapping>
+        </san-mappings>
     </extensions>    
 </meego-syncml-conf>

@@ -49,10 +49,17 @@ const QString CONFLICTRESOLUTIONPOLICYPROP( "conflict-resolution-policy" );
 const QString FASTMAPSSENDPROP( "fast-maps-send" );
 
 // Property to control the maximum transfer unit of OBEX over BT
-const QString BTOBEXMTUPROP( "bt-obex-mtu" );
+const QString OBEXMTUBTPROP( "obex-mtu-bt" );
 
 // Property to control the maximum transfer unit of OBEX over USB
-const QString USBOBEXMTUPROP( "usb-obex-mtu" );
+const QString OBEXMTUUSBPROP( "obex-mtu-usb" );
+
+// Property to control the maximum transfer unit of OBEX over custom
+// transport
+const QString OBEXMTUOTHERPROP( "obex-mtu-other" );
+
+// Property to control the timeout to use with OBEX operations
+const QString OBEXTIMEOUTPROP( "obex-timeout" );
 
 // Property to control the number of times the sending of first message is
 // attempted
@@ -69,6 +76,9 @@ const QString EMITAGSEXTENSION( "emi-tags" );
 
 // Property to control sync without initialization phase extension
 const QString SYNCWITHOUTINITPHASEEXTENSION( "sync-without-init-phase" );
+
+// Property to control SAN mappings extension
+const QString SANMAPPINGSEXTENSION( "san-mappings" );
 
 }
 

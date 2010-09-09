@@ -349,30 +349,46 @@ private:
     /*! \brief Parse agent properties
      *
      * @param aReader XML stream reader to use
-     * @return True on succcess, otherwise false
+     * @return True on success, otherwise false
      */
     bool parseAgentProps( QXmlStreamReader& aReader );
 
     /*! \brief Parse transport properties
      *
      * @param aReader XML stream reader to use
-     * @return True on succcess, otherwise false
+     * @return True on success, otherwise false
      */
     bool parseTransportProps( QXmlStreamReader& aReader );
 
     /*! \brief Parse protocol extensions
      *
      * @param aReader XML stream reader to use
-     * @return True on succcess, otherwise false
+     * @return True on success, otherwise false
      */
     bool parseSyncExtensions( QXmlStreamReader& aReader );
 
     /*! \brief Parse EMI tags extension data
      *
      * @param aReader XML stream reader to use
-     * @return True on succcess, otherwise false
+     * @return True on success, otherwise false
      */
     bool parseEMITagsExtension( QXmlStreamReader& aReader );
+
+    /*! \brief Parse SAN Mappings extension data
+     *
+     * @param aReader XML stream reader to use
+     * @return True on success, otherwise false
+     */
+    bool parseSANMappingsExtension( QXmlStreamReader& aReader );
+
+    /*! \brief Parse data of single SAN Mapping
+     *
+     * @param aReader XML stream reader to use
+     * @param aMappings Mappings table to insert data to
+     * @return True on success, otherwise false
+     */
+    bool parseSANMappingData( QXmlStreamReader& aReader,
+                              QStringList& aMappings );
 
     Transport*                      iTransport;
     StorageProvider*                iStorageProvider;

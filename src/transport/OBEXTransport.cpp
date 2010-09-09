@@ -41,15 +41,17 @@
 #include "LogMacros.h"
 
 // Default MTU, recommended by OpenOBEX
-#define DEFAULT_MTU 1024
+#define DEFAULT_MTU     1024
+
+// Default OBEX timeout
+#define DEFAULT_TIMEOUT 120
 
 using namespace DataSync;
 
 OBEXTransport::OBEXTransport( OBEXConnection& aConnection, Mode aOpMode,
-                              int aTimeOut, ConnectionTypeHint aTypeHint,
-                              QObject* aParent )
+                              ConnectionTypeHint aTypeHint, QObject* aParent )
 : BaseTransport( aParent ), iConnection( aConnection ), iMode( aOpMode ),
-  iTimeOut( aTimeOut ), iTypeHint( aTypeHint ), iWorkerThread( 0 ),
+  iTimeOut( DEFAULT_TIMEOUT ), iTypeHint( aTypeHint ), iWorkerThread( 0 ),
   iWorker( 0 ), iMTU( DEFAULT_MTU ), iMessage( 0 )
 {
 
@@ -67,21 +69,30 @@ void OBEXTransport::setProperty( const QString& aProperty, const QString& aValue
 {
     FUNCTION_CALL_TRACE;
 
-    //const QString BTOBEXMTU( "bt-obex-mtu" );
-    //const QString USBOBEXMTU( "usb-obex-mtu" );
+    //obex-mtu-bt:
+    if( aProperty == OBEXMTUBTPROP && iTypeHint == TYPEHINT_BT )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iMTU = aValue.toInt();
+    }
+    //obex-mtu-usb:
+    else if( aProperty == OBEXMTUUSBPROP&& iTypeHint == TYPEHINT_USB )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iMTU = aValue.toInt();
+    }
+    //obex-mtu-other:
+    else if( aProperty == OBEXMTUOTHERPROP && iTypeHint == TYPEHINT_OTHER )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iMTU = aValue.toInt();
+    }
+    else if( aProperty == OBEXTIMEOUTPROP )
+    {
+        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        iTimeOut = aValue.toInt();
+    }
 
-    //bt-obex-mtu:
-    if( aProperty == BTOBEXMTUPROP && iTypeHint == TYPEHINT_BT )
-    {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
-        iMTU = aValue.toInt();
-    }
-    //usb-obex-mtu:
-    else if( aProperty == USBOBEXMTUPROP && iTypeHint == TYPEHINT_USB )
-    {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
-        iMTU = aValue.toInt();
-    }
 
 }
 

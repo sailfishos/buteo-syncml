@@ -78,11 +78,10 @@ public:
      *
      * @param aConnection OBEX connection to use
      * @param aOpMode Operation mode for transport
-     * @param aTimeOut Timeout to use in OBEX operations (in seconds)
      * @param aTypeHint Connection type hint
      * @param aParent Parent of this QObject
      */
-    OBEXTransport( OBEXConnection& aConnection, Mode aOpMode, int aTimeOut,
+    OBEXTransport( OBEXConnection& aConnection, Mode aOpMode,
                    ConnectionTypeHint aTypeHint = TYPEHINT_OTHER,
                    QObject* aParent = NULL );
 

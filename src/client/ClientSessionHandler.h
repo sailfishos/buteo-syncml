@@ -122,6 +122,8 @@ private:  // functions
 
     void composeResultAlert();
 
+    QString convertSANURItoMIME( const QString& aServerURI );
+
 private: // data
 
     const DataSync::SyncAgentConfig*    iConfig;            ///< A pointer to configuration

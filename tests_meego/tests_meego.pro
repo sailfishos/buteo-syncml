@@ -129,7 +129,9 @@ OTHER_FILES += testfiles/transport_initrequest_nohdr.txt \
     testfiles/respinvalid3.txt \
     testfiles/respinvalid4.txt \
     testfiles/respinvalid5.txt \
-    testfiles/respinvalid6.txt
+    testfiles/respinvalid6.txt \
+    testfiles/testconf.xsd \
+    testfiles/testconf1.xml
     
 QMAKE_CXXFLAGS += -Wall \
     -g

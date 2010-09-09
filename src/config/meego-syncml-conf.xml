@@ -9,8 +9,10 @@
         <fast-maps-send>0</fast-maps-send>
     </agent-props>
     <transport-props>
-    	<bt-obex-mtu>1024</bt-obex-mtu>
-    	<usb-obex-mtu>1024</usb-obex-mtu>
+        <obex-mtu-bt>16384</obex-mtu-bt>
+        <obex-mtu-usb>32768</obex-mtu-usb>
+        <obex-mtu-other>1024</obex-mtu-other>
+        <obex-timeout>120</obex-timeout>
     	<http-number-of-resend-attempts>3</http-number-of-resend-attempts>
     </transport-props>
 </meego-syncml-conf>

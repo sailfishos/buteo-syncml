@@ -67,9 +67,13 @@ void SyncAgentConfigTest::testConfParsing()
 
     QCOMPARE( config.getAgentProperty( FASTMAPSSENDPROP ).toInt(), 1 );
 
-    QCOMPARE( config.getTransportProperty( BTOBEXMTUPROP ).toInt(), 1024 );
+    QCOMPARE( config.getTransportProperty( OBEXMTUBTPROP ).toInt(), 1024 );
 
-    QCOMPARE( config.getTransportProperty( USBOBEXMTUPROP ).toInt(), 2048 );
+    QCOMPARE( config.getTransportProperty( OBEXMTUUSBPROP ).toInt(), 2048 );
+
+    QCOMPARE( config.getTransportProperty( OBEXMTUOTHERPROP ).toInt(), 4096 );
+
+    QCOMPARE( config.getTransportProperty( OBEXTIMEOUTPROP ).toInt(), 120 );
 
     QCOMPARE( config.getTransportProperty( HTTPNUMBEROFRESENDATTEMPTSPROP ).toInt(), 3 );
 
@@ -90,6 +94,18 @@ void SyncAgentConfigTest::testConfParsing()
     QCOMPARE( tags[1], ack );
 
     QVERIFY( config.extensionEnabled( SYNCWITHOUTINITPHASEEXTENSION ) );
+
+    data = config.getExtensionData( SANMAPPINGSEXTENSION );
+
+    QVERIFY( data.isValid() );
+
+    QStringList mappings = data.toStringList();
+
+    QCOMPARE( mappings.count(), 4 );
+    QCOMPARE( mappings[0], QString( "Map1" ) );
+    QCOMPARE( mappings[1], QString( "text/foo1" ) );
+    QCOMPARE( mappings[2], QString( "Map2" ) );
+    QCOMPARE( mappings[3], QString( "text/foo2" ) );
 
 }
 
