@@ -265,12 +265,6 @@ namespace DataSync
     #define SYNCML_CONTTYPE_WBXML "application/vnd.syncml+wbxml"
     #define SYNCML_CONTTYPE_SAN "application/vnd.syncml.ds.notification"
 
-    #define SYNCML_DEVINFO_MANUFACTURER "Nokia"
-    #define SYNCML_DEVINFO_MODEL ""
-    #define SYNCML_DEVINFO_FW_VERSION ""
-    #define SYNCML_DEVINFO_SW_VERSION ""
-    #define SYNCML_DEVINFO_HW_VERSION ""
-    #define SYNCML_DEVINFO_DEVID ""
     #define SYNCML_DEVINFO_DEVTYPE "phone"
     #define SYNCML_DSINFO_MAXGUIDSIZE "32"
     #define SYNCML_DEVINF_PATH_11 "./devinf11"

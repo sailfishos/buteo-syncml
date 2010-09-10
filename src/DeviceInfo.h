@@ -38,7 +38,7 @@
 namespace DataSync
 {
 
-/*! \brief DeviceInfo includes information about the device
+/*! \brief DeviceInfo includes information about a device
  *
  */
 class DeviceInfo
@@ -54,6 +54,96 @@ public:
      */
     ~DeviceInfo();
 
+    /*! \brief Sets the device manufacturer
+     *
+     * @param aManufacturer Device manufacturer
+     */
+    void setManufacturer( const QString& aManufacturer );
+
+    /*! \brief Returns the manufacturer
+     *
+     * @return
+     */
+    const QString& getManufacturer() const;
+
+    /*! \brief Sets the device model
+     *
+     * @param aModel Device model
+     */
+    void setModel( const QString& aModel );
+
+    /*! \brief Returns the device model
+     *
+     * @return
+     */
+    const QString& getModel() const;
+
+    /*! \brief Sets the device OEM
+     *
+     * @param aOEM Device OEM
+     */
+    void setOEM( const QString& aOEM );
+
+    /*! \brief Returns the OEM
+     *
+     * @return
+     */
+    const QString& getOEM() const;
+
+    /*! \brief Sets the device firmware version
+     *
+     * @param aFirmwareVersion Device firmware version
+     */
+    void setFirmwareVersion( const QString& aFirmwareVersion );
+
+    /*! \brief Returns the device firmware version
+     *
+     * @return
+     */
+    const QString& getFirmwareVersion() const;
+
+    /*! \brief Sets the software version
+     *
+     * @param aSoftwareVersion Device software version
+     */
+    void setSoftwareVersion( const QString& aSoftwareVersion );
+
+    /*! \brief Returns the device software version
+     *
+     * @return
+     */
+    const QString& getSoftwareVersion() const;
+
+    /*! \brief Sets the device hardware version
+     *
+     * @param aHardwareVersion Device hardware version
+     */
+    void setHardwareVersion( const QString& aHardwareVersion );
+
+    /*! \brief Returns the device hardware version
+     *
+     * @return
+     */
+    const QString& getHardwareVersion() const;
+
+    /*! \brief Sets the device type
+     *
+     * Possible device types are enumerated in OMA DS Device
+     * Information document in section 5.3.7
+     *
+     * @param aDeviceType Device type
+     */
+    void setDeviceType( const QString& aDeviceType );
+
+    /*! \brief Returns the device type
+     *
+     * Possible device types are enumerated in OMA DS Device
+     * Information document in section 5.3.7
+     *
+     * @return
+     */
+    const QString& getDeviceType() const;
+
     /*! \brief Sets the globally unique device identification of this device
      *
      * @param aDeviceID Device identification
@@ -66,99 +156,19 @@ public:
      */
     const QString& getDeviceID() const;
 
-
-    /*! \brief Sets the Manufacturer
+    /*! \brief Read device information from a file
      *
-     * @param aManufacturer Device manufacturer
+     * @param aFileName File to read
+     * @return True on success, otherwise false
      */
-    void setManufacturer( const QString& aManufacturer );
-
-    /*! \brief Returns the device manufacturer
-     *
-     * @return
-     */
-    const QString& getManufacturer() const;
-
-
-    /*! \brief Sets the Model
-     *
-     * @param aModel
-     */
-    void setModel( const QString& aModel );
-
-    /*! \brief Returns the device model
-     *
-     * @return
-     */
-    const QString& getModel() const;
-
-    /*! \brief Sets the FirmwareVersion
-     *
-     * @param aFirmwareVersion
-     */
-    void setFirmwareVersion( const QString& aFirmwareVersion );
-
-    /*! \brief Returns the firmware version of the device
-     *
-     * @return
-     */
-    const QString& getFirmwareVersion() const;
-
-    /*! \brief Sets the SoftwareVersion
-     *
-     * @param aSoftwareVersion
-     */
-    void setSoftwareVersion( const QString& aSoftwareVersion );
-
-    /*! \brief Returns the software version of the device
-     *
-     * @return
-     */
-    const QString& getSoftwareVersion() const;
-
-    /*! \brief Sets the HardwareVersion
-     *
-     * @param aHardwareVersion
-     */
-    void setHardwareVersion( const QString& aHardwareVersion );
-
-    /*! \brief Returns the hardware version of the device
-     *
-     * @return
-     */
-    const QString& getHardwareVersion() const;
-
-    /*! \brief Sets the DeviceType
-     *
-     * @param aDeviceType
-     */
-    void setDeviceType( const QString& aDeviceType );
-
-    /*! \brief Returns the type of the device.
-     *
-     * Possible device types are enumerated in OMA DS Device
-     * Information document in section 5.3.7
-     *
-     * @return
-     */
-    const QString& getDeviceType() const;
-
-    /*! \brief Returns the type of the device.
-     *
-     * Possible device types are enumerated in OMA DS Device
-     * Information document in section 5.3.7
-     *
-     * @return
-     */
-    bool readFromFile(QString &aFileName);
-
-protected:
+    bool readFromFile(const QString &aFileName);
 
 private:
 
     QString iDeviceID;
     QString iManufacturer;
     QString iModel;
+    QString iOEM;
     QString iFirmwareVersion;
     QString iSoftwareVersion;
     QString iHardwareVersion;
