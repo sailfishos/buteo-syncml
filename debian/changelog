@@ -1,5 +1,6 @@
 libmeegosyncml (0.4.9-32) unstable; urgency=low
 
+  * Implemented item data prefetching on idle time
   * Added more configuration parameters
 
  -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Wed, 15 Sep 2010 15:00:00 +0300
