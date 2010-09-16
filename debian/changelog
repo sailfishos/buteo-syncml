@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.9-33) unstable; urgency=low
+
+  * Disabled schema-based validation of conf file
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 16 Sep 2010 16:30:00 +0300
+
 libmeegosyncml (0.4.9-32) unstable; urgency=low
 
   * Implemented item data prefetching on idle time
