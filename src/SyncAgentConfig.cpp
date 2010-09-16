@@ -88,12 +88,21 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
         return false;
     }
 
-    QXmlSchemaValidator validator( schema );
+    // @todo: Schema validation is currently disabled, because QXmlSchemaValidator
+    //        does not seem to work properl atleast in arm7 environment. After adding
+    //        new configuration parameters the time taken by validation was over 5 minutes!
+    //        Checked the situation without new configuration parameters, and even then
+    //        validation takes about a second, which is a _lot_ when actual parsing
+    //        about 50ms. So, disabling this for now. Situation should be checked again
+    //        in the future.
 
+    /*
+    QXmlSchemaValidator validator( schema );
     if( !validator.validate( xmlData ) ) {
         LOG_CRITICAL( "File did not pass validation:" << aFile );
         return false;
     }
+    */
 
     return parseConfFile(xmlData);
 }
