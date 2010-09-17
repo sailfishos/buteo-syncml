@@ -65,12 +65,14 @@ struct CTCapProperty
 {
     QString                 iName;          /*!< Name of the property*/
     QString                 iType;          /*!< Type of the property*/
+    int                     iMaxOccur;      /*!< Maximum number of times this property can occur*/
     int                     iSize;          /*!< Maximum size of the property*/
+    bool                    iNoTruncate;    /*!< Specifies whether this property can be truncated*/
     QString                 iDisplayName;   /*!< Human-readable name of the property*/
     QList<QString>          iValues;        /*!< Allowed values for the property*/
     QList<CTCapParameter>   iParameters;    /*!< Parameters of the property*/
 
-    CTCapProperty() : iSize( -1 ) { }
+    CTCapProperty() : iMaxOccur( -1 ), iSize( -1 ), iNoTruncate( false ) { }
 };
 
 /*! \brief Describes single content format and its properties

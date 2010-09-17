@@ -259,6 +259,8 @@ namespace DataSync
     #define SYNCML_ELEMENT_PROPERTY "Property"
     #define SYNCML_ELEMENT_MAXSIZE "MaxSize"
     #define SYNCML_ELEMENT_PROPPARAM "PropParam"
+    #define SYNCML_ELEMENT_MAXOCCUR "MaxOccur"
+    #define SYNCML_ELEMENT_NOTRUNCATE "NoTruncate"
 
     #define SYNCML_CONTENT_TYPE "Content-Type"
     #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"

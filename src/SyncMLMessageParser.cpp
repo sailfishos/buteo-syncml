@@ -1357,9 +1357,17 @@ void SyncMLMessageParser::readCTCap12Property( CTCapProperty& aProperty )
             {
                 aProperty.iType = readString();
             }
+            else if( name == SYNCML_ELEMENT_MAXOCCUR )
+            {
+                aProperty.iMaxOccur = readInt();
+            }
             else if( name == SYNCML_ELEMENT_MAXSIZE )
             {
                 aProperty.iSize = readInt();
+            }
+            else if( name == SYNCML_ELEMENT_NOTRUNCATE )
+            {
+                aProperty.iNoTruncate = true;
             }
             else if( name == SYNCML_ELEMENT_DISPLAYNAME )
             {

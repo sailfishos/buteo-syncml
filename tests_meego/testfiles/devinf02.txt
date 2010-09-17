@@ -427,7 +427,9 @@
 	    <Property>
 		    <PropName>Note</PropName>
 		    <DataType>chr</DataType>
+            <MaxOccur>5</MaxOccur>
 		    <MaxSize>0</MaxSize>
+            <NoTruncate/>
 		    <DisplayName>Note</DisplayName>
 	    </Property>
     </CTCap>

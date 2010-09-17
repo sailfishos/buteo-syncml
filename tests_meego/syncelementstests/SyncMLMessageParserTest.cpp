@@ -434,6 +434,7 @@ void SyncMLMessageParserTest::testDevInf12()
     QCOMPARE( datastores[1].ctCaps().count(), 1 );
     QCOMPARE( datastores[1].ctCaps().at(0).getFormat().iType, QString( "text/x-vcalendar" ) );
     QCOMPARE( datastores[1].ctCaps().at(0).properties().count(), 25 );
+    //QVERIFY( !datastores[1].ctCaps().at(0).properties().at(0).iNoTruncate );
 
     QCOMPARE( datastores[2].getSourceURI(), QString( "./Notepad" ) );
     QCOMPARE( datastores[2].getPreferredRx().iType, QString( "text/plain" ) );
@@ -458,6 +459,8 @@ void SyncMLMessageParserTest::testDevInf12()
     QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iName, QString( "Note" ) );
     QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iType, QString( "chr" ) );
     QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iSize, 0 );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iMaxOccur, 5 );
+    QVERIFY( datastores[2].ctCaps().at(0).properties().at(0).iNoTruncate );
 
 }
 
