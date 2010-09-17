@@ -196,6 +196,13 @@ public:
     void addStatus( const SyncActionData& aParams, const ItemParams& aItem,
                     ResponseStatusCode aStatusCode );
 
+    /*! \brief Adds a status to the next outgoing message from PutParams data
+     *
+     * @param aParams PutParams element parameters
+     * @param aStatusCode Status code
+     */
+    void addStatus( const PutParams& aParams, ResponseStatusCode aStatusCode );
+
     /*! \brief Adds a status to the next outgoing message from ResultsParams data
      *
      * @param aParams ResultsParams element parameters

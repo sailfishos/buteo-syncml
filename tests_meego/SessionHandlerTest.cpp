@@ -557,7 +557,7 @@ void SessionHandlerTest::regression_NB153701_01()
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
-    QCOMPARE( sessionHandler.getDevInfHandler().getDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
+    QCOMPARE( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
     QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701SOURCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701SOURCEDEVICE );
     QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
@@ -599,7 +599,7 @@ void SessionHandlerTest::regression_NB153701_02()
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
-    QCOMPARE( sessionHandler.getDevInfHandler().getDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
+    QCOMPARE( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
     QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
@@ -639,7 +639,7 @@ void SessionHandlerTest::regression_NB153701_03()
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
-    QVERIFY( sessionHandler.getDevInfHandler().getDeviceInfo().getDeviceID().isEmpty() );
+    QVERIFY( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID().isEmpty() );
     QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
@@ -682,7 +682,7 @@ void SessionHandlerTest::regression_NB153701_04()
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
-    QVERIFY( sessionHandler.getDevInfHandler().getDeviceInfo().getDeviceID().isEmpty() );
+    QVERIFY( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID().isEmpty() );
     QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );

@@ -37,6 +37,19 @@
 
 namespace DataSync {
 
+/*! \brief Possible sync types as specified in DevInf
+ *
+ */
+enum SyncTypes {
+    SYNCTYPE_TWOWAY = 1,
+    SYNCTYPE_TWOWAYSLOW,
+    SYNCTYPE_FROMCLIENT,
+    SYNCTYPE_FROMCLIENTSLOW,
+    SYNCTYPE_FROMSERVER,
+    SYNCTYPE_FROMSERVERSLOW,
+    SYNCTYPE_SERVERALERTED
+};
+
 /*! \brief UID mapping of a single item
  *
  */

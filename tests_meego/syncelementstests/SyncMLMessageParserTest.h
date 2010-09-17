@@ -46,6 +46,8 @@ public:
 private slots:
     void testResp1();
     void testInvalid1();
+    void testDevInf11();
+    void testDevInf12();
 
 private:
     void verifyAdd( const DataSync::SyncActionData& aData );

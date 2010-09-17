@@ -39,6 +39,7 @@
 
 #include "SyncItemKey.h"
 #include "SyncAgentConsts.h"
+#include "CTCap.h"
 
 namespace DataSync {
 
@@ -58,21 +59,6 @@ class SyncItem;
 class StoragePlugin
 {
 public:
-
-    /*! \brief Lists information about a content format supported by storage
-     *         plugin.
-     *
-     * Every storage plugin MUST support at least one content format.
-     * Every storage plugin SHOULD have at least one preferred content format.
-     * MIME types and versions returned SHOULD match the ones specified in
-     * OMA SyncML Representation Protocol Data Synchronization Usage document
-     * section 8
-     */
-    struct ContentFormat
-    {
-        QString iType;      /*!< MIME type of the content, for example "text/x-vcard"*/
-        QString iVersion;   /*!< Version of the supported MIME type*/
-    };
 
     /*! \brief Status of operation performed by storage plugin
      *

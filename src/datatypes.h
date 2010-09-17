@@ -55,16 +55,6 @@ namespace DataSync
         ROLE_SERVER     /*!<Act as OMA DS server*/
     };
 
-    enum SyncTypes {
-        SYNCTYPE_TWOWAY = 1,
-        SYNCTYPE_TWOWAYSLOW,
-        SYNCTYPE_FROMCLIENT,
-        SYNCTYPE_FROMCLIENTSLOW,
-        SYNCTYPE_FROMSERVER,
-        SYNCTYPE_FROMSERVERSLOW,
-        SYNCTYPE_SERVERALERTED
-    };
-
     enum AlertType
     {
         // Invalid type for initializations etc.
@@ -203,6 +193,7 @@ namespace DataSync
     #define SYNCML_ELEMENT_PUT "Put"
     #define SYNCML_ELEMENT_GET "Get"
     #define SYNCML_ELEMENT_MAN "Man"
+    #define SYNCML_ELEMENT_OEM "OEM"
     #define SYNCML_ELEMENT_MOD "Mod"
     #define SYNCML_ELEMENT_FWVERSION "FwV"
     #define SYNCML_ELEMENT_SWVERSION "SwV"
@@ -211,7 +202,7 @@ namespace DataSync
     #define SYNCML_ELEMENT_DEVTYPE "DevTyp"
     #define SYNCML_ELEMENT_UTC "UTC"
     #define SYNCML_ELEMENT_SUPPORTLARGEOBJS "SupportLargeObjs"
-    #define SYNCML_ELEMENT_SUPPORTNUMBEROFCHANGES "SupportNumberOfChanges"
+    #define SYNCML_ELEMENT_SUPPORTNUMBEROFCHANGES "SupportNumberOfChanges"  
     #define SYNCML_ELEMENT_DATASTORE "DataStore"
     #define SYNCML_ELEMENT_SOURCEREF "SourceRef"
     #define SYNCML_ELEMENT_TARGETREF "TargetRef"
@@ -258,6 +249,16 @@ namespace DataSync
     #define SYNCML_ELEMENT_EMI "EMI"
     #define SYNCML_ELEMENT_CHAL "Chal"
     #define SYNCML_ELEMENT_NEXTNONCE "NextNonce"
+    #define SYNCML_ELEMENT_PROPNAME "PropName"
+    #define SYNCML_ELEMENT_PARAMNAME "ParamName"
+    #define SYNCML_ELEMENT_VALENUM "ValEnum"
+    #define SYNCML_ELEMENT_DATATYPE "DataType"
+    #define SYNCML_ELEMENT_SIZE "Size"
+    #define SYNCML_ELEMENT_DISPLAYNAME "DisplayName"
+    #define SYNCML_ELEMENT_SUPPORTHIERARCHICALSYNC "SupportHierarchicalSync"
+    #define SYNCML_ELEMENT_PROPERTY "Property"
+    #define SYNCML_ELEMENT_MAXSIZE "MaxSize"
+    #define SYNCML_ELEMENT_PROPPARAM "PropParam"
 
     #define SYNCML_CONTENT_TYPE "Content-Type"
     #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"

@@ -35,46 +35,58 @@
 #define INTERNALS_H
 
 #include "datatypes.h"
+#include "RemoteDeviceInfo.h"
 
 namespace DataSync {
 
-struct MemParams {
-      int freeMem;
-      int freeId;
-      MemParams() : freeMem(-1),freeId(-1) {}
-  };
+struct MemParams
+{
+    int freeMem;
+    int freeId;
+    MemParams() : freeMem(-1),freeId(-1) {}
+};
 
-  struct AnchorParams {
-      QString Last;
-      QString Next;
-  };
+struct AnchorParams
+{
+    QString Last;
+    QString Next;
+};
 
-  struct MetaParams {
-      qint64 size;
-      QString type;
-      QString format;
-      QString Version;
-      QString nextNonce; // used for md5 digest challengs
-      MemParams mem; // Optional parameter may not always present
-      AnchorParams anchor;
-      MetaParams() : size(0) {}
-  };
+struct MetaParams
+{
+    qint64 size;
+    QString type;
+    QString format;
+    QString Version;
+    QString nextNonce; // used for md5 digest challengs
+    MemParams mem; // Optional parameter may not always present
+    AnchorParams anchor;
+    MetaParams() : size(0) {}
+};
 
-  struct ItemParams {
-      bool moreData;
-      QString source;
-      QString target;
-      QString sourceParent;
-      QString targetParent;
-      QString Data;
-      MetaParams meta;
-      ItemParams() :moreData(false) {}
-  };
+struct ItemParams
+{
+    bool moreData;
+    QString source;
+    QString target;
+    QString sourceParent;
+    QString targetParent;
+    QString Data;
+    MetaParams meta;
+    ItemParams() :moreData(false) {}
+};
 
-  struct CredParams {
-      QString data;
-      MetaParams meta;
-  };
+struct DevInfItemParams
+{
+    QString             source;
+    RemoteDeviceInfo    devInfo;
+};
+
+struct CredParams
+{
+    QString data;
+    MetaParams meta;
+};
 
 /*! \brief Base for protocol fragments
  *
@@ -91,6 +103,7 @@ struct Fragment {
         FRAGMENT_ALERT,
         FRAGMENT_SYNC,
         FRAGMENT_MAP,
+        FRAGMENT_PUT,
         FRAGMENT_RESULTS,
         FRAGMENT_COMMAND
     };
@@ -171,6 +184,16 @@ struct StatusParams : public Fragment {
                      cmdRef(-1), data(SERVER_FAILURE) {}
 };
 
+struct PutParams : public Fragment
+{
+    int cmdID;
+    bool noResp;
+    MetaParams meta;
+    DevInfItemParams devInf;
+
+    PutParams() : Fragment( FRAGMENT_PUT ), cmdID( -1 ), noResp( false ) { }
+};
+
 struct ResultsParams : public Fragment {
     int cmdID;
     int msgRef;
@@ -178,6 +201,7 @@ struct ResultsParams : public Fragment {
     QString targetRef;
     QString sourceRef;
     MetaParams meta;
+    DevInfItemParams devInf;
     ResultsParams() : Fragment( FRAGMENT_RESULTS ), cmdID(-1), msgRef(-1), cmdRef(-1) {}
 };
 

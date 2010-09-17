@@ -48,7 +48,7 @@
 LocalChangesPackageStorage::LocalChangesPackageStorage( const QString& aSourceURI )
     : iSourceURI( aSourceURI )
 {
-    StoragePlugin::ContentFormat format;
+    ContentFormat format;
     format.iType = "text/foo";
     format.iVersion = "1.0";
     iFormats.append( format );
@@ -75,12 +75,12 @@ qint64 LocalChangesPackageStorage::getMaxObjSize() const
     return 0;
 }
 
-const QList<StoragePlugin::ContentFormat>& LocalChangesPackageStorage::getSupportedFormats() const
+const QList<ContentFormat>& LocalChangesPackageStorage::getSupportedFormats() const
 {
     return iFormats;
 }
 
-const StoragePlugin::ContentFormat& LocalChangesPackageStorage::getPreferredFormat() const
+const ContentFormat& LocalChangesPackageStorage::getPreferredFormat() const
 {
     return iFormats[0];
 }

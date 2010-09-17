@@ -41,7 +41,7 @@
 using namespace DataSync;
 
 DevInfHandler::DevInfHandler( const DeviceInfo& aDeviceInfo )
- : iDeviceInfo( aDeviceInfo ), iLocalDevInfSent( false ),
+ : iLocalDeviceInfo( aDeviceInfo ), iLocalDevInfSent( false ),
    iRemoteDevInfReceived( false )
 {
     FUNCTION_CALL_TRACE;
@@ -52,9 +52,14 @@ DevInfHandler::~DevInfHandler()
     FUNCTION_CALL_TRACE;
 }
 
-const DeviceInfo& DevInfHandler::getDeviceInfo() const
+const DeviceInfo& DevInfHandler::getLocalDeviceInfo() const
 {
-    return iDeviceInfo;
+    return iLocalDeviceInfo;
+}
+
+const RemoteDeviceInfo& DevInfHandler::getRemoteDeviceInfo() const
+{
+    return iRemoteDevInfo;
 }
 
 void DevInfHandler::composeLocalInitiatedDevInfExchange(
@@ -65,7 +70,7 @@ void DevInfHandler::composeLocalInitiatedDevInfExchange(
 
     if( !iLocalDevInfSent )
     {
-        DevInfPackage* devInf = new DevInfPackage( aDataStores, iDeviceInfo,
+        DevInfPackage* devInf = new DevInfPackage( aDataStores, iLocalDeviceInfo,
                                                    aVersion, aRole );
 
         aResponseGenerator.addPackage( devInf );
@@ -106,7 +111,7 @@ ResponseStatusCode DevInfHandler::handleGet( const SyncActionData& aActionData,
         DevInfPackage* devInf = new DevInfPackage( aResponseGenerator.getRemoteMsgId(),
                                                    aActionData.cmdID,
                                                    aDataStores,
-                                                   iDeviceInfo,
+                                                   iLocalDeviceInfo,
                                                    aVersion,
                                                    aRole,
                                                    !iRemoteDevInfReceived );
@@ -125,7 +130,7 @@ ResponseStatusCode DevInfHandler::handleGet( const SyncActionData& aActionData,
     return status;
 }
 
-ResponseStatusCode DevInfHandler::handlePut( const SyncActionData& aActionData,
+ResponseStatusCode DevInfHandler::handlePut( const PutParams& aPut,
                                              const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE;
@@ -134,20 +139,16 @@ ResponseStatusCode DevInfHandler::handlePut( const SyncActionData& aActionData,
 
     bool valid = false;
 
-    if( aActionData.items.count() == 1 ) {
-
-        if( aVersion == DS_1_1 && aActionData.items[0].source == SYNCML_DEVINF_PATH_11 ) {
-            valid = true;
-        }
-        else if( aVersion == DS_1_2 && aActionData.items[0].source == SYNCML_DEVINF_PATH_12 ) {
-            valid = true;
-        }
-
+    if( aVersion == DS_1_1 && aPut.devInf.source == SYNCML_DEVINF_PATH_11 ) {
+        valid = true;
+    }
+    else if( aVersion == DS_1_2 && aPut.devInf.source == SYNCML_DEVINF_PATH_12 ) {
+        valid = true;
     }
 
     if( valid )
     {
-
+        iRemoteDevInfo = aPut.devInf.devInfo;
         iRemoteDevInfReceived = true;
 
         status = SUCCESS;
@@ -160,23 +161,27 @@ ResponseStatusCode DevInfHandler::handlePut( const SyncActionData& aActionData,
     return status;
 }
 
-ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aActionData,
+ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aResults,
                                                  const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE;
 
-    Q_UNUSED(aActionData);
-    Q_UNUSED(aVersion);
-
     ResponseStatusCode status = NOT_IMPLEMENTED;
 
-    // @todo: currently cannot really validate RESULTS, because parser parses it differently
-    // from other elements containing device information
-    bool valid = true;
+    bool valid = false;
+
+    if( aVersion == DS_1_1 && aResults.targetRef == SYNCML_DEVINF_PATH_11 )
+    {
+        valid = true;
+    }
+    else if( aVersion == DS_1_2 && aResults.targetRef == SYNCML_DEVINF_PATH_12 )
+    {
+        valid = true;
+    }
 
     if( valid )
     {
-
+        iRemoteDevInfo = aResults.devInf.devInfo;
         iRemoteDevInfReceived = true;
 
         status = SUCCESS;

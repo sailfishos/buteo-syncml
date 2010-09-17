@@ -2,13 +2,13 @@
 <Item><Source><LocURI>./devinf12</LocURI>
     </Source>
     <Data><DevInf xmlns="syncml:devinf"><VerDTD>1.2</VerDTD>
-            <Man>Nokia</Man>
+            <Man/>
             <Mod/>
             <FwV/>
             <SwV/>
             <HwV/>
             <DevID/>
-            <DevTyp>phone</DevTyp>
+            <DevTyp/>
             <UTC/>
             <SupportLargeObjs/>
             <SupportNumberOfChanges/>

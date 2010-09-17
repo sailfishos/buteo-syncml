@@ -218,10 +218,7 @@ void SyncMLMessageParser::readBody()
                 actionData->action = SYNCML_GET;
                 iFragments.append(actionData);
             } else if (name == SYNCML_ELEMENT_PUT) {
-                SyncActionData *actionData = new SyncActionData();
-                readSyncActionData(name.toString(), *actionData );
-                actionData->action = SYNCML_PUT;
-                iFragments.append(actionData);
+                readPut();
             } else if (name == SYNCML_ELEMENT_RESULTS) {
                 readResults();
             } else if (name == SYNCML_ELEMENT_MAP ) {
@@ -621,6 +618,52 @@ void SyncMLMessageParser::readMapItem( MapItem& aParams )
 
 }
 
+void SyncMLMessageParser::readPut()
+{
+    FUNCTION_CALL_TRACE;
+
+    PutParams* put = new PutParams;
+
+    while( shouldContinue() )
+    {
+
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_PUT )
+        {
+            break;
+        }
+
+        if( iReader.isStartElement() )
+        {
+            if (name == SYNCML_ELEMENT_CMDID)
+            {
+                put->cmdID = readInt();
+            }
+            else if (name == SYNCML_ELEMENT_NORESP)
+            {
+                put->noResp = true;
+            }
+            else if (name == SYNCML_ELEMENT_META)
+            {
+                readMeta( put->meta );
+            }
+            else if (name == SYNCML_ELEMENT_ITEM)
+            {
+                readDevInfItem( put->devInf );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in PUT:NOT HANDLED BY PARSER" << name);
+            }
+        }
+    }
+
+    iFragments.append(put);
+}
+
 void SyncMLMessageParser::readResults()
 {
     FUNCTION_CALL_TRACE
@@ -658,7 +701,7 @@ void SyncMLMessageParser::readResults()
                 results->sourceRef = readString();
             }
             else if (name == SYNCML_ELEMENT_ITEM) {
-                readDevInfData();
+                readDevInfItem( results->devInf );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in RESULTS:NOT HANDLED BY PARSER" << name);
@@ -669,88 +712,6 @@ void SyncMLMessageParser::readResults()
     }
 
     iFragments.append(results);
-
-}
-
-void SyncMLMessageParser::readDevInfData()
-{
-    FUNCTION_CALL_TRACE
-
-    while( shouldContinue() ) {
-
-        iReader.readNext();
-
-        QStringRef name = iReader.name();
-
-        if( iReader.isEndElement() && name == SYNCML_ELEMENT_ITEM ) {
-            break;
-        }
-
-        if( iReader.isStartElement() ) {
-
-            if (name == SYNCML_ELEMENT_META) {
-                MetaParams meta;
-                readMeta( meta );
-                RemoteDeviceInfo::instance()->populateMeta( meta );
-            }
-            else if (name == SYNCML_ELEMENT_TARGET) {
-                RemoteDeviceInfo::instance()->populateTargetURI( readURI() );
-            }
-            else if (name == SYNCML_ELEMENT_SOURCE) {
-                RemoteDeviceInfo::instance()->populateSourceURI( readURI() );
-            }
-            else if (name == SYNCML_ELEMENT_DATA) {
-                readDevInfItem();
-            }
-            else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);
-            }
-
-        }
-
-    }
-
-}
-
-
-void SyncMLMessageParser::readDevInfItem()
-{
-    FUNCTION_CALL_TRACE
-
-    while( shouldContinue() ) {
-
-        iReader.readNext();
-
-        QStringRef name = iReader.name();
-
-        if( iReader.isEndElement() && name == SYNCML_ELEMENT_DATA ) {
-            break;
-        }
-
-        if( iReader.isStartElement() ) {
-
-            if( name == SYNCML_ELEMENT_SUPPORTLARGEOBJS ) {
-                RemoteDeviceInfo::instance()->setLargeObjectSupported();
-            }
-            else if( name == SYNCML_ELEMENT_SYNCTYPE ) {
-                RemoteDeviceInfo::instance()->populateSupportedSyncType( static_cast<DataSync::SyncTypes>(readInt()) );
-            }
-            else if( name == SYNCML_ELEMENT_MAN ) {
-                RemoteDeviceInfo::instance()->populateManufacturer( readString() );
-            }
-            else if( name == SYNCML_ELEMENT_MOD ) {
-                RemoteDeviceInfo::instance()->populateModel( readString() );
-            }
-            else if( name == SYNCML_ELEMENT_SWVERSION ) {
-                RemoteDeviceInfo::instance()->populateSwVersion( readString() );
-            }
-            else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINFDATA:NOT HANDLED BY PARSER" << name);
-            }
-
-        }
-
-    }
 
 }
 
@@ -905,6 +866,570 @@ void SyncMLMessageParser::readAnchor( AnchorParams& aParams )
 
 }
 
+void SyncMLMessageParser::readDevInfItem( DevInfItemParams& aParams )
+{
+    FUNCTION_CALL_TRACE;
+
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_ITEM )
+        {
+            break;
+        }
+
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_SOURCE )
+            {
+                aParams.source = readURI();
+            }
+            else if( name == SYNCML_ELEMENT_DEVINF )
+            {
+                readDevInf( aParams );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readDevInf( DevInfItemParams& aParams )
+{
+    FUNCTION_CALL_TRACE;
+
+    QString dtd;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_DEVINF )
+        {
+            break;
+        }
+
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_VERDTD )
+            {
+                dtd = readString();
+
+                if( dtd != SYNCML_DTD_VERSION_1_1 &&
+                    dtd != SYNCML_DTD_VERSION_1_2 )
+                {
+                    LOG_CRITICAL( "Unrecognized DevInf verDTD:" << dtd );
+                    iError = PARSER_ERROR_INVALID_DATA;
+                }
+
+            }
+            else if( name == SYNCML_ELEMENT_MAN )
+            {
+                aParams.devInfo.deviceInfo().setManufacturer( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_MOD )
+            {
+                aParams.devInfo.deviceInfo().setModel( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_OEM )
+            {
+                aParams.devInfo.deviceInfo().setOEM( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_FWVERSION )
+            {
+                aParams.devInfo.deviceInfo().setFirmwareVersion( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_SWVERSION )
+            {
+                aParams.devInfo.deviceInfo().setSoftwareVersion( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_HWVERSION )
+            {
+                aParams.devInfo.deviceInfo().setHardwareVersion( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_DEVID )
+            {
+                aParams.devInfo.deviceInfo().setDeviceID( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_DEVTYPE )
+            {
+                aParams.devInfo.deviceInfo().setDeviceType( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_UTC )
+            {
+                aParams.devInfo.setSupportsUTC( true );
+            }
+            else if( name == SYNCML_ELEMENT_SUPPORTLARGEOBJS )
+            {
+                aParams.devInfo.setSupportsLargeObjs( true );
+            }
+            else if( name == SYNCML_ELEMENT_SUPPORTNUMBEROFCHANGES )
+            {
+                aParams.devInfo.setSupportsNumberOfChanges( true );
+            }
+            else if( name == SYNCML_ELEMENT_DATASTORE )
+            {
+                Datastore newDatastore;
+                readDataStore( newDatastore, dtd );
+                aParams.devInfo.datastores().append( newDatastore );
+            }
+            else if( name == SYNCML_ELEMENT_CTCAP )
+            {
+                // CTCap element resides under DevInf only 1.1, in 1.2 it's under
+                // DataStore
+                if( dtd == SYNCML_DTD_VERSION_1_1 )
+                {
+                    readCTCap11( aParams.devInfo.datastores() );
+                }
+                else
+                {
+                    LOG_CRITICAL( SYNCML_ELEMENT_CTCAP << "under DevInf allowed only for DS 1.1" );
+                    iError = PARSER_ERROR_INVALID_DATA;
+                }
+            }
+            else{
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+        }
+    }
+}
+
+void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& aDTD )
+{
+    FUNCTION_CALL_TRACE;
+
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_DATASTORE )
+        {
+            break;
+        }
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_SOURCEREF )
+            {
+                QString URI = readString();
+                LOG_DEBUG( "URI of the new datastore instance:" << URI );
+                aDatastore.setSourceURI( URI );
+            }
+            else if( name == SYNCML_ELEMENT_RX_PREF )
+            {
+                ContentFormat rxPref;
+                readContentFormat( rxPref, SYNCML_ELEMENT_RX_PREF );
+                aDatastore.setPreferredRx( rxPref );
+            }
+            else if( name == SYNCML_ELEMENT_RX )
+            {
+                ContentFormat rx;
+                readContentFormat( rx, SYNCML_ELEMENT_RX );
+                aDatastore.rx().append( rx );
+            }
+            else if( name == SYNCML_ELEMENT_TX_PREF )
+            {
+                ContentFormat txPref;
+                readContentFormat( txPref, SYNCML_ELEMENT_TX_PREF );
+                aDatastore.setPreferredTx( txPref );
+            }
+            else if( name == SYNCML_ELEMENT_TX )
+            {
+                ContentFormat tx;
+                readContentFormat( tx, SYNCML_ELEMENT_TX );
+                aDatastore.tx().append( tx );
+            }
+            else if( name == SYNCML_ELEMENT_SYNCCAP )
+            {
+                readSyncCaps( aDatastore );
+            }
+            else if( name == SYNCML_ELEMENT_CTCAP )
+            {
+                readCTCap12( aDatastore );
+            }
+            else if( name == SYNCML_ELEMENT_SUPPORTHIERARCHICALSYNC )
+            {
+                if( aDTD == SYNCML_DTD_VERSION_1_2 )
+                {
+                    aDatastore.setSupportsHierarchicalSync( true );
+                }
+                else
+                {
+                    LOG_CRITICAL( SYNCML_ELEMENT_SUPPORTHIERARCHICALSYNC << "under DevInf allowed only for DS 1.2" );
+                    iError = PARSER_ERROR_INVALID_DATA;
+                }
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readContentFormat( ContentFormat& aFormat, const QString& aEndElement )
+{
+    FUNCTION_CALL_TRACE;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == aEndElement )
+        {
+            break;
+        }
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_CTTYPE )
+            {
+                aFormat.iType = readString();
+            }
+            else if( name == SYNCML_ELEMENT_VERCT )
+            {
+                aFormat.iVersion = readString();
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readSyncCaps( Datastore& aDatastore )
+{
+    FUNCTION_CALL_TRACE;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_SYNCCAP )
+        {
+            break;
+        }
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_SYNCTYPE )
+            {
+                int syncType = readInt();
+                aDatastore.syncCaps().append( static_cast<SyncTypes>( syncType ) );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+        }
+    }
+}
+
+void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
+{
+    FUNCTION_CALL_TRACE;
+
+    QList<CTCap> caps;
+
+    CTCap* currentCap = 0;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_CTCAP )
+        {
+            break;
+        }
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_CTTYPE )
+            {
+                QString type = readString();
+
+                currentCap = 0;
+
+                for( int i = 0; i < caps.count(); ++i )
+                {
+                    if( caps[i].getFormat().iType == type )
+                    {
+                        currentCap = &caps[i];
+                        break;
+                    }
+                }
+
+                if( !currentCap )
+                {
+                    LOG_DEBUG( "Creating new CTCap instance with type" << type );
+                    CTCap newCap;
+                    ContentFormat format;
+                    format.iType = type;
+                    newCap.setFormat(format);
+                    caps.append(newCap);
+                    currentCap = &caps.last();
+                }
+
+            }
+            else
+            {
+                if( !currentCap )
+                {
+                    LOG_CRITICAL( "Cannot process" << name <<"as no" << SYNCML_ELEMENT_CTTYPE << "was found!" );
+                    iError = PARSER_ERROR_INVALID_DATA;
+                }
+                else if( name == SYNCML_ELEMENT_PROPNAME )
+                {
+                    CTCapProperty newProp;
+                    newProp.iName = readString();
+                    currentCap->properties().append( newProp );
+                }
+                else if( name == SYNCML_ELEMENT_VALENUM )
+                {
+                    QString val = readString();
+                    currentCap->properties().last().iValues.append( val );
+                }
+                else if( name == SYNCML_ELEMENT_DATATYPE )
+                {
+                    QString type = readString();
+                    currentCap->properties().last().iType = type;
+                }
+                else if( name == SYNCML_ELEMENT_SIZE )
+                {
+                    int size = readInt();
+                    currentCap->properties().last().iSize = size;
+                }
+                else if( name == SYNCML_ELEMENT_DISPLAYNAME )
+                {
+                    QString displayName = readString();
+                    currentCap->properties().last().iDisplayName = displayName;
+                }
+                else if( name == SYNCML_ELEMENT_PARAMNAME )
+                {
+                    // In SyncML 1.1, parameter names (for example TYPE) are not conveyed, instead
+                    // parameter values (for example WORK). So we must create an anonymous parameter
+                    // that includes all the allowed parameter values
+                    QString paramName = readString();
+                    if( currentCap->properties().last().iParameters.isEmpty() )
+                    {
+                        CTCapParameter newParam;
+                        newParam.iValues.append( paramName );
+                        currentCap->properties().last().iParameters.append( newParam );
+                    }
+                    else
+                    {
+                        currentCap->properties().last().iParameters.last().iValues.append( paramName );
+                    }
+                            \
+
+                }
+                else
+                {
+                    LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                }
+
+            }
+        }
+
+    }
+
+    // Sweep through declared datastores, check the content formats they are interested, and add
+    // parsed CTCaps if a datastore is interested
+    for( int i = 0; i < caps.count(); ++i )
+    {
+
+        for( int a = 0; a < aDataStores.count(); ++a )
+        {
+            QList<ContentFormat> interestedFormats;
+            interestedFormats.append( aDataStores[a].getPreferredRx() );
+            interestedFormats.append( aDataStores[a].rx());
+            interestedFormats.append( aDataStores[a].getPreferredTx() );
+            interestedFormats.append( aDataStores[a].tx());
+
+            for( int b = 0; b < interestedFormats.count(); ++b )
+            {
+                if( interestedFormats[b].iType == caps[i].getFormat().iType )
+                {
+                    LOG_DEBUG( "Datastore" << aDataStores[a].getSourceURI() << "is interested in CTType" << caps[i].getFormat().iType );
+                    aDataStores[a].ctCaps().append( caps[i] );
+                    break;
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readCTCap12( Datastore& aDatastore )
+{
+    FUNCTION_CALL_TRACE;
+
+    CTCap cap;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_CTCAP )
+        {
+            break;
+        }
+
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_CTTYPE )
+            {
+                ContentFormat format = cap.getFormat();
+                format.iType = readString();
+                cap.setFormat( format );
+
+            }
+            else if( name == SYNCML_ELEMENT_VERCT )
+            {
+                ContentFormat format = cap.getFormat();
+                format.iVersion = readString();
+                cap.setFormat( format );
+            }
+            else if( name == SYNCML_ELEMENT_PROPERTY )
+            {
+                CTCapProperty newProperty;
+                readCTCap12Property( newProperty );
+                cap.properties().append( newProperty );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+        }
+
+    }
+
+    aDatastore.ctCaps().append( cap );
+}
+
+void SyncMLMessageParser::readCTCap12Property( CTCapProperty& aProperty )
+{
+    FUNCTION_CALL_TRACE;
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_PROPERTY )
+        {
+            break;
+        }
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_PROPNAME )
+            {
+                aProperty.iName = readString();
+            }
+            else if( name == SYNCML_ELEMENT_DATATYPE )
+            {
+                aProperty.iType = readString();
+            }
+            else if( name == SYNCML_ELEMENT_MAXSIZE )
+            {
+                aProperty.iSize = readInt();
+            }
+            else if( name == SYNCML_ELEMENT_DISPLAYNAME )
+            {
+                aProperty.iDisplayName = readString();
+            }
+            else if( name == SYNCML_ELEMENT_VALENUM )
+            {
+                aProperty.iValues.append( readString() );
+            }
+            else if( name == SYNCML_ELEMENT_PROPPARAM )
+            {
+                CTCapParameter newParam;
+                readCTCap12Parameter( newParam );
+                aProperty.iParameters.append( newParam );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readCTCap12Parameter( CTCapParameter& aParameter )
+{
+    FUNCTION_CALL_TRACE
+
+    while( shouldContinue() )
+    {
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == SYNCML_ELEMENT_PROPPARAM )
+        {
+            break;
+        }
+
+        if( iReader.isStartElement() )
+        {
+            if( name == SYNCML_ELEMENT_PARAMNAME )
+            {
+                aParameter.iName = readString();
+            }
+            else if( name == SYNCML_ELEMENT_DATATYPE )
+            {
+                aParameter.iType = readString();
+            }
+            else if( name == SYNCML_ELEMENT_DISPLAYNAME )
+            {
+                aParameter.iDisplayName = readString();
+            }
+            else if( name == SYNCML_ELEMENT_VALENUM )
+            {
+                aParameter.iValues.append( readString() );
+            }
+            else
+            {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+            }
+
+        }
+
+    }
+
+}
+
 void SyncMLMessageParser::readItem( ItemParams& aParams )
 {
     FUNCTION_CALL_TRACE
@@ -941,21 +1466,7 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
             else if (name == SYNCML_ELEMENT_MOREDATA) {
                 aParams.moreData = true;
             }
-	    else if( name == SYNCML_ELEMENT_SUPPORTLARGEOBJS ) {
-                RemoteDeviceInfo::instance()->setLargeObjectSupported();
-            }
-            else if( name == SYNCML_ELEMENT_SYNCTYPE ) {
-                RemoteDeviceInfo::instance()->populateSupportedSyncType( static_cast<DataSync::SyncTypes>(readInt()) );
-            }
-            else if( name == SYNCML_ELEMENT_MAN ) {
-                RemoteDeviceInfo::instance()->populateManufacturer( readString() );
-            }
-            else if( name == SYNCML_ELEMENT_MOD ) {
-                RemoteDeviceInfo::instance()->populateModel( readString() );
-            }
-            else if( name == SYNCML_ELEMENT_SWVERSION ) {
-                RemoteDeviceInfo::instance()->populateSwVersion( readString() );
-            }
+
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);
             }

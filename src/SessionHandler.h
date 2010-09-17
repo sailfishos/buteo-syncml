@@ -47,7 +47,6 @@
 #include "SyncMLMessageParser.h"
 #include "NonceStorage.h"
 #include "DevInfHandler.h"
-#include "RemoteDeviceInfo.h"
 
 class ServerSessionHandlerTest;
 class ClientSessionHandlerTest;
@@ -240,7 +239,7 @@ protected slots:
      *
      * @param aPutParams Put parameters
      */
-    void handlePutElement( DataSync::SyncActionData* aPutParams );
+    void handlePutElement( DataSync::PutParams* aPutParams );
 
     /*! \brief Called when the parser finds a results element in the message being parsed
      *
@@ -663,9 +662,6 @@ protected:
      * @return Returns sync state mapped to the last syncml error
      */
     SyncState getLastError( QString &aErrorMsg );
-
-    ///< Pointer to RemotDeviceInfo object
-    RemoteDeviceInfo*                                  iRemoteDeviceInfoInstance;
 
 private: // functions
 

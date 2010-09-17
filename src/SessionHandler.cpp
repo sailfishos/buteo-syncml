@@ -55,7 +55,6 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
                                 const Role& aRole,
                                 QObject* aParent ) :
     QObject( aParent ),
-    iRemoteDeviceInfoInstance( RemoteDeviceInfo::instance() ),
     iCommandHandler( aRole ),
     iDevInfHandler( aConfig->getDeviceInfo() ),
     iConfig(aConfig),
@@ -94,8 +93,6 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
 SessionHandler::~SessionHandler()
 {
     FUNCTION_CALL_TRACE;
-
-    RemoteDeviceInfo::destroyInstance();
 
     // Make sure that all allocated objects are released.
     releaseStoragesAndTargets();
@@ -307,6 +304,11 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
             MapParams* map = static_cast<MapParams*>(fragment);
             handleMapElement(map);
         }
+        else if( fragment->iType == Fragment::FRAGMENT_PUT )
+        {
+            PutParams* put = static_cast<PutParams*>(fragment);
+            handlePutElement( put );
+        }
         else if( fragment->iType == Fragment::FRAGMENT_RESULTS )
         {
             ResultsParams* results = static_cast<ResultsParams*>(fragment);
@@ -316,13 +318,13 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
         {
             SyncActionData* action = static_cast<SyncActionData*>(fragment);
 
-            if( action->action == SYNCML_PUT )
-            {
-                handlePutElement(action);
-            }
-            else if( action->action == SYNCML_GET )
+            if( action->action == SYNCML_GET )
             {
                 handleGetElement(action);
+            }
+            else
+            {
+                delete fragment;
             }
         }
     }
@@ -703,7 +705,7 @@ void SessionHandler::handleGetElement( DataSync::SyncActionData* aGetParams )
     aGetParams = NULL;
 }
 
-void SessionHandler::handlePutElement( DataSync::SyncActionData* aPutParams )
+void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
 {
     FUNCTION_CALL_TRACE;
 
@@ -1251,7 +1253,7 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
             aHeaderParams.targetDevice = getConfig()->getLocalDeviceName();
         }
         else {
-            aHeaderParams.targetDevice = getDevInfHandler().getDeviceInfo().getDeviceID();
+            aHeaderParams.targetDevice = getDevInfHandler().getLocalDeviceInfo().getDeviceID();
         }
     }
 
@@ -1301,7 +1303,7 @@ void SessionHandler::setupSession( const QString& aSessionId )
         setLocalDeviceName( getConfig()->getLocalDeviceName() );
     }
     else {
-        setLocalDeviceName( getDevInfHandler().getDeviceInfo().getDeviceID() );
+        setLocalDeviceName( getDevInfHandler().getLocalDeviceInfo().getDeviceID() );
     }
 
     if( !getConfig()->getRemoteDeviceName().isEmpty() ) {

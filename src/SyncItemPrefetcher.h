@@ -58,18 +58,43 @@ class SyncItemPrefetcher : public QObject
 {
     Q_OBJECT;
 public:
+
+    /*! \brief Constructor
+     *
+     * @param aItemIds Ordered list of items to prefetch
+     * @param aStoragePlugin Storage plugin from where to prefetch items
+     * @param aInitialBatchSizeHint Initial value for batch size hint
+     */
     SyncItemPrefetcher( const QList<SyncItemKey>& aItemIds,
                         StoragePlugin& aStoragePlugin,
                         int aInitialBatchSizeHint );
 
+    /*! \brief Destructor
+     *
+     */
     virtual ~SyncItemPrefetcher();
 
+    /*! \brief Sets batch size hint
+     *
+     * @param aBatchSizeHint New value
+     */
     void setBatchSizeHint( int aBatchSizeHint );
 
+    /*! \brief Retrieve next item
+     *
+     * If item is not prefetched, next prefetch round is done and item
+     * is returned after that
+     *
+     * @param aItemId Id of the item to retrieve
+     * @return
+     */
     SyncItem* getItem( const SyncItemKey& aItemId );
 
 public slots:
 
+    /*! \brief Slot that should be invoked when prefetching can be done
+     *
+     */
     void prefetch();
 
 private:

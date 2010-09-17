@@ -33,130 +33,19 @@
 #ifndef REMOTEDEVICEINFO_H
 #define REMOTEDEVICEINFO_H
 
-#include "datatypes.h"
-#include "internals.h"
+#include "DeviceInfo.h"
+#include "DataStore.h"
 
 namespace DataSync
 {
 
-// @todo: How about simulataneous sync sessions, won't a singleton be problematic then?
-/*! \brief DeviceInfo is a singleton that includes
- *  some information about the remote device
- *
+/*! \brief Describes capabilities of remote device as received from protocol
+ *         device info
  */
 class RemoteDeviceInfo
 {
 
 public:
-
-
-    /*! \brief Gets a pointer to the single instance
-     *
-     * @return pointer to RemoteDeviceInfo object
-     */
-    static RemoteDeviceInfo* instance();
-
-    /*! \brief Destroys the single instance of RemoteDeviceInfo
-     *
-     */
-    static void destroyInstance();
-
-    /*! \brief Get the sync types supported by the remote device
-     *
-     * @return list of supported sync types
-     */
-    QList<DataSync::SyncTypes> supportedSyncTypes() const;
-
-    /*! \brief Adds a supported sync type
-     *
-     * @param aType Supported sync type
-     */
-    void populateSupportedSyncType( DataSync::SyncTypes aType );
-
-    /*! \brief Get the source URI
-     *
-     * @return Source URI
-     */
-    QString sourceURI() const;
-
-    /*! \brief Set the source URI
-     *
-     * @param aSource Source URI
-     */
-    void populateSourceURI( const QString& aSource );
-
-    /*! \brief Get the target URI
-     *
-     * @return target URI
-     */
-    QString targetURI() const;
-
-    /*! \brief Set the target URI
-     *
-     * @param aTarget Target URI
-     */
-    void populateTargetURI( const QString& aTarget );
-
-    /*! \brief Get the meta params
-     *
-     * @return Meta params
-     */
-    const MetaParams& meta() const;
-
-    /*! \brief Set the meta params
-     *
-     * @param aMeta Meta params
-     */
-    void populateMeta( const MetaParams& aMeta);
-
-    /*! \brief Checks support for large objects
-     *
-     * @return True if large objects are supported, false otherwise
-     */
-    bool isLargeObjectSupported() const;
-
-    /*! \brief Populates support for large objects
-     *
-     */
-    void setLargeObjectSupported();
-
-    /*! \brief Gets the manufacturer
-     *
-     * @return Manufacturer name
-     */
-    QString manufacturer() const;
-
-    /*! \brief Populates the manufacturer
-     *
-     * @param aManufacturer Manufacturer name
-     */
-    void populateManufacturer( const QString& aManufacturer );
-
-    /*! \brief Gets the SW version
-     *
-     * @return SW Version
-     */
-    QString swVersion() const;
-
-    /*! \brief Populates the sw version
-     *
-     * @param aSwVersion SW version
-     */
-    void populateSwVersion( const QString& aSwVersion);
-
-    /*! \brief Gets the model
-     *
-     * @return Model
-     */
-    QString model() const;
-
-    /*! \brief Populates the model
-     *
-     * @return aModel Model
-     */
-    void populateModel( const QString& aModel);
-
-private:
 
     /*! \brief Constructor
      *
@@ -168,19 +57,83 @@ private:
      */
     ~RemoteDeviceInfo();
 
-    static RemoteDeviceInfo* iInstance;
-    QList<DataSync::SyncTypes> iSupportedSyncTypes;
-    QString iSource;
-    QString iTarget;
-    MetaParams iMeta;
-    bool iSupportsLargeObjects;
-    QString iManufacturer;
-    QString iSwVersion;
-    QString iModel;
+    /*! \brief Access device info
+     *
+     * @return
+     */
+    DeviceInfo& deviceInfo();
 
-    // @todo: There's more in device info
+    /*! \brief Access device info
+     *
+     * @return
+     */
+    const DeviceInfo& deviceInfo() const;
+
+    /*! \brief Find index of datastore based on source URI
+     *
+     * @param aURI Source URI
+     * @return
+     */
+    int findDatastore( const QString& aURI );
+
+    /*! \brief Access list of datastores
+     *
+     * @return
+     */
+    QList<Datastore>& datastores();
+
+    /*! \brief Access list of datastores
+     *
+     * @return
+     */
+    const QList<Datastore>& datastores() const;
+
+    /*! \brief Sets flag for UTC support
+     *
+     * @param aUTC Value to set
+     */
+    void setSupportsUTC( bool aUTC );
+
+    /*! \brief Retrieve flag for UTC support
+     *
+     * @return
+     */
+    bool getSupportsUTC() const;
+
+    /*! \brief Sets flag for large object support
+     *
+     * @param aSupportsLargeObjs Value to set
+     */
+    void setSupportsLargeObjs( bool aSupportsLargeObjs );
+
+    /*! \brief Retrieves flag for large object support
+     *
+     * @return
+     */
+    bool getSupportsLargeObjs() const;
+
+    /*! \brief Sets flag for sending number of changes support
+     *
+     * @param aSupportsNumberOfChanges
+     */
+    void setSupportsNumberOfChanges( bool aSupportsNumberOfChanges );
+
+    /*! \brief Retrieves flag for sending number of changes support
+     *
+     * @return
+     */
+    bool getSupportsNumberOfChanges() const;
+
+private:
+
+    DeviceInfo          iDeviceInfo;
+    QList<Datastore>    iDatastores;
+    bool                iUTC;
+    bool                iSupportLargeObjs;
+    bool                iSupportNumberOfChanges;
 
 };
+
 }
 
 #endif  //  REMOTEDEVICEINFO_H

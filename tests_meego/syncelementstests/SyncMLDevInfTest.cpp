@@ -60,6 +60,8 @@ void SyncMLDevInfTest::testSyncMLDevInf() {
 
         QByteArray input = toXMLfile.readAll();
         toXMLfile.close();
+        qDebug() << input.simplified();
+        qDebug() << output.simplified();
 
         QCOMPARE( input.simplified(), output.simplified() );
 

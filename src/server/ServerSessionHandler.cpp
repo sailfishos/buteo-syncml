@@ -447,20 +447,49 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
     target->setRemoteNextAnchor( aAlertParams.nextAnchor );
     target->setTargetDatabase( aAlertParams.sourceDatabase );
 
-    if( anchorMismatch( aSyncMode, *target, aAlertParams.lastAnchor ) ) {
+    if( anchorMismatch( aSyncMode, *target, aAlertParams.lastAnchor ) )
+    {
+
         LOG_DEBUG("Anchor mismatch, refresh required");
         // Anchor mismatch, must revert to slow sync
         status = REFRESH_REQUIRED;
+
+        // @todo: we should implement this better, so that it'd check synccaps of remote device
+        //        in all cases, not just for from-client syncs
+
         bool clientInitiedRefresh = false;
 
-        if( iRemoteDeviceInfoInstance->supportedSyncTypes().contains( DataSync::SYNCTYPE_FROMCLIENTSLOW ) &&
-            (clientInitiedRefresh = target->setRefreshFromClient()) ) {
-            LOG_DEBUG("Anchor mismatch, client refresh required, sending 203 as client supports refresh");
+        int datastoreIndex = -1;
+        const QList<Datastore>& datastores = getDevInfHandler().getRemoteDeviceInfo().datastores();
+
+        for( int i = 0; i < datastores.count(); ++i )
+        {
+            if( datastores[i].getSourceURI() == target->getTargetDatabase() )
+            {
+                datastoreIndex = i;
+                break;
+            }
         }
-        if( !clientInitiedRefresh ){
-            LOG_DEBUG("Anchor mismatch, refresh required, sending 202");
+
+        if( datastoreIndex != -1 )
+        {
+            if( datastores[datastoreIndex].syncCaps().contains( DataSync::SYNCTYPE_FROMCLIENTSLOW ) &&
+                (clientInitiedRefresh = target->setRefreshFromClient()) )
+            {
+                LOG_DEBUG("Anchor mismatch, client refresh required, sending 203 as client supports refresh");
+            }
+
+            if( !clientInitiedRefresh ){
+                LOG_DEBUG("Anchor mismatch, refresh required, sending 202");
+                target->revertSyncMode();
+            }
+        }
+        else
+        {
+            LOG_DEBUG("Anchor mismatch but have no device info available, reverting");
             target->revertSyncMode();
         }
+
     }
 
 

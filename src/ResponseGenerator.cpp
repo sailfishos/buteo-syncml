@@ -426,6 +426,20 @@ void ResponseGenerator::addStatus( const ResultsParams& aParams, ResponseStatusC
     }
 }
 
+void ResponseGenerator::addStatus( const PutParams& aParams, ResponseStatusCode aStatusCode )
+{
+    FUNCTION_CALL_TRACE;
+
+    if( !iIgnoreStatuses ) {
+        StatusParams* statusParams = new StatusParams;
+        statusParams->msgRef = iRemoteMsgId;
+        statusParams->cmdRef = aParams.cmdID;
+        statusParams->cmd = SYNCML_ELEMENT_PUT;
+        statusParams->data = aStatusCode;
+        addStatus( statusParams );
+    }
+}
+
 const QList<StatusParams*>& ResponseGenerator::getStatuses() const
 {
     return iStatuses;

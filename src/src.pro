@@ -55,8 +55,10 @@ SOURCES += SyncItem.cpp \
 	NonceStorage.cpp \
 	ServerAlertedNotification.cpp \
 	RequestListener.cpp \
-    DevInfHandler.cpp \
-    SyncItemPrefetcher.cpp
+        DevInfHandler.cpp \
+        SyncItemPrefetcher.cpp \
+        CTCap.cpp \
+        DataStore.cpp
 
 HEADERS += SyncItem.h \
 	StoragePlugin.h \
@@ -93,15 +95,16 @@ HEADERS += SyncItem.h \
 	LogMacros.h \
 	StorageProvider.h \
 	ServerAlertedNotification.h \
-    SyncMLGlobals.h \
-    RequestListener.h \
-    DevInfHandler.h \
-    SyncAgentConfigProperties.h \
-    SyncItemPrefetcher.h
+        SyncMLGlobals.h \
+        RequestListener.h \
+        DevInfHandler.h \
+        SyncAgentConfigProperties.h \
+        SyncItemPrefetcher.h \
+        CTCap.h \
+        DataStore.h
     
 OTHER_FILES += config/meego-syncml-conf.xsd \
-               config/meego-syncml-conf.xml \
-               config/nokia-syncml-conf.xml
+               config/meego-syncml-conf.xml
 
 LIBS += -lsqlite3 -lwbxml2 -lopenobex
 

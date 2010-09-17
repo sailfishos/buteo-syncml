@@ -44,7 +44,7 @@
 PrefetchStorage::PrefetchStorage( const QList<SyncItemKey>& aItemIds )
     : iItemIds( aItemIds ), iForceSyncItems( false )
 {
-    StoragePlugin::ContentFormat format;
+    ContentFormat format;
     format.iType = "text/foo";
     format.iVersion = "1.0";
     iFormats.append( format );
@@ -75,12 +75,12 @@ qint64 PrefetchStorage::getMaxObjSize() const
     return 0;
 }
 
-const QList<StoragePlugin::ContentFormat>& PrefetchStorage::getSupportedFormats() const
+const QList<ContentFormat>& PrefetchStorage::getSupportedFormats() const
 {
     return iFormats;
 }
 
-const StoragePlugin::ContentFormat& PrefetchStorage::getPreferredFormat() const
+const ContentFormat& PrefetchStorage::getPreferredFormat() const
 {
     return iFormats[0];
 }

@@ -67,12 +67,18 @@ public:
      *
      * @return
      */
-    const DeviceInfo& getDeviceInfo() const;
+    const DeviceInfo& getLocalDeviceInfo() const;
+
+    /*! \brief Retrieves the remote device information
+     *
+     * @return
+     */
+    const RemoteDeviceInfo& getRemoteDeviceInfo() const;
 
     /*! \brief Initiate a device info exchange with remote device
      *
      * @param aDataStores Data stores to use
-     * @param aVersion Protocol version to use
+     * @param aVersion Protocol version in use
      * @param aRole Role in use
      * @param aResponseGenerator Response generator to use
      */
@@ -85,7 +91,7 @@ public:
      *
      * @param aActionData GET element data
      * @param aDataStores Data stores to use
-     * @param aVersion Protocol version to use
+     * @param aVersion Protocol version in use
      * @param aRole Role in use
      * @param aResponseGenerator Response generator to use
      * @return
@@ -98,19 +104,19 @@ public:
 
     /*! \brief Respond to device info sent by remote device
      *
-     * @param aActionData GET element data
-     * @param aVersion Protocol version to use
+     * @param aPut PUT element data
+     * @param aVersion Protocol version in use
      * @return
      */
-    ResponseStatusCode handlePut( const SyncActionData& aActionData,
+    ResponseStatusCode handlePut( const PutParams& aPut,
                                   const ProtocolVersion& aVersion );
 
     /*! \brief Respond to device info received from remote device
      *
-     * @param aActionData RESULTS element data
-     * @param aVersion Protocol version to use
+     * @param aResults RESULTS element data
+     * @param aVersion Protocol version in use
      */
-    ResponseStatusCode handleResults( const ResultsParams& aActionData,
+    ResponseStatusCode handleResults( const ResultsParams& aResults,
                                       const ProtocolVersion& aVersion );
 
 protected:
@@ -119,9 +125,10 @@ private:
 
     friend class ::DevInfHandlerTest;
 
-    DeviceInfo  iDeviceInfo;
-    bool        iLocalDevInfSent;
-    bool        iRemoteDevInfReceived;
+    DeviceInfo          iLocalDeviceInfo;
+    RemoteDeviceInfo    iRemoteDevInfo;
+    bool                iLocalDevInfSent;
+    bool                iRemoteDevInfReceived;
 
 };
 

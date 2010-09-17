@@ -203,7 +203,7 @@ SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
 
     }
 
-    const StoragePlugin::ContentFormat& preferredFormat = aPlugin.getPreferredFormat();
+    const ContentFormat& preferredFormat = aPlugin.getPreferredFormat();
 
     if( !preferredFormat.iType.isEmpty() ) {
 
@@ -228,10 +228,10 @@ SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
 
     }
 
-    const QList<StoragePlugin::ContentFormat>& supportedFormats = aPlugin.getSupportedFormats();
+    const QList<ContentFormat>& supportedFormats = aPlugin.getSupportedFormats();
 
     for( int i = 0; i < supportedFormats.count(); ++i ) {
-        const StoragePlugin::ContentFormat& format = supportedFormats[i];
+        const ContentFormat& format = supportedFormats[i];
 
         SyncMLCmdObject *rxObject = new SyncMLCmdObject(SYNCML_ELEMENT_RX);
         SyncMLCmdObject *txObject = new SyncMLCmdObject(SYNCML_ELEMENT_TX);

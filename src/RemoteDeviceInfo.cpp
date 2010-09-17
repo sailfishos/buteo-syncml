@@ -32,38 +32,14 @@
 */
 
 #include "RemoteDeviceInfo.h"
+
 #include "LogMacros.h"
 
 using namespace DataSync;
 
-#define INFO_UNKNOWN "UNKNOWN"
 
-RemoteDeviceInfo* RemoteDeviceInfo::iInstance = 0;
-
-RemoteDeviceInfo* RemoteDeviceInfo::instance()
-{
-    FUNCTION_CALL_TRACE;
-    if( 0 == iInstance )
-    {
-        iInstance = new RemoteDeviceInfo();
-    }
-    return iInstance;
-}
-
-void RemoteDeviceInfo::destroyInstance()
-{
-    FUNCTION_CALL_TRACE;
-    if( iInstance )
-    {
-        delete iInstance;
-        iInstance = 0;
-    }
-}
-
-RemoteDeviceInfo::RemoteDeviceInfo(): 
-    iSupportsLargeObjects(false), iSource(INFO_UNKNOWN), 
-    iTarget(INFO_UNKNOWN), iManufacturer(INFO_UNKNOWN),
-    iSwVersion(INFO_UNKNOWN), iModel(INFO_UNKNOWN)
+RemoteDeviceInfo::RemoteDeviceInfo()
+: iUTC( false ), iSupportLargeObjs( false ), iSupportNumberOfChanges( false )
 {
     FUNCTION_CALL_TRACE;
 }
@@ -73,105 +49,52 @@ RemoteDeviceInfo::~RemoteDeviceInfo()
     FUNCTION_CALL_TRACE;
 }
 
-QList<DataSync::SyncTypes> RemoteDeviceInfo::supportedSyncTypes() const
+DeviceInfo& RemoteDeviceInfo::deviceInfo()
 {
-    FUNCTION_CALL_TRACE;
-    return iSupportedSyncTypes;
+    return iDeviceInfo;
 }
 
-void RemoteDeviceInfo::populateSupportedSyncType( DataSync::SyncTypes aType )
+const DeviceInfo& RemoteDeviceInfo::deviceInfo() const
 {
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, add sync type supported : " << aType);
-    iSupportedSyncTypes.append( aType );
+    return iDeviceInfo;
 }
 
-QString RemoteDeviceInfo::sourceURI() const
+QList<Datastore>& RemoteDeviceInfo::datastores()
 {
-    FUNCTION_CALL_TRACE;
-    return iSource;
+    return iDatastores;
 }
 
-void RemoteDeviceInfo::populateSourceURI( const QString& aSource )
+const QList<Datastore>& RemoteDeviceInfo::datastores() const
 {
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set source : " << aSource);
-    iSource = aSource;
+    return iDatastores;
 }
 
-QString RemoteDeviceInfo::targetURI() const
+void RemoteDeviceInfo::setSupportsUTC( bool aUTC )
 {
-    FUNCTION_CALL_TRACE;
-    return iTarget;
+    iUTC = aUTC;
 }
 
-void RemoteDeviceInfo::populateTargetURI( const QString& aTarget )
+bool RemoteDeviceInfo::getSupportsUTC() const
 {
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set target : " << aTarget);
-    iTarget = aTarget;
+    return iUTC;
 }
 
-const MetaParams& RemoteDeviceInfo::meta() const
+void RemoteDeviceInfo::setSupportsLargeObjs( bool aSupportsLargeObjs )
 {
-    FUNCTION_CALL_TRACE;
-    return iMeta;
+    iSupportLargeObjs = aSupportsLargeObjs;
 }
 
-void RemoteDeviceInfo::populateMeta( const MetaParams& aMeta)
+bool RemoteDeviceInfo::getSupportsLargeObjs() const
 {
-    FUNCTION_CALL_TRACE;
-    iMeta = aMeta;
+    return iSupportLargeObjs;
 }
 
-bool RemoteDeviceInfo::isLargeObjectSupported() const
+void RemoteDeviceInfo::setSupportsNumberOfChanges( bool aSupportsNumberOfChanges )
 {
-    FUNCTION_CALL_TRACE;
-    return iSupportsLargeObjects;
+    iSupportNumberOfChanges = aSupportsNumberOfChanges;
 }
 
-void RemoteDeviceInfo::setLargeObjectSupported()
+bool RemoteDeviceInfo::getSupportsNumberOfChanges() const
 {
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set large object supported");
-    iSupportsLargeObjects = true;
-}
-
-QString RemoteDeviceInfo::manufacturer() const
-{
-    FUNCTION_CALL_TRACE;
-    return iManufacturer;
-}
-
-void RemoteDeviceInfo::populateManufacturer( const QString& aManufacturer )
-{
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set manufacturer : " << aManufacturer);
-    iManufacturer = aManufacturer;
-}
-
-QString RemoteDeviceInfo::swVersion() const
-{
-    FUNCTION_CALL_TRACE;
-    return iSwVersion;
-}
-
-void RemoteDeviceInfo::populateSwVersion( const QString& aSwVersion )
-{
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set sw version : " << aSwVersion);
-    iSwVersion = aSwVersion;
-}
-
-QString RemoteDeviceInfo::model() const
-{
-    FUNCTION_CALL_TRACE;
-    return iModel;
-}
-
-void RemoteDeviceInfo::populateModel( const QString& aModel )
-{
-    FUNCTION_CALL_TRACE;
-    LOG_DEBUG("RemoteDeviceInfo, set model : " << aModel);
-    iModel = aModel;
+    return iSupportNumberOfChanges;
 }

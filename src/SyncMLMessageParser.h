@@ -39,6 +39,7 @@
 
 #include "internals.h"
 
+class SyncMLMessageParserTest;
 
 namespace DataSync {
 
@@ -107,52 +108,25 @@ signals:
     void parsingError( DataSync::ParserError aEvent );
 
 private:
-
-    /**
-     * \brief trigger function for the parser
-     */
     void startParsing();
 
-	/**
-     * \brief reads Header and emits cmdSyncHeaderReceived signal
-     */
 	void readHeader();
 
-	/**
-     * \brief reads Body inside a SyncML message
-     */
 	void readBody();
 
-	/**
-     * \brief reads Status element and emits cmdStatusReceived signal
-     */
 	void readStatus();
 
-	/**
-     * \brief reads Sync element and emits cmdSyncReceived signal
-     */
 	void readSync();
 
-	/**
-     * \brief reads Alert Element and emits cmdAlertReceived signal
-     */
 	void readAlert();
 
-	/**
-     * \brief reads Results and emits cmdResultsReceived signal
-     */
+    void readPut();
+
 	void readResults();
 
-    /**
-     * \brief reads Map and emits cmdMapReceived signal
-     */
     void readMap();
 
     void readMapItem( MapItem& aParams );
-
-	void readDevInfData();
-
-	void readDevInfItem();
 
 	void readSyncActionData( const QString& aAction, SyncActionData& aParams );
 
@@ -166,13 +140,31 @@ private:
 
 	void readAnchor( AnchorParams& aParams );
 
+    void readDevInfItem( DevInfItemParams& aParams );
+
+    void readDevInf( DevInfItemParams& aParams );
+
+    void readDataStore( Datastore& aDatastore, const QString& aDTD );
+
+    void readContentFormat( ContentFormat& aFormat, const QString& aEndElement );
+
+    void readSyncCaps( Datastore& aDatastore );
+
+    void readCTCap11( QList<Datastore>& aDatastores );
+
+    void readCTCap12( Datastore& aDatastore );
+
+    void readCTCap12Property( CTCapProperty& aProperty );
+
+    void readCTCap12Parameter( CTCapParameter& aParameter );
+
     QString readURI();
 
 	int readInt();
 
 	QString readString();
 
-	bool shouldContinue() const;
+    bool shouldContinue() const;
 
 	void initMaps();
 
@@ -185,6 +177,9 @@ private:
     bool                        iSyncHdrFound;
     bool                        iSyncBodyFound;
     bool                        iIsNewPacket;
+
+
+    friend class ::SyncMLMessageParserTest;
 };
 }
 

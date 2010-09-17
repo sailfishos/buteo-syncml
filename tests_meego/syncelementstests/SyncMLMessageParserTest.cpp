@@ -46,7 +46,6 @@ using namespace DataSync;
 
 void SyncMLMessageParserTest::testResp1()
 {
-    RemoteDeviceInfo::instance();
 
     SyncMLMessageParser parser;
 
@@ -151,12 +150,8 @@ void SyncMLMessageParserTest::testResp1()
     QCOMPARE( fragment->iType, Fragment::FRAGMENT_RESULTS );
 
     ResultsParams* results = static_cast<ResultsParams*>( fragment );
-
-    QCOMPARE( RemoteDeviceInfo::instance()->isLargeObjectSupported(), true );
-
     delete results;
     results = NULL;
-    RemoteDeviceInfo::destroyInstance();
 
     // Map
     QVERIFY( !fragments.isEmpty() );
@@ -266,6 +261,204 @@ void SyncMLMessageParserTest::verifyDelete( const DataSync::SyncActionData& aDat
     QCOMPARE(aData.cmdID,6);
     QCOMPARE(aData.meta.type,QString("x-type/x-subtype2"));
     QCOMPARE(aData.items.at(0).target,QString("128"));
+}
+
+void SyncMLMessageParserTest::testDevInf11()
+{
+    QByteArray data;
+    QVERIFY( readFile( "testfiles/devinf01.txt", data ) );
+    QBuffer buffer( &data );
+    buffer.open( QIODevice::ReadOnly );
+    buffer.seek( 0 );
+    SyncMLMessageParser parser;
+    parser.iReader.setDevice( &buffer );
+
+    DevInfItemParams params;
+    parser.readDevInf( params );
+    buffer.close();
+
+    QCOMPARE( parser.iError, PARSER_ERROR_LAST );
+
+    QCOMPARE( params.devInfo.deviceInfo().getManufacturer(), QString( "FooManufacturer" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getModel(), QString( "FooModel" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getOEM(), QString( "FooOEM" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getFirmwareVersion(), QString( "FwVersion" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getSoftwareVersion(), QString( "v 21.0.045") );
+    QCOMPARE( params.devInfo.deviceInfo().getHardwareVersion(), QString( "HwVersion" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getDeviceID(), QString( "IMEI:356064034969473" ) );
+    QVERIFY( params.devInfo.getSupportsLargeObjs() );
+    QVERIFY( params.devInfo.getSupportsNumberOfChanges() );
+    QVERIFY( params.devInfo.getSupportsUTC() );
+
+    const QList<Datastore>& datastores = params.devInfo.datastores();
+    QCOMPARE( datastores.count(), 3 );
+
+    QCOMPARE( datastores[0].getSourceURI(), QString( "./Contacts" ) );
+    QCOMPARE( datastores[0].getPreferredRx().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].getPreferredRx().iVersion, QString( "2.1" ) );
+    QCOMPARE( datastores[0].rx().count(), 1 );
+    QCOMPARE( datastores[0].rx().at(0).iType, QString( "text/vcard" ) );
+    QCOMPARE( datastores[0].rx().at(0).iVersion, QString( "3.0" ) );
+    QCOMPARE( datastores[0].getPreferredTx().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].getPreferredTx().iVersion, QString( "2.1" ) );
+    QVERIFY( !datastores[0].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[0].tx().count(), 0 );
+    QCOMPARE( datastores[0].syncCaps().count(), 5 );
+    QVERIFY( datastores[0].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[0].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[0].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[0].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[0].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+    QCOMPARE( datastores[0].ctCaps().count(), 1 );
+    QCOMPARE( datastores[0].ctCaps().at(0).getFormat().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().count(), 28 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iName, QString( "TEL" ) );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.count(), 1 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.at(0).iValues.count(), 8 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.at(0).iValues.at(7), QString( "VIDEO") );
+
+    QCOMPARE( datastores[1].getSourceURI(), QString( "./Calendar" ) );
+    QCOMPARE( datastores[1].getPreferredRx().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].getPreferredRx().iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[1].rx().count(), 0 );
+    QCOMPARE( datastores[1].getPreferredTx().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].getPreferredTx().iVersion, QString( "1.0" ) );
+    QVERIFY( !datastores[1].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[1].tx().count(), 0 );
+    QCOMPARE( datastores[1].syncCaps().count(), 5 );
+    QVERIFY( datastores[1].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[1].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[1].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[1].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[1].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+    QCOMPARE( datastores[1].ctCaps().count(), 1 );
+    QCOMPARE( datastores[1].ctCaps().at(0).getFormat().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].ctCaps().at(0).properties().count(), 35 );
+
+    QCOMPARE( datastores[2].getSourceURI(), QString( "./Notepad" ) );
+    QCOMPARE( datastores[2].getPreferredRx().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].getPreferredRx().iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[2].rx().count(), 1 );
+    QCOMPARE( datastores[2].rx().at(0).iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].rx().at(0).iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[2].getPreferredTx().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].getPreferredTx().iVersion, QString( "1.0" ) );
+    QVERIFY( !datastores[2].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[2].tx().count(), 0 );
+    QCOMPARE( datastores[2].syncCaps().count(), 5 );
+    QVERIFY( datastores[2].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[2].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[2].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[2].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[2].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+    QCOMPARE( datastores[2].ctCaps().count(), 1 );
+    QCOMPARE( datastores[2].ctCaps().at(0).getFormat().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().count(), 1 );
+    QVERIFY( datastores[2].ctCaps().at(0).properties().at(0).iName.isEmpty() );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iType, QString( "chr" ) );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iSize, 0 );
+
+}
+
+void SyncMLMessageParserTest::testDevInf12()
+{
+    QByteArray data;
+    QVERIFY( readFile( "testfiles/devinf02.txt", data ) );
+    QBuffer buffer( &data );
+    buffer.open( QIODevice::ReadOnly );
+    buffer.seek( 0 );
+    SyncMLMessageParser parser;
+    parser.iReader.setDevice( &buffer );
+
+    DevInfItemParams params;
+    parser.readDevInf( params );
+    buffer.close();
+
+    QCOMPARE( parser.iError, PARSER_ERROR_LAST );
+
+    QCOMPARE( params.devInfo.deviceInfo().getManufacturer(), QString( "FooManufacturer" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getModel(), QString( "FooModel" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getOEM(), QString( "FooOEM" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getFirmwareVersion(), QString( "FwVersion" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getSoftwareVersion(), QString( "v 21.0.045") );
+    QCOMPARE( params.devInfo.deviceInfo().getHardwareVersion(), QString( "HwVersion" ) );
+    QCOMPARE( params.devInfo.deviceInfo().getDeviceID(), QString( "IMEI:356064034969473" ) );
+    QVERIFY( params.devInfo.getSupportsLargeObjs() );
+    QVERIFY( params.devInfo.getSupportsNumberOfChanges() );
+    QVERIFY( params.devInfo.getSupportsUTC() );
+
+    const QList<Datastore>& datastores = params.devInfo.datastores();
+    QCOMPARE( datastores.count(), 3 );
+
+    QCOMPARE( datastores[0].getSourceURI(), QString( "./Contacts" ) );
+    QCOMPARE( datastores[0].getPreferredRx().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].getPreferredRx().iVersion, QString( "2.1" ) );
+    QCOMPARE( datastores[0].rx().count(), 1 );
+    QCOMPARE( datastores[0].rx().at(0).iType, QString( "text/vcard" ) );
+    QCOMPARE( datastores[0].rx().at(0).iVersion, QString( "3.0" ) );
+    QCOMPARE( datastores[0].getPreferredTx().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].getPreferredTx().iVersion, QString( "2.1" ) );
+    QVERIFY( datastores[0].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[0].tx().count(), 0 );
+    QCOMPARE( datastores[0].syncCaps().count(), 5 );
+    QVERIFY( datastores[0].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[0].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[0].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[0].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[0].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+
+    QCOMPARE( datastores[0].ctCaps().count(), 1 );
+    QCOMPARE( datastores[0].ctCaps().at(0).getFormat().iType, QString( "text/x-vcard" ) );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().count(), 24 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iName, QString( "TEL" ) );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.count(), 1 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.at(0).iName, QString( "TYPE") );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.at(0).iValues.count(), 8 );
+    QCOMPARE( datastores[0].ctCaps().at(0).properties().at(6).iParameters.at(0).iValues.at(7), QString( "CAR") );
+
+    QCOMPARE( datastores[1].getSourceURI(), QString( "./Calendar" ) );
+    QCOMPARE( datastores[1].getPreferredRx().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].getPreferredRx().iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[1].rx().count(), 0 );
+    QCOMPARE( datastores[1].getPreferredTx().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].getPreferredTx().iVersion, QString( "1.0" ) );
+    QVERIFY( !datastores[1].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[1].tx().count(), 0 );
+    QCOMPARE( datastores[1].syncCaps().count(), 5 );
+    QVERIFY( datastores[1].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[1].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[1].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[1].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[1].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+
+    QCOMPARE( datastores[1].ctCaps().count(), 1 );
+    QCOMPARE( datastores[1].ctCaps().at(0).getFormat().iType, QString( "text/x-vcalendar" ) );
+    QCOMPARE( datastores[1].ctCaps().at(0).properties().count(), 25 );
+
+    QCOMPARE( datastores[2].getSourceURI(), QString( "./Notepad" ) );
+    QCOMPARE( datastores[2].getPreferredRx().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].getPreferredRx().iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[2].rx().count(), 1 );
+    QCOMPARE( datastores[2].rx().at(0).iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].rx().at(0).iVersion, QString( "1.0" ) );
+    QCOMPARE( datastores[2].getPreferredTx().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].getPreferredTx().iVersion, QString( "1.0" ) );
+    QVERIFY( datastores[2].getSupportsHierarchicalSync() );
+    QCOMPARE( datastores[2].tx().count(), 0 );
+    QCOMPARE( datastores[2].syncCaps().count(), 5 );
+    QVERIFY( datastores[2].syncCaps().at(0) == SYNCTYPE_TWOWAY );
+    QVERIFY( datastores[2].syncCaps().at(1) == SYNCTYPE_TWOWAYSLOW );
+    QVERIFY( datastores[2].syncCaps().at(2) == SYNCTYPE_FROMCLIENT );
+    QVERIFY( datastores[2].syncCaps().at(3) == SYNCTYPE_FROMSERVER );
+    QVERIFY( datastores[2].syncCaps().at(4) == SYNCTYPE_SERVERALERTED );
+
+    QCOMPARE( datastores[2].ctCaps().count(), 1 );
+    QCOMPARE( datastores[2].ctCaps().at(0).getFormat().iType, QString( "text/plain" ) );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().count(), 1 );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iName, QString( "Note" ) );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iType, QString( "chr" ) );
+    QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iSize, 0 );
+
 }
 
 TESTLOADER_ADD_TEST(SyncMLMessageParserTest);
