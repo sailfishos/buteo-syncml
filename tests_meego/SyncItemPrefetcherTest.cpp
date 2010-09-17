@@ -47,7 +47,10 @@ PrefetchStorage::PrefetchStorage( const QList<SyncItemKey>& aItemIds )
     ContentFormat format;
     format.iType = "text/foo";
     format.iVersion = "1.0";
-    iFormats.append( format );
+    iFormats.setPreferredRx( format );
+    iFormats.setPreferredTx( format );
+    iFormats.rx().append( format );
+    iFormats.tx().append( format );
 }
 
 PrefetchStorage::~PrefetchStorage()
@@ -70,19 +73,14 @@ const QString& PrefetchStorage::getSourceURI() const
     return iSourceURI;
 }
 
-qint64 PrefetchStorage::getMaxObjSize() const
-{
-    return 0;
-}
-
-const QList<ContentFormat>& PrefetchStorage::getSupportedFormats() const
+const StorageContentFormatInfo& PrefetchStorage::getFormatInfo() const
 {
     return iFormats;
 }
 
-const ContentFormat& PrefetchStorage::getPreferredFormat() const
+qint64 PrefetchStorage::getMaxObjSize() const
 {
-    return iFormats[0];
+    return 0;
 }
 
 QByteArray PrefetchStorage::getPluginCTCaps( ProtocolVersion aVersion ) const

@@ -584,7 +584,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = COMMIT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
+                                    aPlugin.getSourceURI() ,aPlugin.getFormatInfo().getPreferredRx().iType, deleteItems.count() );
 
                 break;
             }
@@ -594,7 +594,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = COMMIT_NOT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
+                                    aPlugin.getSourceURI() ,aPlugin.getFormatInfo().getPreferredRx().iType, deleteItems.count() );
 
                 break;
             }
@@ -603,7 +603,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
                 result.iStatus = generalStatus( deleteStatus[i] );
 
                 emit itemProcessed( MOD_ITEM_ERROR, MOD_LOCAL_DATABASE,
-                                    aPlugin.getSourceURI() ,aPlugin.getPreferredFormat().iType, deleteItems.count() );
+                                    aPlugin.getSourceURI() ,aPlugin.getFormatInfo().getPreferredRx().iType, deleteItems.count() );
 
                 break;
             }

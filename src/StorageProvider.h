@@ -35,12 +35,14 @@
 
 class QString;
 
+#include "StorageContentFormatInfo.h"
+
 namespace DataSync {
 
 class StoragePlugin;
 class SessionHandler;
 
-/*! \brief Storage provider interface for SyncML stack
+/*! \brief Storage provider interface for SyncAgent
  *
  */
 class StorageProvider
@@ -65,6 +67,18 @@ public:
     void setSessionHandler(const SessionHandler *aSessionHandler) {
         iSessionHandler = aSessionHandler;
     }
+
+    /*! \brief Provides content format information based on storage URI
+     *
+     * This is used by SyncAgent to examine content information of a storage
+     * plugin before acquiring it.
+     *
+     * @param aURI Source URI of the storage
+     * @param aInfo Content information of the storage (if successful)
+     * @return True if the storage was found, otherwise false
+     */
+    virtual bool getStorageContentFormatInfo( const QString& aURI,
+                                              StorageContentFormatInfo& aInfo ) = 0;
 
     /*! \brief Provides a storage based on URI
      *

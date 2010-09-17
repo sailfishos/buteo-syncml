@@ -37,6 +37,10 @@
 
 #include "SessionHandler.h"
 
+#include <QString>
+#include <QList>
+#include <QPair>
+
 class ServerSessionHandlerTest;
 
 namespace DataSync {
@@ -93,17 +97,15 @@ protected:
     virtual void resendPackage();
 
 
-private: // functions
+private:
 
     ResponseStatusCode setupTargetByClient( const SyncMode& aSyncMode, AlertParams& aAlertParams );
 
     ResponseStatusCode acknowledgeTarget( const SyncMode& aSyncMode, AlertParams& aAlertParams );
 
-    void setupStorages();
+    void composeSyncML11ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages );
 
-    void composeSyncML11ServerAlertedSyncPackage();
-
-    void composeAndSendSyncML12ServerAlertedSyncPackage();
+    void composeAndSendSyncML12ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages );
 
     void composeServerInitializationPackage();
 
@@ -113,15 +115,9 @@ private: // functions
 
     void composeServerInitialization();
 
-    /**
-     * \brief DS 1.1 specific sync initialization by server
-     */
-    void serverInitiatedSyncDS11();
+    void serverInitiatedSyncDS11( const QList< QPair<QString, QString> >& aStorages );
 
-    /**
-     * \brief DS 1.2 specific sync initialization by server
-     */
-    void serverInitiatedSyncDS12();
+    void serverInitiatedSyncDS12( const QList< QPair<QString, QString> >& aStorages );
 
 
 private: // data

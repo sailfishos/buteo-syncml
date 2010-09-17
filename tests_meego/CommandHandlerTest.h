@@ -52,7 +52,10 @@ public:
         ContentFormat format;
         format.iType = "foo";
         format.iVersion = "0.0";
-        iFormats.append( format );
+        iFormats.setPreferredRx( format );
+        iFormats.setPreferredTx( format );
+        iFormats.rx().append( format );
+        iFormats.tx().append( format );
     }
 
     virtual ~CommitTestStorage()
@@ -64,20 +67,14 @@ public:
         return iSourceURI;
     }
 
-    virtual qint64 getMaxObjSize() const
-    {
-        return 0;
-    }
-
-    virtual const QList<ContentFormat>& getSupportedFormats() const
+    const StorageContentFormatInfo& getFormatInfo() const
     {
         return iFormats;
     }
 
-    virtual const ContentFormat& getPreferredFormat() const
+    virtual qint64 getMaxObjSize() const
     {
-        Q_ASSERT( iFormats.count() == 1 );
-        return iFormats[0];
+        return 0;
     }
 
     virtual QByteArray getPluginCTCaps( ProtocolVersion /*aVersion*/ ) const
@@ -164,12 +161,12 @@ public:
     friend class CommandHandlerTest;
 
 private:
-    QString                 iSourceURI;
-    QList<ContentFormat>    iFormats;
-    QList<SyncItemKey>      iAddedItems;
-    QList<SyncItemKey>      iReplacedItems;
-    QList<SyncItemKey>      iDeletedItems;
-    int                     iIdCounter;
+    QString                     iSourceURI;
+    StorageContentFormatInfo    iFormats;
+    QList<SyncItemKey>          iAddedItems;
+    QList<SyncItemKey>          iReplacedItems;
+    QList<SyncItemKey>          iDeletedItems;
+    int                         iIdCounter;
 
 };
 

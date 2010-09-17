@@ -41,6 +41,15 @@
 
 using namespace DataSync;
 
+bool SyncAgentTest::getStorageContentFormatInfo( const QString& aURI,
+                                                 StorageContentFormatInfo& aInfo )
+{
+    Q_UNUSED( aURI );
+    MockStorage temp( "storage" );
+    aInfo = temp.getFormatInfo();
+    return true;
+}
+
 StoragePlugin* SyncAgentTest::acquireStorageByURI( const QString& /*aURI*/ )
 {
     return new MockStorage( "storage" );

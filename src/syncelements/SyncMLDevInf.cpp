@@ -203,38 +203,43 @@ SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
 
     }
 
-    const ContentFormat& preferredFormat = aPlugin.getPreferredFormat();
+    const ContentFormat& rxPref = aPlugin.getFormatInfo().getPreferredRx();
 
-    if( !preferredFormat.iType.isEmpty() ) {
-
+    if( !rxPref.iType.isEmpty() )
+    {
         SyncMLCmdObject *rxPrefObject = new SyncMLCmdObject(SYNCML_ELEMENT_RX_PREF);
-        SyncMLCmdObject *txPrefObject = new SyncMLCmdObject(SYNCML_ELEMENT_TX_PREF);
 
-        SyncMLCmdObject* rxCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, preferredFormat.iType );
+        SyncMLCmdObject* rxCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, rxPref.iType );
         rxPrefObject->addChild( rxCTTypeObject );
 
-        SyncMLCmdObject* rxVerCTObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERCT, preferredFormat.iVersion );
+        SyncMLCmdObject* rxVerCTObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERCT, rxPref.iVersion );
         rxPrefObject->addChild( rxVerCTObject );
 
         dataStoreObject->addChild( rxPrefObject );
+    }
 
-        SyncMLCmdObject* txCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, preferredFormat.iType);
+    const ContentFormat& txPref = aPlugin.getFormatInfo().getPreferredTx();
+
+    if( !txPref.iType.isEmpty() )
+    {
+        SyncMLCmdObject *txPrefObject = new SyncMLCmdObject(SYNCML_ELEMENT_TX_PREF);
+
+        SyncMLCmdObject* txCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, txPref.iType);
         txPrefObject->addChild( txCTTypeObject );
 
-        SyncMLCmdObject* txVerCTObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERCT, preferredFormat.iVersion );
+        SyncMLCmdObject* txVerCTObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERCT, txPref.iVersion );
         txPrefObject->addChild( txVerCTObject );
 
         dataStoreObject->addChild( txPrefObject );
-
     }
 
-    const QList<ContentFormat>& supportedFormats = aPlugin.getSupportedFormats();
+    const QList<ContentFormat>& rx = aPlugin.getFormatInfo().rx();
 
-    for( int i = 0; i < supportedFormats.count(); ++i ) {
-        const ContentFormat& format = supportedFormats[i];
+    for( int i = 0; i < rx.count(); ++i )
+    {
+        const ContentFormat& format = rx[i];
 
         SyncMLCmdObject *rxObject = new SyncMLCmdObject(SYNCML_ELEMENT_RX);
-        SyncMLCmdObject *txObject = new SyncMLCmdObject(SYNCML_ELEMENT_TX);
 
         SyncMLCmdObject* rxCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, format.iType );
         rxObject->addChild( rxCTTypeObject );
@@ -243,6 +248,15 @@ SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
         rxObject->addChild( rxVerCTObject );
 
         dataStoreObject->addChild( rxObject );
+    }
+
+    const QList<ContentFormat>& tx = aPlugin.getFormatInfo().tx();
+
+    for( int i = 0; i < tx.count(); ++i )
+    {
+        const ContentFormat& format = tx[i];
+
+        SyncMLCmdObject *txObject = new SyncMLCmdObject(SYNCML_ELEMENT_TX);
 
         SyncMLCmdObject* txCTTypeObject = new SyncMLCmdObject( SYNCML_ELEMENT_CTTYPE, format.iType);
         txObject->addChild( txCTTypeObject );
@@ -251,8 +265,6 @@ SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
         txObject->addChild( txVerCTObject );
 
         dataStoreObject->addChild( txObject );
-
-
     }
 
     SyncMLCmdObject* syncCapObject = new SyncMLCmdObject(SYNCML_ELEMENT_SYNCCAP);

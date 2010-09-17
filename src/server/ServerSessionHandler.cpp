@@ -40,6 +40,7 @@
 #include "DevInfPackage.h"
 #include "AuthHelper.h"
 #include "ServerAlertedNotification.h"
+#include "StorageProvider.h"
 
 #include "LogMacros.h"
 
@@ -69,14 +70,31 @@ void ServerSessionHandler::initiateSync()
     QString sessionId = generateSessionID();
     setupSession( sessionId );
     ProtocolVersion protocolVersion = getProtocolVersion();
-    setupStorages();
 
     LOG_DEBUG("Using protocol version " << protocolVersion);
 
-    if( getStorages().count() != iConfig->getSourceDbs().count() )
+    QList<QString> sourceDbs = iConfig->getSourceDbs();
+    QList< QPair<QString, QString> > storages;
+
+    for( int i = 0; i < sourceDbs.count(); ++i )
     {
-        LOG_CRITICAL( "Could not create all targets, aborting sync" );
-        abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
+        const QString& sourceURI = sourceDbs[i];
+        StorageContentFormatInfo info;
+        if( iConfig->getStorageProvider()->getStorageContentFormatInfo( sourceURI,
+                                                                        info ) )
+        {
+            QPair<QString, QString> storage;
+            storage.first = sourceURI;
+            storage.second = info.getPreferredTx().iType;
+            storages.append( storage );
+        }
+
+    }
+
+    if( storages.count() != sourceDbs.count() )
+    {
+        LOG_CRITICAL( "Could not find all targets, aborting sync" );
+        abortSync( DATABASE_FAILURE, "Could not find all sync targets" );
         return;
     }
 
@@ -88,10 +106,10 @@ void ServerSessionHandler::initiateSync()
     }
 
     if( protocolVersion == DS_1_1 ) {
-        serverInitiatedSyncDS11();
+        serverInitiatedSyncDS11( storages );
     }
     else if (protocolVersion == DS_1_2){
-        serverInitiatedSyncDS12();
+        serverInitiatedSyncDS12( storages );
     }
     else {
         abortSync( INTERNAL_ERROR, "Unknown protocol version" );
@@ -395,19 +413,6 @@ void ServerSessionHandler::resendPackage()
     }
 }
 
-void ServerSessionHandler::setupStorages()
-{
-    QList<QString> sources;
-
-    if (iConfig != NULL) {
-        sources = iConfig->getSourceDbs();
-    }
-
-    foreach(const QString& sourceDb, sources) {
-        createStorageByURI( sourceDb );
-    }
-}
-
 ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aSyncMode,
                                                               AlertParams& aAlertParams )
 {
@@ -538,20 +543,21 @@ ResponseStatusCode ServerSessionHandler::acknowledgeTarget( const SyncMode& /*aS
 
 }
 
-void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage()
+void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages )
 {
     FUNCTION_CALL_TRACE;
 
     composeAuthentication();
 
-    foreach (StoragePlugin* plugin, getStorages()) {
-        if (plugin != NULL && iConfig != NULL) {
-            AlertPackage* package = new AlertPackage(plugin->getSourceURI(),
-                                                     plugin->getPreferredFormat().iType,
-                                                     (AlertType)iConfig->getSyncMode().toSyncMLCode());
+    AlertType alertCode = (AlertType)iConfig->getSyncMode().toSyncMLCode();
 
-            getResponseGenerator().addPackage(package);
-        }
+    for( int i = 0; i < aStorages.count(); ++i )
+    {
+        AlertPackage* package = new AlertPackage(aStorages[i].first,
+                                                 aStorages[i].second,
+                                                 alertCode );
+
+        getResponseGenerator().addPackage(package);
     }
 
     // Close the package by appending Final
@@ -559,7 +565,7 @@ void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage()
 
 }
 
-void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage()
+void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages )
 {
     FUNCTION_CALL_TRACE;
 
@@ -572,15 +578,13 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage()
     data.iSessionId = 0;
     data.iServerIdentifier = getConfig()->getLocalDeviceName();
 
-    const QList<StoragePlugin*>& storages = getStorages();
-
-    for( int i = 0; i < storages.count(); ++i )
+    int syncType = getConfig()->getSyncMode().toSyncMLCode();
+    for( int i = 0; i < aStorages.count(); ++i )
     {
-        StoragePlugin* storage = storages[i];
         SANSyncInfo syncInfo;
-        syncInfo.iSyncType = getConfig()->getSyncMode().toSyncMLCode();
-        syncInfo.iContentType = storage->getPreferredFormat().iType;
-        syncInfo.iServerURI = storage->getSourceURI();
+        syncInfo.iSyncType = syncType;
+        syncInfo.iServerURI = aStorages[i].first;
+        syncInfo.iContentType = aStorages[i].second;
         data.iSyncInfo.append( syncInfo );
     }
 
@@ -657,24 +661,24 @@ void ServerSessionHandler::composeServerInitialization()
 
 }
 
-void ServerSessionHandler::serverInitiatedSyncDS11()
+void ServerSessionHandler::serverInitiatedSyncDS11( const QList< QPair<QString, QString> >& aStorages )
 {
     FUNCTION_CALL_TRACE;
 
     // Send initialization package to client
-    composeSyncML11ServerAlertedSyncPackage();
+    composeSyncML11ServerAlertedSyncPackage( aStorages );
     setSyncState( PREPARED );
     sendNextMessage();
     getTransport().receive();
 
 }
 
-void ServerSessionHandler::serverInitiatedSyncDS12()
+void ServerSessionHandler::serverInitiatedSyncDS12( const QList< QPair<QString, QString> >& aStorages )
 {
     FUNCTION_CALL_TRACE;
 
     // Send initialization package to client
-    composeAndSendSyncML12ServerAlertedSyncPackage();
+    composeAndSendSyncML12ServerAlertedSyncPackage( aStorages );
     setSyncState( PREPARED );
     getTransport().receive();
 

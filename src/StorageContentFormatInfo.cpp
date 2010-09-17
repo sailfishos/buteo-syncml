@@ -31,64 +31,56 @@
 *
 */
 
-#include "DataStore.h"
+#include "StorageContentFormatInfo.h"
 
 using namespace DataSync;
 
-Datastore::Datastore() : iSupportsHierarchicalSync( false )
+StorageContentFormatInfo::StorageContentFormatInfo()
 {
+
 }
 
-Datastore::~Datastore()
+StorageContentFormatInfo::~StorageContentFormatInfo()
 {
+
 }
 
-void Datastore::setSourceURI( const QString& aSourceURI )
+void StorageContentFormatInfo::setPreferredRx( const ContentFormat& aFormat )
 {
-    iSourceURI = aSourceURI;
+    iRxPref = aFormat;
 }
 
-const QString& Datastore::getSourceURI() const
+const ContentFormat& StorageContentFormatInfo::getPreferredRx() const
 {
-    return iSourceURI;
+    return iRxPref;
 }
 
-StorageContentFormatInfo& Datastore::formatInfo()
+void StorageContentFormatInfo::setPreferredTx( const ContentFormat& aFormat )
 {
-    return iFormatInfo;
+    iTxPref = aFormat;
 }
 
-const StorageContentFormatInfo& Datastore::formatInfo() const
+const ContentFormat& StorageContentFormatInfo::getPreferredTx() const
 {
-    return iFormatInfo;
+    return iTxPref;
 }
 
-void Datastore::setSupportsHierarchicalSync( bool aSupports )
+const QList<ContentFormat>& StorageContentFormatInfo::rx() const
 {
-    iSupportsHierarchicalSync = aSupports;
+    return iRx;
 }
 
-bool Datastore::getSupportsHierarchicalSync() const
+QList<ContentFormat>& StorageContentFormatInfo::rx()
 {
-    return iSupportsHierarchicalSync;
+    return iRx;
 }
 
-const QList<SyncTypes>& Datastore::syncCaps() const
+const QList<ContentFormat>& StorageContentFormatInfo::tx() const
 {
-    return iSyncCaps;
+    return iTx;
 }
 
-QList<SyncTypes>& Datastore::syncCaps()
+QList<ContentFormat>& StorageContentFormatInfo::tx()
 {
-    return iSyncCaps;
-}
-
-const QList<CTCap>& Datastore::ctCaps() const
-{
-    return iCTCaps;
-}
-
-QList<CTCap>& Datastore::ctCaps()
-{
-    return iCTCaps;
+    return iTx;
 }

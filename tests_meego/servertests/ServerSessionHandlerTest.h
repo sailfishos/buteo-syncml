@@ -57,9 +57,6 @@ private slots:
     void testHandleResponseHeader();
     void testSetGetSyncStatus();
     void testAddGetSyncTargets();
-    void testServerInitiatedSync();
-    void testSuspendResumeSync();
-    void testMessageReceived();
     void testSyncAlertReceived();
     void testSyncReceived();
     void testMapReceived();

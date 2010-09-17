@@ -30,100 +30,98 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-#ifndef DATASTORE_H
-#define DATASTORE_H
+#ifndef STORAGECONTENTFORMATINFO_H
+#define STORAGECONTENTFORMATINFO_H
 
-#include "CTCap.h"
-#include "SyncMLGlobals.h"
+#include <QString>
+#include <QList>
 
 namespace DataSync {
 
-/*! \brief Describes the properties of a storage
+/*! \brief Information about a content format
  *
  */
-class Datastore
+struct ContentFormat
+{
+    QString iType;      /*!< MIME type of the content, for example "text/x-vcard"*/
+    QString iVersion;   /*!< Version of the supported MIME type*/
+};
+
+/*! \brief Describes general information about content formats supported by
+ *         a storage
+ */
+class StorageContentFormatInfo
 {
 public:
 
     /*! \brief Constructor
      *
      */
-    Datastore();
+    StorageContentFormatInfo();
 
     /*! \brief Destructor
      *
      */
-    ~Datastore();
+    ~StorageContentFormatInfo();
 
-    /*! \brief Set source URI of this datastore
+    /*! \brief Set preferred receive format
      *
-     * @param aSourceURI Source URI to set
+     * @param aFormat Format to set
      */
-    void setSourceURI( const QString& aSourceURI );
+    void setPreferredRx( const ContentFormat& aFormat );
 
-    /*! \brief Retrieve source URI of this datastore
-     *
-     * @return
-     */
-    const QString& getSourceURI() const;
-
-    /*! \brief Access format info
+    /*! \brief Retrieve preferred receive format
      *
      * @return
      */
-    StorageContentFormatInfo& formatInfo();
+    const ContentFormat& getPreferredRx() const;
 
-    /*! \brief Access format info
+    /*! \brief Set preferred transmit format
+     *
+     * @param aFormat
+     */
+    void setPreferredTx( const ContentFormat& aFormat );
+
+    /*! \brief Retrieve preferred transmit format
      *
      * @return
      */
-    const StorageContentFormatInfo& formatInfo() const;
+    const ContentFormat& getPreferredTx() const;
 
-    /*! \brief Sets support hierarchical sync property
-     *
-     * @param aSupports Value to set
-     */
-    void setSupportsHierarchicalSync( bool aSupports );
-
-    /*! \brief Retrieve support hierarchical sync property
+    /*! \brief Access receive formats
      *
      * @return
      */
-    bool getSupportsHierarchicalSync() const;
+    const QList<ContentFormat>& rx() const;
 
-    /*! \brief Access sync caps of this datastore
+    /*! \brief Access receive formats
      *
      * @return
      */
-    const QList<SyncTypes>& syncCaps() const;
+    QList<ContentFormat>& rx();
 
-    /*! \brief Access sync caps of this datastore
+    /*! \brief Access transmit formats
      *
      * @return
      */
-    QList<SyncTypes>& syncCaps();
+    const QList<ContentFormat>& tx() const;
 
-    /*! \brief Access CT caps of this datastore
+    /*! \brief Access transmit formats
      *
      * @return
      */
-    const QList<CTCap>& ctCaps() const;
-
-    /*! \brief Access CT caps of this datastore
-     *
-     * @return
-     */
-    QList<CTCap>& ctCaps();
+    QList<ContentFormat>& tx();
 
 private:
 
-    QString                     iSourceURI;
-    StorageContentFormatInfo    iFormatInfo;
-    bool                        iSupportsHierarchicalSync;
-    QList<SyncTypes>            iSyncCaps;
-    QList<CTCap>                iCTCaps;
+
+    ContentFormat           iRxPref;
+    ContentFormat           iTxPref;
+    QList<ContentFormat>    iRx;
+    QList<ContentFormat>    iTx;
+
 };
 
 }
 
-#endif // DATASTORE_H
+#endif // STORAGECONTENTFORMATINFO_H

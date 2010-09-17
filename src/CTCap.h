@@ -36,16 +36,9 @@
 #include <QString>
 #include <QList>
 
-namespace DataSync {
+#include "StorageContentFormatInfo.h"
 
-/*! \brief Information about a content format
- *
- */
-struct ContentFormat
-{
-    QString iType;      /*!< MIME type of the content, for example "text/x-vcard"*/
-    QString iVersion;   /*!< Version of the supported MIME type*/
-};
+namespace DataSync {
 
 /*! \brief Parameter of a property
  *

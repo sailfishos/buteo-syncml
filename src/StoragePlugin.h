@@ -39,22 +39,17 @@
 
 #include "SyncItemKey.h"
 #include "SyncAgentConsts.h"
-#include "CTCap.h"
+#include "StorageContentFormatInfo.h"
 
 namespace DataSync {
 
 class SyncItem;
 
-/*! \brief StoragePlugin provides the content for the synchronization process.
+/*! \brief Describes one storage backend in a synchronization process
  *
  * StoragePlugin is an entity which provides an interface for adding, removing
  * a SyncItem (like an email or bookmark), and read or write data to it.
  * The actual writing of data to an item is done via the SyncItem class methods.
- *
- * Every StoragePlugin has an identifier that can be retrieved using getInfo() method.
- * This identifier is used by server to identify to which data store (represented by
- * storage plugin) the client wishes to sync against. Therefore StoragePlugin identifiers
- * should be unique inside one device.
  */
 class StoragePlugin
 {
@@ -85,25 +80,16 @@ public:
      */
     virtual const QString& getSourceURI() const = 0;
 
+    /*! \brief Returns content format information of the storage plugin
+     *
+     */
+    virtual const StorageContentFormatInfo& getFormatInfo() const = 0;
+
     /*! \brief Returns the maximum size of items supported by the storage plugin
      *
      * @return
      */
     virtual qint64 getMaxObjSize() const = 0;
-
-    /*! \brief Returns a list of the format supported by the storage plugin
-     *
-     * List includes all supported formats, including preferred format
-     *
-     * @return
-     */
-    virtual const QList<ContentFormat>& getSupportedFormats() const = 0;
-
-    /*! \brief Returns the preferred format of the storage plugin
-     *
-     * @return
-     */
-    virtual const ContentFormat& getPreferredFormat() const = 0;
 
     /*! \brief Returns SyncML Device Information CTCaps of this plugin
      *

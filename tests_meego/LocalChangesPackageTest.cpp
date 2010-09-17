@@ -51,7 +51,10 @@ LocalChangesPackageStorage::LocalChangesPackageStorage( const QString& aSourceUR
     ContentFormat format;
     format.iType = "text/foo";
     format.iVersion = "1.0";
-    iFormats.append( format );
+    iFormats.setPreferredRx( format );
+    iFormats.setPreferredTx( format );
+    iFormats.rx().append( format );
+    iFormats.tx().append( format );
 }
 
 LocalChangesPackageStorage::~LocalChangesPackageStorage()
@@ -70,19 +73,14 @@ const QString& LocalChangesPackageStorage::getSourceURI() const
     return iSourceURI;
 }
 
-qint64 LocalChangesPackageStorage::getMaxObjSize() const
-{
-    return 0;
-}
-
-const QList<ContentFormat>& LocalChangesPackageStorage::getSupportedFormats() const
+const StorageContentFormatInfo& LocalChangesPackageStorage::getFormatInfo() const
 {
     return iFormats;
 }
 
-const ContentFormat& LocalChangesPackageStorage::getPreferredFormat() const
+qint64 LocalChangesPackageStorage::getMaxObjSize() const
 {
-    return iFormats[0];
+    return 0;
 }
 
 QByteArray LocalChangesPackageStorage::getPluginCTCaps( ProtocolVersion aVersion ) const

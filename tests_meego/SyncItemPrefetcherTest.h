@@ -51,9 +51,7 @@ public:
 
     virtual qint64 getMaxObjSize() const;
 
-    virtual const QList<ContentFormat>& getSupportedFormats() const;
-
-    virtual const ContentFormat& getPreferredFormat() const;
+    virtual const StorageContentFormatInfo& getFormatInfo() const;
 
     virtual QByteArray getPluginCTCaps( ProtocolVersion aVersion ) const;
 
@@ -77,13 +75,13 @@ public:
     virtual QList<StoragePluginStatus> deleteItems( const QList<SyncItemKey>& aKeys );
 
 private:
-    QString                 iSourceURI;
-    QList<ContentFormat>    iFormats;
+    QString                     iSourceURI;
+    StorageContentFormatInfo    iFormats;
 
-    QList<SyncItemKey>      iItemIds;
+    QList<SyncItemKey>          iItemIds;
 
-    bool                    iForceSyncItems;
-    QList<SyncItem*>        iSyncItems;
+    bool                        iForceSyncItems;
+    QList<SyncItem*>            iSyncItems;
 
 };
 

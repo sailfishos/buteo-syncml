@@ -43,6 +43,9 @@ class SessionHandlerTest : public QObject, public DataSync::StorageProvider
 Q_OBJECT
 
 public:
+
+    virtual bool getStorageContentFormatInfo( const QString& aURI,
+                                              DataSync::StorageContentFormatInfo& aInfo );
     virtual DataSync::StoragePlugin* acquireStorageByURI( const QString& aURI );
 
     virtual DataSync::StoragePlugin* acquireStorageByMIME( const QString& aMIME );

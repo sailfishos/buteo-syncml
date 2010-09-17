@@ -130,26 +130,6 @@ void ServerSessionHandlerTest::testAddGetSyncTargets()
 
 
 }
-
-void ServerSessionHandlerTest::testServerInitiatedSync()
-{
-    iHandler->initiateSync();
-}
-
-void ServerSessionHandlerTest::testSuspendResumeSync()
-{
-    iHandler->suspendSync();
-    iHandler->resumeSync();
-}
-
-void ServerSessionHandlerTest::testMessageReceived()
-{
-    HeaderParams headerParams;
-    iHandler->setSyncState(PREPARED);
-    iHandler->messageReceived(headerParams);
-
-}
-
 void ServerSessionHandlerTest::testSyncAlertReceived()
 {
     SyncMode mode;

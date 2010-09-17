@@ -126,6 +126,15 @@ private:
     //friend class SessionHandlerTest;
 };
 
+bool SessionHandlerTest::getStorageContentFormatInfo( const QString& aURI,
+                                                      StorageContentFormatInfo& aInfo )
+{
+    Q_UNUSED( aURI );
+    MockStorage storage( "storage" );
+    aInfo = storage.getFormatInfo();
+    return true;
+}
+
 StoragePlugin* SessionHandlerTest::acquireStorageByURI( const QString& /*aURI*/ )
 {
     return new MockStorage( "storage" );

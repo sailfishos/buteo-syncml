@@ -105,7 +105,10 @@ public:
         ContentFormat format;
         format.iType = aContentFormat;
         format.iVersion = aContentVersion;
-        iFormats.append( format );
+        iFormats.setPreferredRx(format);
+        iFormats.setPreferredTx(format);
+        iFormats.rx().append(format);
+        iFormats.tx().append(format);
     }
 
     virtual ~MockStorage() {}
@@ -115,20 +118,14 @@ public:
         return iSourceURI;
     }
 
-    virtual qint64 getMaxObjSize() const
-    {
-        return iMaxObjSize;
-    }
-
-    virtual const QList<ContentFormat>& getSupportedFormats() const
+    virtual const StorageContentFormatInfo& getFormatInfo() const
     {
         return iFormats;
     }
 
-    virtual const ContentFormat& getPreferredFormat() const
+    virtual qint64 getMaxObjSize() const
     {
-        Q_ASSERT( iFormats.count() > 0 );
-        return iFormats[0];
+        return iMaxObjSize;
     }
 
     virtual QByteArray getPluginCTCaps( ProtocolVersion aVersion ) const
@@ -252,9 +249,9 @@ public:
 #endif
 
 protected:
-    QString                 iSourceURI;
-    qint64                  iMaxObjSize;
-    QList<ContentFormat>    iFormats;
+    QString                     iSourceURI;
+    qint64                      iMaxObjSize;
+    StorageContentFormatInfo    iFormats;
 
 };
 

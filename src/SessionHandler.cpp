@@ -1390,7 +1390,7 @@ StoragePlugin* SessionHandler::createStorageByURI( const QString& aURI )
 
         if (plugin != NULL) {
             iStorages.append( plugin );
-            emit storageAccquired (plugin->getPreferredFormat().iType);
+            emit storageAccquired (plugin->getFormatInfo().getPreferredTx().iType);
         }
     }
 
@@ -1405,7 +1405,7 @@ StoragePlugin* SessionHandler::createStorageByMIME( const QString& aMIME )
     StoragePlugin* plugin = NULL;
 
     for( int i = 0; i < iStorages.count(); ++i ) {
-        if( iStorages[i]->getPreferredFormat().iType == aMIME ) {
+        if( iStorages[i]->getFormatInfo().getPreferredRx().iType == aMIME ) {
             plugin = iStorages[i];
             break;
         }

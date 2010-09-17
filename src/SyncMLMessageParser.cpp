@@ -1031,25 +1031,25 @@ void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& a
             {
                 ContentFormat rxPref;
                 readContentFormat( rxPref, SYNCML_ELEMENT_RX_PREF );
-                aDatastore.setPreferredRx( rxPref );
+                aDatastore.formatInfo().setPreferredRx( rxPref );
             }
             else if( name == SYNCML_ELEMENT_RX )
             {
                 ContentFormat rx;
                 readContentFormat( rx, SYNCML_ELEMENT_RX );
-                aDatastore.rx().append( rx );
+                aDatastore.formatInfo().rx().append( rx );
             }
             else if( name == SYNCML_ELEMENT_TX_PREF )
             {
                 ContentFormat txPref;
                 readContentFormat( txPref, SYNCML_ELEMENT_TX_PREF );
-                aDatastore.setPreferredTx( txPref );
+                aDatastore.formatInfo().setPreferredTx( txPref );
             }
             else if( name == SYNCML_ELEMENT_TX )
             {
                 ContentFormat tx;
                 readContentFormat( tx, SYNCML_ELEMENT_TX );
-                aDatastore.tx().append( tx );
+                aDatastore.formatInfo().tx().append( tx );
             }
             else if( name == SYNCML_ELEMENT_SYNCCAP )
             {
@@ -1262,10 +1262,11 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
         for( int a = 0; a < aDataStores.count(); ++a )
         {
             QList<ContentFormat> interestedFormats;
-            interestedFormats.append( aDataStores[a].getPreferredRx() );
-            interestedFormats.append( aDataStores[a].rx());
-            interestedFormats.append( aDataStores[a].getPreferredTx() );
-            interestedFormats.append( aDataStores[a].tx());
+            const StorageContentFormatInfo& formatInfo = aDataStores[a].formatInfo();
+            interestedFormats.append( formatInfo.getPreferredRx() );
+            interestedFormats.append( formatInfo.rx());
+            interestedFormats.append( formatInfo.getPreferredTx() );
+            interestedFormats.append( formatInfo.tx());
 
             for( int b = 0; b < interestedFormats.count(); ++b )
             {
