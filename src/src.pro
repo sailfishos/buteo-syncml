@@ -136,7 +136,7 @@ headers.files = $$HEADERS
 target.path   = /usr/lib
 config.path   = /etc/sync
 config.files  = config/meego-syncml-conf.xsd \
-                config/nokia-syncml-conf.xml
+                config/meego-syncml-conf.xml
                 
 INSTALLS += target \
     	    headers \
