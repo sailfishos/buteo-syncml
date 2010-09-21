@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-35) unstable; urgency=low
+
+  * Parsing of device information sent by remote device
+  * Delayed loading of storage plugins in D2D sync
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 21 Sep 2010 09:00:00 +0300
+
 libmeegosyncml (0.4.9-34) unstable; urgency=low
 
   * Fixed installation of default conf file
