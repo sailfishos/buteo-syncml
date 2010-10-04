@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-36) unstable; urgency=low
+
+  * Fixes: NB#195583 Some data not copied message dislayed for any/all data
+    when sync initiated from S60 to device
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Mon, 04 Oct 2010 09:00:00 +0300
+
 libmeegosyncml (0.4.9-35) unstable; urgency=low
 
   * Parsing of device information sent by remote device
