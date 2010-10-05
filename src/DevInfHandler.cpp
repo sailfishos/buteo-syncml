@@ -172,11 +172,11 @@ ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aResults,
 
     bool valid = false;
 
-    if( aVersion == DS_1_1 && aResults.devInf.source == SYNCML_DEVINF_PATH_11 )
+    if( aVersion == SYNCML_1_1 && aResults.devInf.source == SYNCML_DEVINF_PATH_11 )
     {
         valid = true;
     }
-    else if( aVersion == DS_1_2 && aResults.devInf.source == SYNCML_DEVINF_PATH_12 )
+    else if( aVersion == SYNCML_1_2 && aResults.devInf.source == SYNCML_DEVINF_PATH_12 )
     {
         valid = true;
     }
