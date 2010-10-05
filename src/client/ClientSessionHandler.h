@@ -89,7 +89,7 @@ protected:
 
     virtual void messageReceived( HeaderParams& aHeaderParams );
 
-    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
     virtual bool syncReceived();
 
@@ -104,9 +104,9 @@ protected:
 private:  // functions
 
 
-    ResponseStatusCode setupTargetByServer( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    ResponseStatusCode setupTargetByServer( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
-    ResponseStatusCode acknowledgeTarget( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    ResponseStatusCode acknowledgeTarget( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
     void setupSyncTargets();
 

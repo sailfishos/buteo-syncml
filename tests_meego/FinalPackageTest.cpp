@@ -32,11 +32,12 @@
 */
 
 #include "FinalPackageTest.h"
+
 #include "FinalPackage.h"
 #include "SyncMLMessage.h"
-#include "internals.h"
-#include "TestLoader.h"
+#include "Fragments.h"
 #include "QtEncoder.h"
+#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -44,7 +45,7 @@ void FinalPackageTest::testPackage()
 {
     FinalPackage pkg;
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     const int SIZE_TRESHOLD = 10000;
     int remaining = SIZE_TRESHOLD;
     QCOMPARE(pkg.write(msg, remaining), true);

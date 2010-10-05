@@ -34,8 +34,8 @@
 #define RESPONSEGENERATOR_H
 
 #include <QtGlobal>
-#include "internals.h"
 #include "SyncAgentConsts.h"
+#include "Fragments.h"
 
 class QString;
 
@@ -149,7 +149,6 @@ public:
      */
     void addStatus( const HeaderParams& aParams, ResponseStatusCode aStatusCode );
 
-
     /*! \brief Adds a status to the next outgoing message from SyncHdr data
      *
      * @param aParams SyncHdr params
@@ -159,12 +158,15 @@ public:
     void addStatus( const HeaderParams& aParams, const ChalParams& aChalParams,
                     ResponseStatusCode aStatusCode );
 
-    /*! \brief Adds a status to the next outgoing message from Alert data
+    /*! \brief Adds a status to the next outgoing message from command data
      *
-     * @param aParams Alert params
+     * @param aParams Command params
      * @param aStatusCode Status code
+     * @param aWriteItemRefs True if SourceRef/TargetRef about Item(s) of the command should be written to the status
+     * @param aItemIndex Override index for item to reference
      */
-    void addStatus( const AlertParams& aParams, ResponseStatusCode aStatusCode );
+    void addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
+                    bool aWriteItemRefs = true, int aItemIndex = -1);
 
     /*! \brief Adds a status to the next outgoing message from Sync data
      *
@@ -179,22 +181,6 @@ public:
      * @param aStatusCode Status code
      */
     void addStatus( const MapParams& aParams, ResponseStatusCode aStatusCode );
-
-    /*! \brief Adds a status to the next outgoing message from SyncActionData data
-     *
-     * @param aParams SyncActionData element parameters
-     * @param aStatusCode Status code
-     */
-    void addStatus( const SyncActionData& aParams, ResponseStatusCode aStatusCode );
-
-    /*! \brief Adds a status to the next outgoing message from SyncActionData data
-     *
-     * @param aParams SyncActionData element parameters
-     * @param aItem ItemParams element parameters
-     * @param aStatusCode Status code
-     */
-    void addStatus( const SyncActionData& aParams, const ItemParams& aItem,
-                    ResponseStatusCode aStatusCode );
 
     /*! \brief Adds a status to the next outgoing message from PutParams data
      *

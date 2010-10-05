@@ -37,6 +37,7 @@
 #include "SyncItem.h"
 #include "StoragePlugin.h"
 #include "Transport.h"
+#include "BaseTransport.h"
 #include "SyncAgentConfig.h"
 #include "SyncTarget.h"
 #include "DatabaseHandler.h"
@@ -143,7 +144,7 @@ public:
             "</CTCap>"
             );
 
-        if ( aVersion == DS_1_2 )
+        if ( aVersion == SYNCML_1_2 )
         {
             ctCaps.prepend( "<CTCaps>" );
             ctCaps.append( QByteArray(
@@ -305,19 +306,75 @@ private:
 
 };
 
-
-class MockConfig : public SyncAgentConfig {
+class TestTransport : public BaseTransport
+{
+    Q_OBJECT;
 
 public:
-    MockConfig() : SyncAgentConfig() {
-        addSyncTarget("foo", "bar");
+
+    TestTransport( bool aDoReceive, QObject* aParent = NULL ) : BaseTransport( aParent ), iDoReceive( aDoReceive )
+    {
     }
 
-    ~MockConfig() {}
-
-    ProtocolVersion getProtocolVersion() {
-        return DS_1_1;
+    virtual ~TestTransport()
+    {
     }
+
+    virtual void setProperty( const QString& aProperty, const QString& aValue )
+    {
+        Q_UNUSED( aProperty );
+        Q_UNUSED( aValue );
+    }
+
+    virtual bool init()
+    {
+        return true;
+    }
+
+    virtual void close()
+    {
+
+    }
+
+    QByteArray  iData;
+    QString     iContentType;
+
+protected:
+
+    virtual bool prepareSend()
+    {
+        return true;
+    }
+
+    virtual bool doSend( const QByteArray& aData, const QString& aContentType )
+    {
+
+        iData = aData;
+        iContentType = aContentType;
+
+        if( iDoReceive )
+        {
+            receive( aData, aContentType );
+        }
+
+        return true;
+    }
+
+    virtual bool doReceive( const QString& aContentType )
+    {
+        Q_UNUSED( aContentType );
+
+        if( iDoReceive )
+        {
+            receive( iData, iContentType );
+        }
+
+        return true;
+    }
+
+private:
+
+    bool        iDoReceive;
 
 };
 

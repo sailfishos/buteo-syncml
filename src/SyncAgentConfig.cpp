@@ -51,7 +51,7 @@ SyncAgentConfig::SyncAgentConfig()
  : iTransport( NULL ),
    iStorageProvider( NULL ),
    iDatabaseFilePath( "/etc/sync/syncml.db" ),
-   iProtocolVersion( DS_1_2 ),
+   iProtocolVersion( SYNCML_1_2 ),
    iAuthenticationType( AUTH_NONE )
 {
     FUNCTION_CALL_TRACE
@@ -154,7 +154,7 @@ void SyncAgentConfig::setDatabaseFilePath( const QString& aPath )
     iDatabaseFilePath = aPath;
 }
 
-QString SyncAgentConfig::getDatabaseFilePath() const
+const QString& SyncAgentConfig::getDatabaseFilePath() const
 {
     return iDatabaseFilePath;
 }
@@ -214,16 +214,18 @@ const SyncMode& SyncAgentConfig::getSyncMode() const
     return iSyncMode;
 }
 
-void SyncAgentConfig::setAuthParams( const AuthenticationType& aAuthType,
+void SyncAgentConfig::setAuthParams( const AuthType& aAuthType,
                                      const QString& aUsername,
-                                     const QString& aPassword )
+                                     const QString& aPassword,
+                                     const QString& aNonce )
 {
     iAuthenticationType = aAuthType;
     iUsername = aUsername;
     iPassword = aPassword;
+    iNonce = aNonce;
 }
 
-const AuthenticationType& SyncAgentConfig::getAuthenticationType() const
+const AuthType& SyncAgentConfig::getAuthType() const
 {
     return iAuthenticationType;
 }
@@ -236,6 +238,11 @@ const QString& SyncAgentConfig::getUsername() const
 const QString& SyncAgentConfig::getPassword() const
 {
     return iPassword;
+}
+
+const QString& SyncAgentConfig::getNonce() const
+{
+    return iNonce;
 }
 
 void SyncAgentConfig::addSyncTarget( const QString& aSourceDb, const QString& aTargetDb )

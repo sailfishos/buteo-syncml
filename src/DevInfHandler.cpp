@@ -1,3 +1,4 @@
+
 /*
 * This file is part of buteo-syncml package
 *
@@ -35,6 +36,7 @@
 
 #include "DevInfPackage.h"
 #include "ResponseGenerator.h"
+#include "Fragments.h"
 
 #include "LogMacros.h"
 
@@ -80,7 +82,7 @@ void DevInfHandler::composeLocalInitiatedDevInfExchange(
 
 }
 
-ResponseStatusCode DevInfHandler::handleGet( const SyncActionData& aActionData,
+ResponseStatusCode DevInfHandler::handleGet( const CommandParams& aGet,
                                              const ProtocolVersion& aVersion,
                                              const QList<StoragePlugin*>& aDataStores,
                                              const Role& aRole,
@@ -92,12 +94,12 @@ ResponseStatusCode DevInfHandler::handleGet( const SyncActionData& aActionData,
 
     bool valid = false;
 
-    if( aActionData.items.count() == 1 ) {
+    if( aGet.items.count() == 1 ) {
 
-        if( aVersion == DS_1_1 && aActionData.items[0].target == SYNCML_DEVINF_PATH_11 ) {
+        if( aVersion == SYNCML_1_1 && aGet.items.first().target == SYNCML_DEVINF_PATH_11 ) {
             valid = true;
         }
-        else if( aVersion == DS_1_2 && aActionData.items[0].target == SYNCML_DEVINF_PATH_12 ) {
+        else if( aVersion == SYNCML_1_2 && aGet.items.first().target == SYNCML_DEVINF_PATH_12 ) {
             valid = true;
         }
 
@@ -109,7 +111,7 @@ ResponseStatusCode DevInfHandler::handleGet( const SyncActionData& aActionData,
         // If we haven't yet received remote device info, send GET in addition to the
         // RESULTS
         DevInfPackage* devInf = new DevInfPackage( aResponseGenerator.getRemoteMsgId(),
-                                                   aActionData.cmdID,
+                                                   aGet.cmdId,
                                                    aDataStores,
                                                    iLocalDeviceInfo,
                                                    aVersion,
@@ -139,10 +141,10 @@ ResponseStatusCode DevInfHandler::handlePut( const PutParams& aPut,
 
     bool valid = false;
 
-    if( aVersion == DS_1_1 && aPut.devInf.source == SYNCML_DEVINF_PATH_11 ) {
+    if( aVersion == SYNCML_1_1 && aPut.devInf.source == SYNCML_DEVINF_PATH_11 ) {
         valid = true;
     }
-    else if( aVersion == DS_1_2 && aPut.devInf.source == SYNCML_DEVINF_PATH_12 ) {
+    else if( aVersion == SYNCML_1_2 && aPut.devInf.source == SYNCML_DEVINF_PATH_12 ) {
         valid = true;
     }
 
@@ -191,4 +193,12 @@ ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aResults,
     }
 
     return status;
+}
+
+void DevInfHandler::reset()
+{
+    FUNCTION_CALL_TRACE;
+
+    iLocalDevInfSent = false;
+    iRemoteDevInfReceived = false;
 }

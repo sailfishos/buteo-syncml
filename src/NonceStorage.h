@@ -59,12 +59,6 @@ public:
      */
     virtual ~NonceStorage();
 
-    /*! \brief Ensure that database table exists for Nonces
-     *
-     * @return True on success, otherwise false
-     */
-    bool createNonceTable();
-
     /*! \brief Generates a new nonce
      *
      * @return Generated nonce
@@ -73,6 +67,9 @@ public:
 
     /*! \brief Adds a new nonce to storage
      *
+     * The order of devices means, that whenever aLocalDevice authenticates with
+     * aRemoteDevice, it should use the specified nonce
+     *
      * @param aLocalDevice Local device to associate with
      * @param aRemoteDevice Remove device to associate with
      * @param aNonce Nonce to store
@@ -80,6 +77,9 @@ public:
     void addNonce( const QString& aLocalDevice, const QString& aRemoteDevice, const QByteArray& aNonce );
 
     /*! \brief Retrieves a nonce from storage
+     *
+     * The order of devices means, that whenever aLocalDevice authenticates with
+     * aRemoteDevice, it should use the specified nonce
      *
      * @param aLocalDevice Local device to associate with
      * @param aRemoteDevice Remove device to associate with
@@ -95,6 +95,12 @@ public:
     void clearNonce( const QString& aLocalDevice, const QString& aRemoteDevice );
 
 protected:
+
+    /*! \brief Ensure that database table exists for Nonces
+     *
+     * @return True on success, otherwise false
+     */
+    bool createNonceTable();
 
 private:
 

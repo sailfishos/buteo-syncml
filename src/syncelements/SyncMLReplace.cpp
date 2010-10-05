@@ -33,7 +33,7 @@
 
 #include "SyncMLReplace.h"
 
-#include "internals.h"
+#include "datatypes.h"
 
 using namespace DataSync;
 

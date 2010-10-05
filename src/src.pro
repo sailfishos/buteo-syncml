@@ -59,7 +59,9 @@ SOURCES += SyncItem.cpp \
     SyncItemPrefetcher.cpp \
     CTCap.cpp \
     DataStore.cpp \
-    StorageContentFormatInfo.cpp
+    StorageContentFormatInfo.cpp \
+    SessionAuthentication.cpp \
+    SessionParams.cpp
 
 HEADERS += SyncItem.h \
 	StoragePlugin.h \
@@ -68,7 +70,7 @@ HEADERS += SyncItem.h \
 	SyncAgent.h \
 	SyncItemKey.h \
 	datatypes.h \
-	internals.h \
+    Fragments.h \
 	SyncAgentConfig.h \
 	SyncMLMessageParser.h \
 	AuthenticationPackage.h \
@@ -103,7 +105,10 @@ HEADERS += SyncItem.h \
     SyncItemPrefetcher.h \
     CTCap.h \
     DataStore.h \
-    StorageContentFormatInfo.h
+    StorageContentFormatInfo.h \
+    LocalChanges.h \
+    SessionAuthentication.h \
+    SessionParams.h
     
 OTHER_FILES += config/meego-syncml-conf.xsd \
                config/meego-syncml-conf.xml

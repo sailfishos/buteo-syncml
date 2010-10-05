@@ -33,23 +33,18 @@
 
 #ifndef SYNCMLHDRTEST_H
 #define SYNCMLHDRTEST_H
+
 #include <QTest>
-#include "datatypes.h"
-#include "SyncMLHdr.h"
 
-class SyncMLHdrTest: public QObject {
-        Q_OBJECT
-    DataSync::HeaderParams *iHdrParams;
-  private slots:
-   //initialise the header params
-   void testStart();
+class SyncMLHdrTest: public QObject
+{
+    Q_OBJECT;
 
-   //test the header params passed
-   void testSyncMLHdr();
+private slots:
 
    void testSyncMLHdr_11();
+   void testSyncMLHdr_12();
 
-   //delete the memory held
-   void testEnd();
+private:
 };
 #endif // SYNCMLHDRTEST_H

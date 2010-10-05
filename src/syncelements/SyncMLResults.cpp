@@ -33,11 +33,24 @@
 
 #include "SyncMLResults.h"
 
+#include "datatypes.h"
 #include "SyncMLMeta.h"
 #include "SyncMLDevInf.h"
-#include "internals.h"
 
 using namespace DataSync;
+
+SyncMLResults::SyncMLResults( int aCmdID, int aMsgRef, int aCmdRef )
+ : SyncMLCmdObject( SYNCML_ELEMENT_RESULTS )
+{
+    SyncMLCmdObject* cmdIdObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDID, QString::number( aCmdID ) );
+    addChild( cmdIdObject );
+
+    SyncMLCmdObject* msgRefObject = new SyncMLCmdObject( SYNCML_ELEMENT_MSGREF, QString::number( aMsgRef ) );
+    addChild(msgRefObject);
+
+    SyncMLCmdObject* cmdRefObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDREF, QString::number( aCmdRef ) );
+    addChild(cmdRefObject);
+}
 
 SyncMLResults::SyncMLResults( int aCmdID, int aMsgRef, int aCmdRef,
                               const QList<StoragePlugin*> &aDataStores,
@@ -56,7 +69,7 @@ SyncMLResults::SyncMLResults( int aCmdID, int aMsgRef, int aCmdRef,
     addChild(cmdRefObject);
 
     SyncMLCmdObject* targetRefObject = new SyncMLCmdObject( SYNCML_ELEMENT_TARGETREF,
-            aVersion == DS_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
+            aVersion == SYNCML_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
     addChild( targetRefObject );
 
     SyncMLMeta* metaObject = new SyncMLMeta;

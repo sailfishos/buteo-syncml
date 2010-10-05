@@ -64,7 +64,7 @@ public:
      *
      * @param aSyncMLCode SyncML Alert code
      */
-    explicit SyncMode( int aSyncMLCode );
+    explicit SyncMode( qint32 aSyncMLCode );
 
     /*! \brief Destructor
      *
@@ -116,7 +116,7 @@ public:
      *
      * @return
      */
-    int toSyncMLCode() const;
+    qint32 toSyncMLCode() const;
 
 protected:
 

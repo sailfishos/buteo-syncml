@@ -53,12 +53,32 @@ public:
     virtual void releaseStorage( DataSync::StoragePlugin* aStorage );
 
 private slots:
+    void init();
+    void cleanup();
     void testBase();
     void testErrorStatuses();
     void testClientWithClientInitiated();
     void testClientWithServerInitiated();
     void testServerWithClientInitiated();
     void testClientWithServerInitiatedSAN();
+
+    void testClientAuthNone();
+    void testClientAuthNoneFailed();
+    void testClientAuthNoneChal1();
+    void testClientAuthNoneChal2();
+    void testClientAuthBasicNoCreds();
+    void testClientAuthBasic();
+    void testClientAuthBasicChalToMD5WithoutNonce();
+    void testClientAuthBasicChalToMD5WithNonce();
+    void testClientAuthBasicContinuous();
+    void testClientAuthMD5NoCreds();
+    void testClientAuthMD5WithoutNonce1();
+    void testClientAuthMD5WithoutNonce2();
+    void testClientAuthMD5WithoutNonce3();
+    void testClientAuthMD5WithoutNonce4();
+    void testClientAuthMD5WithNonce();
+    void testClientAuthMD5ChalToBasic();
+    void testClientAuthMD5Continuous();
 
     void regression_NB153701_01();
     void regression_NB153701_02();

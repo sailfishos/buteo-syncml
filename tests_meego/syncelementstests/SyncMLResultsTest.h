@@ -33,11 +33,14 @@
 
 #ifndef SYNCMLRESULTSTEST_H
 #define SYNCMLRESULTSTEST_H
+
 #include <QTest>
-class SyncMLResultsTest: public QObject {
+
+class SyncMLResultsTest: public QObject
+{
     Q_OBJECT
 private slots:
-    void testSyncMLResults();
+
 };
 
 #endif // SYNCMLRESULTSTEST_H

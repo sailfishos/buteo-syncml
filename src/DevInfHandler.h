@@ -34,8 +34,9 @@
 #define DEVINFHANDLER_H
 
 #include "DeviceInfo.h"
+#include "RemoteDeviceInfo.h"
 #include "SyncAgentConsts.h"
-#include "internals.h"
+#include "datatypes.h"
 
 class DevInfHandlerTest;
 
@@ -44,6 +45,10 @@ namespace DataSync
 
 class StoragePlugin;
 class ResponseGenerator;
+
+struct CommandParams;
+struct PutParams;
+struct ResultsParams;
 
 /*! \brief Class that governs the exchange of device information in
  *         synchronization session
@@ -89,14 +94,14 @@ public:
 
     /*! \brief Respond to device info requested by remote device
      *
-     * @param aActionData GET element data
+     * @param aGet GET element data
      * @param aDataStores Data stores to use
      * @param aVersion Protocol version in use
      * @param aRole Role in use
      * @param aResponseGenerator Response generator to use
      * @return
      */
-    ResponseStatusCode handleGet( const SyncActionData& aActionData,
+    ResponseStatusCode handleGet( const CommandParams& aGet,
                                   const ProtocolVersion& aVersion,
                                   const QList<StoragePlugin*>& aDataStores,
                                   const Role& aRole,
@@ -118,6 +123,12 @@ public:
      */
     ResponseStatusCode handleResults( const ResultsParams& aResults,
                                       const ProtocolVersion& aVersion );
+
+    /*! \brief Resets device information exchange state
+     *
+     * Needed for example when initialization package needs to be re-sent
+     */
+    void reset();
 
 protected:
 

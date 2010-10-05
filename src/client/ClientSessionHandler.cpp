@@ -65,7 +65,10 @@ void ClientSessionHandler::initiateSync()
 {
     FUNCTION_CALL_TRACE;
 
-    prepareSync();
+    if( !prepareSync() )
+    {
+        return;
+    }
 
     QString sessionId = generateSessionID();
     setupSession( sessionId );
@@ -105,7 +108,10 @@ void ClientSessionHandler::handleNotificationXML( QList<Fragment*>& aFragments )
 {
     FUNCTION_CALL_TRACE;
 
-    prepareSync();
+    if( !prepareSync() )
+    {
+        return;
+    }
 
     processMessage( aFragments, true );
 }
@@ -114,35 +120,43 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
 {
     FUNCTION_CALL_TRACE;
 
-    prepareSync();
+    if( !prepareSync() )
+    {
+        return;
+    }
 
     // Set up session
 
     if( aData.iSessionId == 0 ) {
-        setSessionId( generateSessionID() );
+        params().setSessionId( generateSessionID() );
     }
     else {
-        setSessionId( QString::number( aData.iSessionId ) );
+        params().setSessionId( QString::number( aData.iSessionId ) );
     }
 
     if( !getConfig()->getLocalDeviceName().isEmpty() ) {
-        setLocalDeviceName( getConfig()->getLocalDeviceName() );
+        params().setLocalDeviceName( getConfig()->getLocalDeviceName() );
     }
     else {
-        setLocalDeviceName( getConfig()->getDeviceInfo().getDeviceID() );
+        params().setLocalDeviceName( getConfig()->getDeviceInfo().getDeviceID() );
     }
 
-    setRemoteDeviceName( aData.iServerIdentifier );
+    params().setRemoteDeviceName( aData.iServerIdentifier );
 
-    setAuthenticationType( getConfig()->getAuthenticationType() );
+    QString verDTD;
+    QString verProto;
 
-    if( aData.iVersion == DS_1_1 ) {
+    if( aData.iVersion == SYNCML_1_1 ) {
         LOG_DEBUG("Setting SyncML 1.1 protocol version");
-        setProtocolVersion( DS_1_1 );
+        setProtocolVersion( SYNCML_1_1 );
+        verDTD = SYNCML_DTD_VERSION_1_1;
+        verProto = DS_VERPROTO_1_1;
     }
-    else if( aData.iVersion == DS_1_2 ) {
+    else if( aData.iVersion == SYNCML_1_2 ) {
         LOG_DEBUG("Setting SyncML 1.2 protocol version");
-        setProtocolVersion( DS_1_2 );
+        setProtocolVersion( SYNCML_1_2 );
+        verDTD = SYNCML_DTD_VERSION_1_2;
+        verProto = DS_VERPROTO_1_2;
     }
 
     if( getConfig()->extensionEnabled( SYNCWITHOUTINITPHASEEXTENSION ) ) {
@@ -150,21 +164,16 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
     }
 
     HeaderParams headerParams;
-    headerParams.sessionID = getSessionId();
-    headerParams.sourceDevice = getLocalDeviceName();
-    headerParams.targetDevice = getRemoteDeviceName();
-    headerParams.maxMsgSize = getLocalMaxMsgSize();
+    headerParams.verDTD = verDTD;
+    headerParams.verProto = verProto;
+    headerParams.sessionID = params().sessionId();
+    headerParams.sourceDevice = params().localDeviceName();
+    headerParams.targetDevice = params().remoteDeviceName();
+    headerParams.meta.maxMsgSize = params().localMaxMsgSize();
 
     if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
     {
         insertEMITagsToken( headerParams );
-    }
-
-    if( getAuthenticationType() == AUTH_NONE ) {
-        setSessionAuthenticated( true );
-    }
-    else {
-        setSessionAuthenticated( false );
     }
 
     setLocalHeaderParams( headerParams );
@@ -284,7 +293,7 @@ void ClientSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 
 		// When we sent initialization message we might not have necessarily
 		// known the remote device id, so update it based on the received header
-		setRemoteDeviceName( aHeaderParams.sourceDevice );
+        params().setRemoteDeviceName( aHeaderParams.sourceDevice );
 
 		// Update remote device id also to header params
 		HeaderParams headerParams = getLocalHeaderParams();
@@ -295,7 +304,7 @@ void ClientSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 }
 
 ResponseStatusCode ClientSessionHandler::syncAlertReceived( const SyncMode& aSyncMode,
-		AlertParams& aAlertParams )
+                                                            CommandParams& aAlertParams )
 {
 	FUNCTION_CALL_TRACE;
 
@@ -473,6 +482,7 @@ void ClientSessionHandler::resendPackage()
 	{
 	case LOCAL_INIT:
 	{
+        getDevInfHandler().reset();
 		composeClientInitializationPackage();
 		break;
 	}
@@ -496,11 +506,22 @@ void ClientSessionHandler::resendPackage()
 }
 
 ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aSyncMode,
-		AlertParams& aAlertParams )
+                                                              CommandParams& aAlertParams )
 {
 	FUNCTION_CALL_TRACE;
 
-	if( aAlertParams.sourceDatabase.isEmpty() || aAlertParams.type.isEmpty() ) {
+    if( aAlertParams.items.isEmpty() )
+    {
+        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        return INCOMPLETE_COMMAND;
+    }
+
+    ItemParams& item = aAlertParams.items.first();
+    const MetaParams& meta = item.meta;
+
+    if( item.source.isEmpty() || meta.type.isEmpty() )
+    {
+        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
 		return INCOMPLETE_COMMAND;
 	}
 
@@ -508,11 +529,11 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 
 	syncMode.toClientInitiated();
 
-	LOG_DEBUG( "Searching for storage with MIME type" << aAlertParams.type );
-	StoragePlugin* source = createStorageByMIME( aAlertParams.type );
+    LOG_DEBUG( "Searching for storage with MIME type" << meta.type );
+    StoragePlugin* source = createStorageByMIME( meta.type );
 
 	if( !source ) {
-		LOG_DEBUG( "Could not found matching storage for MIME:" << aAlertParams.type );
+        LOG_DEBUG( "Could not found matching storage for MIME:" << meta.type );
 		return NOT_FOUND;
 	}
 
@@ -524,7 +545,7 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 
 	ResponseStatusCode status = SUCCESS;
 
-	target->setTargetDatabase( aAlertParams.sourceDatabase );
+    target->setTargetDatabase( item.source );
 
 	if( target->getSyncMode()->syncType() == TYPE_FAST )
 	{
@@ -543,24 +564,35 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 
 	// Set target database now that we know what it is so that we can write proper
 	// targetref to returned status
-	aAlertParams.targetDatabase = target->getSourceDatabase();
+    item.target = target->getSourceDatabase();
 
 	return status;
 
 }
 
 ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyncMode,
-		AlertParams& aAlertParams )
+                                                            CommandParams& aAlertParams )
 {
 	FUNCTION_CALL_TRACE;
 
+    if( aAlertParams.items.isEmpty() )
+    {
+        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        return INCOMPLETE_COMMAND;
+    }
 
-    if( aAlertParams.targetDatabase.isEmpty() || aAlertParams.nextAnchor.isEmpty() ) {
+    const ItemParams& item = aAlertParams.items.first();
+    const MetaParams& meta = item.meta;
+    const AnchorParams& anchors = meta.anchor;
+
+    if( item.target.isEmpty() || anchors.next.isEmpty() )
+    {
+        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
 		return INCOMPLETE_COMMAND;
 	}
 
 	SyncMode syncMode = aSyncMode;
-	SyncTarget* target = getSyncTarget( aAlertParams.targetDatabase );
+    SyncTarget* target = getSyncTarget( item.target );
 
 	if( !target ) {
 		return NOT_FOUND;
@@ -569,7 +601,7 @@ ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyn
 	ResponseStatusCode status = SUCCESS;
 
 
-	target->setRemoteNextAnchor( aAlertParams.nextAnchor );
+    target->setRemoteNextAnchor( anchors.next );
 
 	// Analyze sync mode proposed by server. According to OMA DS 1.2 specification,
 	// client SHOULD follow sync mode given by server even if it is different than the
@@ -703,7 +735,9 @@ void ClientSessionHandler::composeClientInitialization()
 	FUNCTION_CALL_TRACE;
 
 	// Authentication
-	composeAuthentication();
+    authentication().composeAuthentication( getResponseGenerator(), getDatabaseHandler(),
+                                            params().localDeviceName(),
+                                            params().remoteDeviceName() );
 
     // Device info exchange
     getDevInfHandler().composeLocalInitiatedDevInfExchange( getStorages(),
@@ -717,7 +751,7 @@ void ClientSessionHandler::composeClientInitialization()
     foreach( const SyncTarget* target, targets) {
 
         if (target != NULL) {
-            AlertPackage* package = new AlertPackage( (AlertType)target->getSyncMode()->toSyncMLCode(),
+            AlertPackage* package = new AlertPackage(  target->getSyncMode()->toSyncMLCode(),
                                                        target->getSourceDatabase(),
                                                        target->getTargetDatabase(),
                                                        target->getLocalLastAnchor(),
@@ -733,8 +767,9 @@ void ClientSessionHandler::composeResultAlert()
 {
 	FUNCTION_CALL_TRACE;
 
-	AlertPackage* package = new AlertPackage( RESULT_ALERT, getLocalDeviceName(),
-                                              getRemoteDeviceName() );
+    AlertPackage* package = new AlertPackage( RESULT_ALERT,
+                                              params().localDeviceName(),
+                                              params().remoteDeviceName() );
 
 	getResponseGenerator().addPackage( package );
 

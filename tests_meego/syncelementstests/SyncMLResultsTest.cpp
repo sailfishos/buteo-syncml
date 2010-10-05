@@ -32,20 +32,7 @@
 */
 
 #include "SyncMLResultsTest.h"
-#include <QtTest>
+
 #include "TestLoader.h"
-#include "SyncMLResults.h"
-#include "internals.h"
-#include "datatypes.h"
-#include "StoragePlugin.h"
-#include "DeviceInfo.h"
 
-using namespace DataSync;
-
-void SyncMLResultsTest::testSyncMLResults() {
-    QList<DataSync::StoragePlugin*> dataSources;
-    DeviceInfo devInfo;
-    SyncMLResults Results(10,10,10,dataSources, devInfo, DS_1_2, ROLE_CLIENT);
-    // @TODO add the actual test .
-}
 TESTLOADER_ADD_TEST(SyncMLResultsTest);

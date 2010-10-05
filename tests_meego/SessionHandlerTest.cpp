@@ -38,17 +38,17 @@
 #include "SessionHandler.h"
 #include "ClientSessionHandler.h"
 #include "ServerSessionHandler.h"
-#include "TestLoader.h"
-#include "internals.h"
 #include "Mock.h"
 #include "SyncAgent.h"
 #include "TestUtils.h"
 #include "ServerAlertedNotification.h"
 #include "SyncAgentConfigProperties.h"
 
+#include "TestLoader.h"
+
 using namespace DataSync;
 
-QString NB153701DB( "/tmp/NB153701.db" );
+QString DBFILE( "/tmp/sessionhandlertest.db" );
 QString NB153701UNKNOWNDEVICE( "/" );
 QString NB153701SOURCEDEVICE( "IMEI:000000000000000" );
 QString NB153701TARGETDEVICE( "IMEI:000000000000001" );
@@ -101,7 +101,7 @@ protected:
     virtual void messageReceived( HeaderParams& ) { iLatestFunction = FUNC_MESSAGE_RECEIVED; }
 
 
-    virtual ResponseStatusCode syncAlertReceived( const SyncMode&, AlertParams& ) { iLatestFunction = FUNC_ALERT_RECEIVED; return SUCCESS; }
+    virtual ResponseStatusCode syncAlertReceived( const SyncMode&, CommandParams& ) { iLatestFunction = FUNC_ALERT_RECEIVED; return SUCCESS; }
 
     virtual bool syncReceived() { iLatestFunction = FUNC_SYNC_RECEIVED; return true; }
 
@@ -115,10 +115,10 @@ protected:
 
 
 private:
-    virtual void handleSyncAlert( const SyncMode&, AlertParams& ) {
+    virtual void handleSyncAlert( const SyncMode&, CommandParams& ) {
         iLatestFunction = FUNC_HANDLE_SYNC_ALERT; }
 
-    virtual void handleInformativeAlert( const AlertParams& ) {
+    virtual void handleInformativeAlert( const CommandParams& ) {
         iLatestFunction = FUNC_HANDLE_INFORMATIVE_ALERT; }
 
     FuncType iLatestFunction;
@@ -150,6 +150,16 @@ void SessionHandlerTest::releaseStorage( StoragePlugin* aStorage )
     delete aStorage;
 }
 
+void SessionHandlerTest::init()
+{
+    QFile::remove( DBFILE );
+}
+
+void SessionHandlerTest::cleanup()
+{
+    QFile::remove( DBFILE );
+}
+
 void SessionHandlerTest::testBase()
 {
     // Get metatypes registered.
@@ -161,12 +171,13 @@ void SessionHandlerTest::testBase()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( "/tmp/sessionhandlertest.db" );
+    config.setDatabaseFilePath( DBFILE );
+
     config.addSyncTarget( "storage", DB );
 
     // Create session handler and prepare.
     DummySessionHandler session_handler(&config, NULL);
-    session_handler.prepareSync();
+    QVERIFY(session_handler.prepareSync());
     QCOMPARE(session_handler.getSyncState(), PREPARED );
 
     // Status change emits a signal.
@@ -201,12 +212,13 @@ void SessionHandlerTest::testErrorStatuses()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( "/tmp/sessionhandlertest.db" );
+    config.setDatabaseFilePath( DBFILE );
+
     config.addSyncTarget( "storage", "target" );
 
     // Create session handler and prepare.
     DummySessionHandler session_handler(&config, NULL);
-    session_handler.prepareSync();
+    QVERIFY(session_handler.prepareSync());
     QCOMPARE(session_handler.getSyncState(), PREPARED);
 
     // Parser errors.
@@ -244,14 +256,14 @@ void SessionHandlerTest::testErrorStatuses()
 
 void SessionHandlerTest::testClientWithClientInitiated()
 {
-    MockTransport transport("transport");
+    TestTransport transport( false );
     const QString DB = "calendar";
 
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
     config.addSyncTarget( "calendar", "calendar" );
-    config.setDatabaseFilePath("/tmp/sessionhandler.db");
+    config.setDatabaseFilePath( DBFILE );
 
     config.setAuthParams( AUTH_BASIC, "user", "password" );
 
@@ -270,13 +282,13 @@ void SessionHandlerTest::testClientWithClientInitiated()
     hp1->msgID = 1;
     hp1->targetDevice = SYNCML_UNKNOWN_DEVICE;
     hp1->respURI = "redirect URI";
-    hp1->maxMsgSize = 30000;
+    hp1->meta.maxMsgSize = 30000;
     session_handler.handleHeaderElement(hp1);
     hp1 = NULL;
 
     // Fake status
     StatusParams* sp1 = new StatusParams();
-    sp1->cmdID = 1;
+    sp1->cmdId = 1;
     sp1->msgRef = 1;
     sp1->cmdRef = 0;
     sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
@@ -284,11 +296,14 @@ void SessionHandlerTest::testClientWithClientInitiated()
     session_handler.handleStatusElement( sp1 );
 
     // Fake alert.
-    AlertParams* ap1 = new AlertParams();
-    ap1->cmdID = 2;
-    ap1->sourceDatabase = DB;
-    ap1->targetDatabase = DB;
-    ap1->nextAnchor = "something";
+    CommandParams* ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 2;
+    ap1->data = QString::number( SLOW_SYNC );
+    ItemParams item;
+    item.source = DB;
+    item.target = DB;
+    item.meta.anchor.next = "something";
+    ap1->items.append(item);
     session_handler.handleAlertElement(ap1);
     ap1 = NULL;
 
@@ -298,16 +313,17 @@ void SessionHandlerTest::testClientWithClientInitiated()
     // Step through different states.
     session_handler.handleEndOfMessage();
     SyncParams* sync = new SyncParams();
-    sync->cmdID = 1;
-    sync->sourceDatabase = DB;
-    sync->targetDatabase = DB;
+    sync->cmdId = 1;
+    sync->source = DB;
+    sync->target = DB;
     session_handler.handleSyncElement( sync );
     QCOMPARE(session_handler.getSyncState(), RECEIVING_ITEMS);
-    SyncActionData* data = new SyncActionData;
-    data->action = SYNCML_GET;
-    data->cmdID = 1;
-    session_handler.handleGetElement(data);
-    data = NULL;
+
+    CommandParams* get = new CommandParams( CommandParams::COMMAND_GET );
+    get->cmdId = 1;
+    session_handler.handleGetElement(get);
+    get = NULL;
+
     session_handler.handleFinal();
     QCOMPARE(session_handler.getSyncState(), SENDING_MAPPINGS);
     session_handler.handleEndOfMessage();
@@ -327,9 +343,9 @@ void SessionHandlerTest::testClientWithServerInitiated()
     SyncAgentConfig config;
     config.setTransport(&transport);
     config.setStorageProvider( this );
-    config.setSyncParams( "", DS_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
+    config.setSyncParams( "", SYNCML_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
     config.addSyncTarget( "contacts", DB );
-    config.setDatabaseFilePath("/tmp/sessionhandler.db");
+    config.setDatabaseFilePath( DBFILE );
 
     // Start.
     ClientSessionHandler session_handler(&config, NULL);
@@ -345,13 +361,15 @@ void SessionHandlerTest::testClientWithServerInitiated()
     fragments.append(hp1);
 
     // Fake alert.
-    AlertParams* ap1 = new AlertParams();
-    ap1->cmdID = 0;
-    ap1->data = ONE_WAY_FROM_CLIENT_BY_SERVER;
-    ap1->type = "text/x-vcard";
-    ap1->sourceDatabase = DB;
-    ap1->targetDatabase = DB;
-    ap1->nextAnchor = "kala";
+    CommandParams* ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 1;
+    ap1->data = QString::number( ONE_WAY_FROM_CLIENT_BY_SERVER );
+    ItemParams item1;
+    item1.meta.type = "text/x-vcard";
+    item1.source = DB;
+    item1.target = DB;
+    item1.meta.anchor.next = "kala";
+    ap1->items.append(item1);
     fragments.append(ap1);
 
     session_handler.handleNotificationXML( fragments );
@@ -359,17 +377,19 @@ void SessionHandlerTest::testClientWithServerInitiated()
     QVERIFY( fragments.isEmpty() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
-    SyncActionData* data = new SyncActionData;
-    data->action = SYNCML_PUT;
-    data->cmdID = 1;
-    fragments.append(data);
+    PutParams* put = new PutParams;
+    put->cmdId = 1;
+    fragments.append(put);
 
     // Fake alert.
-    ap1 = new AlertParams();
-    ap1->cmdID = 1;
-    ap1->sourceDatabase = DB;
-    ap1->targetDatabase = DB;
-    ap1->nextAnchor = "something";
+    ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 1;
+    ap1->data = QString::number( SLOW_SYNC );
+    ItemParams item2;
+    item2.source = DB;
+    item2.target = DB;
+    item2.meta.anchor.next = "something";
+    ap1->items.append(item2);
     fragments.append(ap1);
 
     session_handler.processMessage( fragments, true );
@@ -393,17 +413,16 @@ void SessionHandlerTest::testServerWithClientInitiated()
     config.setTransport( &transport );
     config.setStorageProvider( this );
     config.addSyncTarget( "calendar" );
-    config.setDatabaseFilePath( "/tmp/sessionhandler.db" );
+    config.setDatabaseFilePath( DBFILE );
     config.setLocalDeviceName( "Local device" );
-    config.setAuthParams( AUTH_BASIC, "user", "password" );
 
     // Prepare
     ServerSessionHandler sessionHandler( &config, NULL );
-    sessionHandler.prepareSync();
+    QVERIFY(sessionHandler.prepareSync());
     QCOMPARE( sessionHandler.getSyncState(), PREPARED );
 
     // Start.
-    sessionHandler.prepareSync();
+    QVERIFY(sessionHandler.prepareSync());
     QCOMPARE( sessionHandler.getSyncState(), PREPARED );
 
     // Fake header
@@ -413,21 +432,19 @@ void SessionHandlerTest::testServerWithClientInitiated()
     hp1->targetDevice = "Target device";
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
-    hp1->cred.meta.type = SYNCML_FORMAT_AUTH_BASIC;
-    hp1->cred.meta.format = SYNCML_FORMAT_ENCODING_B64;
-    hp1->cred.data = QByteArray( "user:password" ).toBase64();
-
+    hp1->meta.maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     sessionHandler.handleHeaderElement( hp1 );
     hp1 = NULL;
 
     // Fake alert
-    AlertParams* ap1 = new AlertParams();
-    ap1->cmdID = 1;
-    ap1->sourceDatabase = "calendar";
-    ap1->targetDatabase = "calendar";
-    ap1->nextAnchor = "nextAnchor";
-    ap1->data = SLOW_SYNC;
+    CommandParams* ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 1;
+    ap1->data = QString::number( SLOW_SYNC );
+    ItemParams item;
+    item.source = "calendar";
+    item.target = "calendar";
+    item.meta.anchor.next = "nextAnchor";
+    ap1->items.append(item);
 
     sessionHandler.handleAlertElement( ap1 );
     ap1 = NULL;
@@ -440,9 +457,9 @@ void SessionHandlerTest::testServerWithClientInitiated()
     sessionHandler.handleEndOfMessage();
 
     SyncParams* sync = new SyncParams();
-    sync->cmdID = 1;
-    sync->sourceDatabase = "calendar";
-    sync->targetDatabase = "calendar";
+    sync->cmdId = 1;
+    sync->source = "calendar";
+    sync->target = "calendar";
 
     sessionHandler.handleSyncElement( sync );
     sync = NULL;
@@ -460,7 +477,6 @@ void SessionHandlerTest::testServerWithClientInitiated()
     sessionHandler.handleEndOfMessage();
     QCOMPARE( sessionHandler.getSyncState(), SYNC_FINISHED );
 
-
 }
 
 void SessionHandlerTest::testClientWithServerInitiatedSAN()
@@ -472,8 +488,9 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     config.setTransport(&transport);
     config.setStorageProvider( this );
     config.addSyncTarget( "Contacts", DB );
-    config.setDatabaseFilePath("/tmp/sessionhandler.db");
-    config.setSyncParams( "", DS_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "", SYNCML_1_2, SyncMode(DIRECTION_FROM_CLIENT, INIT_SERVER) );
 
     QStringList mappings;
     mappings << "Contacts" << "text/x-vcard";
@@ -497,11 +514,14 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     // Fake alert.
-    AlertParams* ap1 = new AlertParams();
-    ap1->cmdID = 2;
-    ap1->sourceDatabase = DB;
-    ap1->targetDatabase = DB;
-    ap1->nextAnchor = "something";
+    CommandParams* ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 2;
+    ap1->data = QString::number( SLOW_SYNC );
+    ItemParams item;
+    item.source = DB;
+    item.target = DB;
+    item.meta.anchor.next = "something";
+    ap1->items.append( item );
     session_handler.handleAlertElement(ap1);
     ap1 = NULL;
 
@@ -511,16 +531,17 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     // Step through different states.
     session_handler.handleEndOfMessage();
     SyncParams* sync = new SyncParams();
-    sync->cmdID = 1;
-    sync->sourceDatabase = DB;
-    sync->targetDatabase = DB;
+    sync->cmdId = 1;
+    sync->source = DB;
+    sync->target = DB;
     session_handler.handleSyncElement( sync );
     QCOMPARE(session_handler.getSyncState(), RECEIVING_ITEMS);
-    SyncActionData* data = new SyncActionData;
-    data->action = SYNCML_GET;
-    data->cmdID = 1;
-    session_handler.handleGetElement(data);
-    data = NULL;
+
+    CommandParams* get = new CommandParams( CommandParams::COMMAND_GET );
+    get->cmdId = 1;
+    session_handler.handleGetElement(get);
+    get = NULL;
+
     session_handler.handleFinal();
     QCOMPARE(session_handler.getSyncState(), SENDING_MAPPINGS);
     session_handler.handleEndOfMessage();
@@ -531,6 +552,795 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     session_handler.handleEndOfMessage();
     QCOMPARE(session_handler.getSyncState(), SYNC_FINISHED);
 
+}
+
+void SessionHandlerTest::testClientAuthNone()
+{
+    // Test that no authentication info is sent if authentication type
+    // is AUTH_NONE, even if credenticals would be supplied
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_NONE, "user", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray data = transport.iData;
+
+    QVERIFY( !data.contains( SYNCML_ELEMENT_CRED ) );
+
+}
+
+void SessionHandlerTest::testClientAuthNoneFailed()
+{
+    // Test that session is aborted if authentication type is AUTH_NONE
+    // and we receive 401 for authentication
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setLocalDeviceName( "client" );
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_NONE, "user", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray data = transport.iData;
+
+    QVERIFY( !data.contains( SYNCML_ELEMENT_CRED ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "client";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
+}
+
+void SessionHandlerTest::testClientAuthNoneChal1()
+{
+    // Test that session is aborted if authentication type is AUTH_NONE
+    // and we receive 407 for authentication with a challenge for
+    // basic auth
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setLocalDeviceName( "client" );
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_NONE, "user", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray data = transport.iData;
+
+    QVERIFY( !data.contains( SYNCML_ELEMENT_CRED ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "client";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_BASIC;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
+}
+
+void SessionHandlerTest::testClientAuthNoneChal2()
+{
+    // Test that session is aborted if authentication type is AUTH_NONE
+    // and we receive 407 for authentication with a challenge without
+    // unspecified type (should default to basic auth)
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setLocalDeviceName( "client" );
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_NONE, "user", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray data = transport.iData;
+
+    QVERIFY( !data.contains( SYNCML_ELEMENT_CRED ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "client";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
+}
+
+void SessionHandlerTest::testClientAuthBasicNoCreds()
+{
+    // Test that basic authentication fails if no credentials are
+    // supplied
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_BASIC, "", "" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
+
+}
+
+
+void SessionHandlerTest::testClientAuthBasic()
+{
+    // Test that basic authentication is processed properly when
+    // server accepts the credentials
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_BASIC, "userid", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_BASIC ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+    QVERIFY( message.contains( "dXNlcmlkOnBhc3N3b3Jk" ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "client";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = AUTH_ACCEPTED;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( session_handler.authentication().authenticated() );
+}
+
+void SessionHandlerTest::testClientAuthBasicChalToMD5WithoutNonce()
+{
+    // Test that session is aborted if we try to use basic auth but
+    // get challenged with MD5 without us having a nonce
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthBasicChalToMD5WithoutNonce" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_BASIC, "userid", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_BASIC ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+    QVERIFY( message.contains( "dXNlcmlkOnBhc3N3b3Jk" ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "client";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = MISSING_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
+}
+
+void SessionHandlerTest::testClientAuthBasicChalToMD5WithNonce()
+{
+    // Test that reauthentication is attempted if basic authentication
+    // gets rejected, but MD5 auth challenge is issued with a nonce
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthBasicChalToMD5WithNonce" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_BASIC, "Bruce2", "OhBehave" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_BASIC ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+    QVERIFY( message.contains( "QnJ1Y2UyOk9oQmVoYXZl" ) ); // "Nonce" in B64
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthBasicChalToMD5WithNonce";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = MISSING_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    sp1->chal.meta.nextNonce = "Tm9uY2U=";
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+
+    session_handler.handleFinal();
+    session_handler.handleEndOfMessage();
+    QCOMPARE( session_handler.getSyncState(), LOCAL_INIT );
+
+    message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_MD5 ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with nonce "Nonce"
+    QVERIFY( message.contains( "Zz6EivR3yeaaENcRN6lpAQ==" ) );
+
+}
+
+void SessionHandlerTest::testClientAuthBasicContinuous()
+{
+
+    // Test that basic authentication information is continued to be sent
+    // if server responds with 200.
+
+    QVERIFY( false );
+}
+
+void SessionHandlerTest::testClientAuthMD5NoCreds()
+{
+    // Test that MD5 authentication fails if no credentials are
+    // supplied
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_MD5, "", "" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
+
+}
+
+void SessionHandlerTest::testClientAuthMD5WithoutNonce1()
+{
+    // Check that if we don't have a known nonce & MD5 is to be used,
+    // that we first try to send message without auth info. If no challenge
+    // comes, continue the session
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5WithoutNonce1" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5WithoutNonce1";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = SUCCESS;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( session_handler.authentication().authenticated() );
+}
+
+void SessionHandlerTest::testClientAuthMD5WithoutNonce2()
+{
+    // Check that if we don't have a known nonce & MD5 is to be used,
+    // that we first try to send message without auth info. If basic challenge
+    // comes, abort the session
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5WithoutNonce2" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5WithoutNonce2";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_BASIC;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
+}
+
+void SessionHandlerTest::testClientAuthMD5WithoutNonce3()
+{
+    // Check that if we don't have a known nonce & MD5 is to be used,
+    // that we first try to send message without auth info. If MD5 challenge
+    // comes without nonce, abort the session
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5WithoutNonce3" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5WithoutNonce3";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
+
+}
+
+void SessionHandlerTest::testClientAuthMD5WithoutNonce4()
+{
+    // Check that if we don't have a known nonce & MD5 is to be used,
+    // that we first try to send message without auth info. If MD5 challenge
+    // comes with a nonce, continue the session
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5WithoutNonce3" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5WithoutNonce3";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    sp1->chal.meta.nextNonce = "Tm9uY2U=";
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+
+    session_handler.handleFinal();
+    session_handler.handleEndOfMessage();
+    QCOMPARE( session_handler.getSyncState(), LOCAL_INIT );
+
+    message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_MD5 ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with nonce "Nonce"
+    QVERIFY( message.contains( "Zz6EivR3yeaaENcRN6lpAQ==" ) );
+
+}
+
+void SessionHandlerTest::testClientAuthMD5WithNonce()
+{
+    // Test that MD5 authentication is processed properly when
+    // server accepts the credentials
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5WithNonce" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave", "Nonce" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with nonce "Nonce"
+    QVERIFY( message.contains( "Zz6EivR3yeaaENcRN6lpAQ==" ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5WithNonce";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = SUCCESS;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( session_handler.authentication().authenticated() );
+    QCOMPARE( session_handler.getSyncState(), LOCAL_INIT );
+}
+
+void SessionHandlerTest::testClientAuthMD5ChalToBasic()
+{
+    // Test that session is aborted if we want to use MD5 authentication and
+    // server responds with challenge for basic
+
+    TestTransport transport(false);
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setLocalDeviceName( "testClientAuthMD5ChalToBasic" );
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
+    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave", "Nonce" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
+
+    QByteArray message = transport.iData;
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with nonce "Nonce"
+    QVERIFY( message.contains( "Zz6EivR3yeaaENcRN6lpAQ==" ) );
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "server";
+    hp1->targetDevice = "testClientAuthMD5ChalToBasic";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_BASIC;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
+    session_handler.handleStatusElement( sp1 );
+
+    QVERIFY( !session_handler.authentication().authenticated() );
+    QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
+}
+
+void SessionHandlerTest::testClientAuthMD5Continuous()
+{
+    QVERIFY( false );
 }
 
 void SessionHandlerTest::regression_NB153701_01()
@@ -545,7 +1355,7 @@ void SessionHandlerTest::regression_NB153701_01()
     DeviceInfo deviceInfo;
     config.setTransport( &transport );
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( NB153701DB );
+    config.setDatabaseFilePath( DBFILE );
     deviceInfo.setDeviceID( NB153701SOURCEDEVICE );
     config.setDeviceInfo(deviceInfo);
 
@@ -560,16 +1370,16 @@ void SessionHandlerTest::regression_NB153701_01()
     hp1->targetDevice = NB153701UNKNOWNDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+    hp1->meta.maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
     QCOMPARE( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
-    QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701SOURCEDEVICE );
+    QCOMPARE( sessionHandler.params().localDeviceName(), NB153701SOURCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701SOURCEDEVICE );
-    QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
+    QCOMPARE( sessionHandler.params().remoteDeviceName(), NB153701TARGETDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().targetDevice, NB153701TARGETDEVICE );
 
 }
@@ -586,7 +1396,7 @@ void SessionHandlerTest::regression_NB153701_02()
     DeviceInfo deviceInfo;
     config.setTransport( &transport );
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( NB153701DB );
+    config.setDatabaseFilePath( DBFILE );
     deviceInfo.setDeviceID( NB153701SOURCEDEVICE );
     config.setDeviceInfo(deviceInfo);
     config.setLocalDeviceName( NB153701FORCEDEVICE );
@@ -602,16 +1412,16 @@ void SessionHandlerTest::regression_NB153701_02()
     hp1->targetDevice = NB153701UNKNOWNDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+    hp1->meta.maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
     QCOMPARE( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID(), NB153701SOURCEDEVICE );
-    QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
+    QCOMPARE( sessionHandler.params().localDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
-    QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
+    QCOMPARE( sessionHandler.params().remoteDeviceName(), NB153701TARGETDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().targetDevice, NB153701TARGETDEVICE );
 
 }
@@ -628,7 +1438,7 @@ void SessionHandlerTest::regression_NB153701_03()
     SyncAgentConfig config;
     config.setTransport( &transport );
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( NB153701DB );
+    config.setDatabaseFilePath( DBFILE );
     config.setLocalDeviceName( NB153701SOURCEDEVICE );
 
     // Prepare
@@ -642,16 +1452,16 @@ void SessionHandlerTest::regression_NB153701_03()
     hp1->targetDevice = NB153701FORCEDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+    hp1->meta.maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
     QVERIFY( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID().isEmpty() );
-    QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
+    QCOMPARE( sessionHandler.params().localDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
-    QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
+    QCOMPARE( sessionHandler.params().remoteDeviceName(), NB153701TARGETDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().targetDevice, NB153701TARGETDEVICE );
 
 }
@@ -667,9 +1477,9 @@ void SessionHandlerTest::regression_NB153701_04()
     SyncAgentConfig config;
     config.setTransport( &transport );
     config.setStorageProvider( this );
-    config.setDatabaseFilePath( NB153701DB );
+    config.setDatabaseFilePath( DBFILE );
     config.setLocalDeviceName( NB153701SOURCEDEVICE );
-    config.setSyncParams( "", DS_1_1, SyncMode(DIRECTION_TWO_WAY, INIT_SERVER, TYPE_FAST) );
+    config.setSyncParams( "", SYNCML_1_1, SyncMode(DIRECTION_TWO_WAY, INIT_SERVER, TYPE_FAST) );
     config.addSyncTarget( "./calendar", "./calendar" );
 
     ClientSessionHandler sessionHandler( &config, NULL );
@@ -685,16 +1495,16 @@ void SessionHandlerTest::regression_NB153701_04()
     hp1->targetDevice = NB153701FORCEDEVICE;
     hp1->sessionID = "1";
     hp1->msgID = 1;
-    hp1->maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+    hp1->meta.maxMsgSize = DEFAULT_MAX_MESSAGESIZE;
     fragments.append(hp1);
 
     sessionHandler.handleNotificationXML(fragments);
     QVERIFY(fragments.isEmpty());
 
     QVERIFY( sessionHandler.getDevInfHandler().getLocalDeviceInfo().getDeviceID().isEmpty() );
-    QCOMPARE( sessionHandler.getLocalDeviceName(), NB153701FORCEDEVICE );
+    QCOMPARE( sessionHandler.params().localDeviceName(), NB153701FORCEDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().sourceDevice, NB153701FORCEDEVICE );
-    QCOMPARE( sessionHandler.getRemoteDeviceName(), NB153701TARGETDEVICE );
+    QCOMPARE( sessionHandler.params().remoteDeviceName(), NB153701TARGETDEVICE );
     QCOMPARE( sessionHandler.getResponseGenerator().getHeaderParams().targetDevice, NB153701TARGETDEVICE );
 
 }

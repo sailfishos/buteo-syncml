@@ -53,20 +53,16 @@ private slots:
     void initTestCase();
     void cleanupTestCase();
 
-    void testPrepareSync();
     void testHandleResponseHeader();
     void testSetGetSyncStatus();
     void testAddGetSyncTargets();
-    void testSyncAlertReceived();
     void testSyncReceived();
     void testMapReceived();
     void testFinalReceived();
     void testMessageParsed();
     void testResendPackage();
     void testComposeServerModificationsPackage();
-    void testAcknowledgeTarget();
     void testSyncFinished();
-    void testHandleMapElement();
     void testHandleInformativeAlert();
 
     void regression_NB166841_01();

@@ -54,6 +54,14 @@ public:
      * @param aCmdID Command id for this element
      * @param aMsgRef Message referenced by this element
      * @param aCmdRef Command referenced by this element
+     */
+    SyncMLResults( int aCmdID, int aMsgRef, int aCmdRef );
+
+    /*! \brief Constructor
+     *
+     * @param aCmdID Command id for this element
+     * @param aMsgRef Message referenced by this element
+     * @param aCmdRef Command referenced by this element
      * @param aDataStores Datastores available to use in generation
      * @param aDeviceInfo Device info object
      * @param aVersion Protocol version to use

@@ -32,15 +32,14 @@
 */
 
 #include "SyncMLDevInfTest.h"
-
-#include <QtTest>
-#include "TestLoader.h"
 #include "SyncMLDevInf.h"
-#include "datatypes.h"
-#include "internals.h"
-#include "DeviceInfo.h"
 #include "StoragePlugin.h"
+#include "DeviceInfo.h"
+#include "datatypes.h"
+#include "TestUtils.h"
 #include "QtEncoder.h"
+
+#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -48,23 +47,15 @@ void SyncMLDevInfTest::testSyncMLDevInf() {
 
     QList<DataSync::StoragePlugin*> pluginList;
     DeviceInfo devInfo;
-    SyncMLDevInf devInf( pluginList, devInfo, DS_1_2, ROLE_CLIENT);
-    QFile toXMLfile("testfiles/testDevInf.txt");
-    if(!toXMLfile.open(QIODevice::ReadOnly)) {
-        QFAIL("Failed to open the file testfiles/testDevInf.txt");
-    } else {
+    SyncMLDevInf devInf( pluginList, devInfo, SYNCML_1_2, ROLE_CLIENT);
 
-        QtEncoder encoder;
-        QByteArray output;
-        QVERIFY( encoder.encodeToXML( devInf, output, true ) );
+    QByteArray expected;
+    QVERIFY( readFile("testfiles/testDevInf.txt", expected ) );
+    QtEncoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( devInf, output, true ) );
 
-        QByteArray input = toXMLfile.readAll();
-        toXMLfile.close();
-        qDebug() << input.simplified();
-        qDebug() << output.simplified();
+    QCOMPARE( expected.simplified(), output.simplified() );
 
-        QCOMPARE( input.simplified(), output.simplified() );
-
-    }
 }
 TESTLOADER_ADD_TEST(SyncMLDevInfTest);

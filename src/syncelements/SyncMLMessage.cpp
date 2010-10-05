@@ -33,7 +33,8 @@
 
 #include "SyncMLMessage.h"
 
-#include "internals.h"
+#include "datatypes.h"
+#include "Fragments.h"
 #include "SyncMLHdr.h"
 #include "SyncMLBody.h"
 
@@ -45,14 +46,14 @@ SyncMLMessage::SyncMLMessage( const HeaderParams& aHeaderParams,
    iProtocolVersion( aProtocolVersion )
 {
 
-    if( iProtocolVersion == DS_1_1 ) {
+    if( iProtocolVersion == SYNCML_1_1 ) {
         addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML11 );
     }
-    else if( iProtocolVersion == DS_1_2 ) {
+    else if( iProtocolVersion == SYNCML_1_2 ) {
         addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML12 );
     }
 
-	iSyncHdr  = new SyncMLHdr( aHeaderParams, iProtocolVersion );
+    iSyncHdr  = new SyncMLHdr( aHeaderParams );
 	addChild( iSyncHdr );
 
 	iSyncBody = new SyncMLBody();

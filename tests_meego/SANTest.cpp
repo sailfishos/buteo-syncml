@@ -59,7 +59,7 @@ void SANTest::testParser01()
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
     QVERIFY( parser.parseSANMessage( message, data ) );
 
-    QVERIFY( data.iVersion == DS_1_2 );
+    QVERIFY( data.iVersion == SYNCML_1_2 );
     QVERIFY( data.iUIMode == SANUIMODE_BACKGROUND );
     QVERIFY( data.iInitiator == SANINITIATOR_SERVER );
     QVERIFY( data.iSessionId == 0 );
@@ -90,7 +90,7 @@ void SANTest::testParser02()
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
     QVERIFY( parser.parseSANMessage( message, data ) );
 
-    QVERIFY( data.iVersion == DS_1_2 );
+    QVERIFY( data.iVersion == SYNCML_1_2 );
     QVERIFY( data.iUIMode == SANUIMODE_BACKGROUND );
     QVERIFY( data.iInitiator == SANINITIATOR_SERVER );
     QVERIFY( data.iSessionId == 0 );
@@ -112,7 +112,7 @@ void SANTest::testGenerator01()
     QByteArray message;
 
     SANData data;
-    data.iVersion = DS_1_2;
+    data.iVersion = SYNCML_1_2;
     data.iUIMode = SANUIMODE_BACKGROUND;
     data.iInitiator = SANINITIATOR_SERVER;
     data.iSessionId = 0;

@@ -34,55 +34,63 @@
 #include "SyncMLAlert.h"
 
 #include "SyncMLMeta.h"
-#include "internals.h"
+#include "datatypes.h"
+#include "Fragments.h"
 
 using namespace DataSync;
 
-SyncMLAlert::SyncMLAlert(AlertParams& aAlertParams)
+SyncMLAlert::SyncMLAlert(CommandParams& aAlertParams)
     : SyncMLCmdObject( SYNCML_ELEMENT_ALERT )
 {
 
-    SyncMLCmdObject* cmdIdObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDID, QString::number(aAlertParams.cmdID) );
+    SyncMLCmdObject* cmdIdObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDID, QString::number(aAlertParams.cmdId) );
     addChild(cmdIdObject);
 
-    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, QString::number(aAlertParams.data) );
+    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA, aAlertParams.data );
     dataObject->setCDATA( true );
     addChild(dataObject);
 
-    SyncMLCmdObject* itemObject = new SyncMLCmdObject(SYNCML_ELEMENT_ITEM);
+    if( !aAlertParams.items.isEmpty() )
+    {
+        const ItemParams& item = aAlertParams.items.first();
+        SyncMLCmdObject* itemObject = new SyncMLCmdObject(SYNCML_ELEMENT_ITEM);
 
-    if( !aAlertParams.targetDatabase.isEmpty() ) {
-        SyncMLCmdObject* targetURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, aAlertParams.targetDatabase );
-        SyncMLCmdObject* targetObject = new SyncMLCmdObject(SYNCML_ELEMENT_TARGET);
-        targetObject->addChild(targetURIObject);
-        itemObject->addChild(targetObject);
-    }
-
-    if( !aAlertParams.sourceDatabase.isEmpty() ) {
-        SyncMLCmdObject* sourceURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, aAlertParams.sourceDatabase );
-        SyncMLCmdObject* sourceObject = new SyncMLCmdObject(SYNCML_ELEMENT_SOURCE);
-        sourceObject->addChild(sourceURIObject);
-        itemObject->addChild(sourceObject);
-    }
-
-    if( !aAlertParams.lastAnchor.isEmpty() || !aAlertParams.nextAnchor.isEmpty() ||
-        !aAlertParams.type.isEmpty() ) {
-
-        SyncMLMeta* metaObject = new SyncMLMeta;
-
-        if( !aAlertParams.lastAnchor.isEmpty() || !aAlertParams.nextAnchor.isEmpty() ) {
-            metaObject->addAnchors( aAlertParams.lastAnchor, aAlertParams.nextAnchor );
+        if( !item.target.isEmpty() )
+        {
+            SyncMLCmdObject* targetURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, item.target );
+            SyncMLCmdObject* targetObject = new SyncMLCmdObject(SYNCML_ELEMENT_TARGET);
+            targetObject->addChild(targetURIObject);
+            itemObject->addChild(targetObject);
         }
 
-        if( !aAlertParams.type.isEmpty() ) {
-            metaObject->addType( aAlertParams.type );
+        if( !item.source.isEmpty() )
+        {
+            SyncMLCmdObject* sourceURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, item.source );
+            SyncMLCmdObject* sourceObject = new SyncMLCmdObject(SYNCML_ELEMENT_SOURCE);
+            sourceObject->addChild(sourceURIObject);
+            itemObject->addChild(sourceObject);
         }
 
-        itemObject->addChild(metaObject);
+        if( !item.meta.anchor.last.isEmpty() || !item.meta.anchor.next.isEmpty() ||
+            !item.meta.type.isEmpty() )
+        {
 
+            SyncMLMeta* metaObject = new SyncMLMeta;
+
+            if( !item.meta.anchor.last.isEmpty() || !item.meta.anchor.next.isEmpty() ) {
+                metaObject->addAnchors( item.meta.anchor.last, item.meta.anchor.next );
+            }
+
+            if( !item.meta.type.isEmpty() ) {
+                metaObject->addType( item.meta.type );
+            }
+
+            itemObject->addChild(metaObject);
+
+        }
+
+        addChild(itemObject);
     }
-
-    addChild(itemObject);
 
 }
 

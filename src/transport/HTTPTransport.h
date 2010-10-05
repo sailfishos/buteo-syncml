@@ -35,6 +35,7 @@
 #define HTTPTRANSPORT_H
 
 #include <QHttp>
+#include <QMap>
 
 #include "BaseTransport.h"
 

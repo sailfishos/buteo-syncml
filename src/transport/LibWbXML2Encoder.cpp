@@ -393,10 +393,10 @@ WBXMLLanguage LibWbXML2Encoder::namespaceToLanguage( const SyncMLCmdObject& aObj
     }
     else if( ns == XML_NAMESPACE_VALUE_METINF ) {
 
-        if( aVersion == DS_1_1 ) {
+        if( aVersion == SYNCML_1_1 ) {
             return WBXML_LANG_SYNCML_SYNCML11;
         }
-        else if( aVersion == DS_1_2 ) {
+        else if( aVersion == SYNCML_1_2 ) {
             return WBXML_LANG_SYNCML_SYNCML12;
         }
         else {
@@ -406,10 +406,10 @@ WBXMLLanguage LibWbXML2Encoder::namespaceToLanguage( const SyncMLCmdObject& aObj
     }
     else if( ns == XML_NAMESPACE_VALUE_DEVINF ) {
 
-        if( aVersion == DS_1_1 ) {
+        if( aVersion == SYNCML_1_1 ) {
             return WBXML_LANG_SYNCML_DEVINF11;
         }
-        else if( aVersion == DS_1_2 ) {
+        else if( aVersion == SYNCML_1_2 ) {
             return WBXML_LANG_SYNCML_DEVINF12;
         }
         else {

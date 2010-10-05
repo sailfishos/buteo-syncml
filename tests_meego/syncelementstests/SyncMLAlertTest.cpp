@@ -32,33 +32,43 @@
 */
 
 #include "SyncMLAlertTest.h"
-#include <QtTest>
-#include "TestLoader.h"
+
+#include<QFile>
+
 #include "SyncMLAlert.h"
-#include "internals.h"
 #include "QtEncoder.h"
+#include "Fragments.h"
+#include "TestUtils.h"
+
+#include "TestLoader.h"
+
 using namespace DataSync;
 
 
-void SyncMLAlertTest::testSyncMLAlert() {
-    DataSync::AlertParams alertParams;
-    alertParams.targetDatabase = "card";
-    alertParams.sourceDatabase = "addressbook";
-    alertParams.lastAnchor = "12345678";
-    alertParams.nextAnchor = "12345679";
-    alertParams.type = "text";
-    SyncMLAlert alert(alertParams);
-    QFile toXMLfile("testfiles/testAlert.txt");
-    if(!toXMLfile.open(QIODevice::ReadOnly)) {
-        QFAIL("Failed to open the file testfiles/testAlert.txt");
-    } else {
-        QtEncoder encoder;
-        QByteArray output;
-        QVERIFY( encoder.encodeToXML( alert, output, true ) );
+void SyncMLAlertTest::testSyncMLAlert()
+{
 
-        QCOMPARE(output, toXMLfile.readAll());
-        toXMLfile.close();
-    }
+    CommandParams alertParams( CommandParams::COMMAND_ALERT );
+    alertParams.cmdId = -1;
+    alertParams.data = QString::number( SLOW_SYNC );
+    DataSync::ItemParams item;
+    item.target = "card";
+    item.source = "addressbook";
+    item.meta.anchor.last = "12345678";
+    item.meta.anchor.next = "12345679";
+    item.meta.type = "text";
+    alertParams.items.append(item);
+    SyncMLAlert alert(alertParams);
+
+    QByteArray expected;
+    QVERIFY( readFile( "testfiles/testAlert.txt", expected ) );
+
+    QtEncoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( alert, output, true ) );
+
+    QCOMPARE(output, expected);
+
 }
 
 TESTLOADER_ADD_TEST(SyncMLAlertTest);

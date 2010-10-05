@@ -33,16 +33,15 @@
 
 #include "LocalChangesPackageTest.h"
 
-#include <QTest>
-
-#include "TestLoader.h"
 #include "SyncItem.h"
 #include "SyncTarget.h"
 #include "LocalChangesPackage.h"
 #include "SyncMLMessage.h"
 #include "QtEncoder.h"
 #include "Mock.h"
-#include "LogMacros.h"
+#include "Fragments.h"
+
+#include "TestLoader.h"
 
 
 LocalChangesPackageStorage::LocalChangesPackageStorage( const QString& aSourceURI )
@@ -226,7 +225,7 @@ void LocalChangesPackageTest::testSimpleClient()
 
     LocalChangesPackage package( target, changes, msgSize, ROLE_CLIENT, maxChanges );
 
-    SyncMLMessage msg( HeaderParams(), DS_1_2 );
+    SyncMLMessage msg( HeaderParams(), SYNCML_1_2 );
 
     int remaining = msgSize;
     QVERIFY( package.write( msg, remaining ) );
@@ -299,7 +298,7 @@ void LocalChangesPackageTest::testSimpleServer()
 
     LocalChangesPackage package( target, changes, msgSize, ROLE_SERVER, maxChanges );
 
-    SyncMLMessage msg( HeaderParams(), DS_1_2 );
+    SyncMLMessage msg( HeaderParams(), SYNCML_1_2 );
 
     int remaining = msgSize;
     QVERIFY( package.write( msg, remaining ) );
@@ -353,7 +352,7 @@ void LocalChangesPackageTest::testLargeObjects()
     LocalChangesPackage package( target, changes, msgSize, ROLE_CLIENT, maxChanges );
 
     int remaining = msgSize;
-    SyncMLMessage msg1( HeaderParams(), DS_1_2 );
+    SyncMLMessage msg1( HeaderParams(), SYNCML_1_2 );
     QVERIFY( !package.write( msg1, remaining ) );
     QVERIFY( remaining < msgSize );
 
@@ -367,7 +366,7 @@ void LocalChangesPackageTest::testLargeObjects()
     QVERIFY( result_xml1.contains( "MoreData" ) );
 
     remaining = msgSize;
-    SyncMLMessage msg2( HeaderParams(), DS_1_2 );
+    SyncMLMessage msg2( HeaderParams(), SYNCML_1_2 );
     QVERIFY( package.write( msg2, remaining ) );
     QVERIFY( remaining < msgSize );
 

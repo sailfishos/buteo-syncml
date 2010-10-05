@@ -51,7 +51,7 @@ void ServerSessionHandlerTest::initTestCase()
 {
     iDbHandler = new DatabaseHandler( "/tmp/serversessionhandler.db");
     iClientId = QString("clientId");
-    iConfig = new MockConfig();
+    iConfig = new SyncAgentConfig();
     QString localDb = "localcontacts";
     iStorage = new MockStorage( localDb );
     iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
@@ -76,13 +76,6 @@ void ServerSessionHandlerTest::cleanupTestCase()
 
     delete iDbHandler;
     iDbHandler = 0;
-}
-
-
-void ServerSessionHandlerTest::testPrepareSync()
-{
-    iHandler->prepareSync();
-    QVERIFY(true);
 }
 
 void ServerSessionHandlerTest::testHandleResponseHeader()
@@ -129,26 +122,6 @@ void ServerSessionHandlerTest::testAddGetSyncTargets()
     QVERIFY(!returnedTargets.isEmpty());
 
 
-}
-void ServerSessionHandlerTest::testSyncAlertReceived()
-{
-    SyncMode mode;
-    AlertParams alertParams;
-//     alertParams.sourceDatabase = "foo";
-//     alertParams.targetDatabase = "bar";
-//     alertParams.nextAnchor = "zed";
-
-    iHandler->setSyncState(PREPARED);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(REMOTE_INIT);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(LOCAL_INIT);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(SENDING_ITEMS);
-    iHandler->syncAlertReceived(mode, alertParams);
 }
 
 void ServerSessionHandlerTest::testSyncReceived()
@@ -243,19 +216,6 @@ void ServerSessionHandlerTest::testComposeServerModificationsPackage()
     iHandler->composeServerModificationsPackage();
 }
 
-void ServerSessionHandlerTest::testAcknowledgeTarget()
-{
-    SyncMode mode;
-    AlertParams alertParams;
-    alertParams.sourceDatabase = "foo";
-    alertParams.targetDatabase = "bar";
-    alertParams.nextAnchor = "zed";
-
-    iHandler->acknowledgeTarget(mode, alertParams);
-
-
-}
-
 void ServerSessionHandlerTest::testSyncFinished()
 {
     bool expected = iHandler->iSyncFinished;
@@ -263,32 +223,19 @@ void ServerSessionHandlerTest::testSyncFinished()
     QCOMPARE(expected, actual);
 }
 
-void ServerSessionHandlerTest::testHandleMapElement()
-{
-    MapParams* mapParams;
-
-    mapParams = new MapParams;
-    iHandler->iSessionAuthenticated = false;
-    iHandler->handleMapElement(mapParams);
-
-    mapParams = new MapParams;
-    iHandler->iSessionAuthenticated = true;
-    iHandler->handleMapElement(mapParams);
-}
-
 void ServerSessionHandlerTest::testHandleInformativeAlert()
 {
-    AlertParams alertParams;
+    CommandParams alertParams( CommandParams::COMMAND_ALERT );
 
-    alertParams.data = DISPLAY;
+    alertParams.data = QString::number( DISPLAY );
     ResponseStatusCode response = iHandler->handleInformativeAlert(alertParams);
     QVERIFY(response == NOT_IMPLEMENTED);
 
-    alertParams.data = NEXT_MESSAGE;
+    alertParams.data = QString::number( NEXT_MESSAGE );
     response = iHandler->handleInformativeAlert(alertParams);
     QVERIFY(response == SUCCESS);
 
-    alertParams.data = SLOW_SYNC;
+    alertParams.data = QString::number( SLOW_SYNC );
     response = iHandler->handleInformativeAlert(alertParams);
     QVERIFY(response == NOT_IMPLEMENTED);
 
@@ -310,10 +257,12 @@ void ServerSessionHandlerTest::regression_NB166841_01()
     sessionHandler.iStorages.append( storage );
 
     SyncMode syncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_SLOW);
-    AlertParams alert;
-    alert.targetDatabase = sourceURI;
-    alert.sourceDatabase = targetURI;
-    alert.nextAnchor = nextAnchor;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.target = sourceURI;
+    item.source = targetURI;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
     QCOMPARE( status, SUCCESS );
 }
@@ -334,17 +283,19 @@ void ServerSessionHandlerTest::regression_NB166841_02()
     sessionHandler.iStorages.append( storage );
 
     SyncMode syncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_SLOW);
-    AlertParams alert;
-    alert.sourceDatabase = sourceURI;
-    alert.type = mimeURI;
-    alert.nextAnchor = nextAnchor;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.source = sourceURI;
+    item.meta.type = mimeURI;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
     QCOMPARE( status, SUCCESS );
 }
 
 void ServerSessionHandlerTest::regression_NB166841_03()
 {
-    // regression_NB166841_03: Test that target setup fails f source db uri and
+    // regression_NB166841_03: Test that target setup fails if source db uri and
     // mime type are absent
     const QString mimeURI( "text/x-vcalendar" );
     const QString nextAnchor( "0" );
@@ -353,8 +304,10 @@ void ServerSessionHandlerTest::regression_NB166841_03()
     ServerSessionHandler sessionHandler(&config);
 
     SyncMode syncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_SLOW);
-    AlertParams alert;
-    alert.nextAnchor = nextAnchor;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
     QCOMPARE( status, INCOMPLETE_COMMAND );
 }
@@ -373,9 +326,11 @@ void ServerSessionHandlerTest::regression_NB166841_04()
     sessionHandler.iStorages.append( storage );
 
     SyncMode syncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_SLOW);
-    AlertParams alert;
-    alert.targetDatabase = sourceURI;
-    alert.sourceDatabase = targetURI;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.target = sourceURI;
+    item.source = targetURI;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
     QCOMPARE( status, INCOMPLETE_COMMAND );
 }
@@ -389,7 +344,7 @@ void ServerSessionHandlerTest::testSetClientRefresh()
     const QString nextAnchor( "0" );
     SyncMode syncMode(DIRECTION_FROM_CLIENT,INIT_CLIENT,TYPE_SLOW);
     SyncMode nextSyncMode(DIRECTION_FROM_CLIENT,INIT_CLIENT,TYPE_FAST);
-    AlertParams alert;
+
     SyncAgentConfig config;
     ServerSessionHandler sessionHandler(&config);
 
@@ -398,9 +353,13 @@ void ServerSessionHandlerTest::testSetClientRefresh()
     ChangeLog* changeLog = new ChangeLog( remoteDevice, localDb, DIRECTION_FROM_CLIENT );
     SyncTarget* target = new SyncTarget( changeLog, storage, syncMode, "lastanchor" );
     sessionHandler.addSyncTarget(target);
-    alert.targetDatabase = sourceURI;
-    alert.sourceDatabase = targetURI;
-    alert.nextAnchor = nextAnchor;
+
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.target = sourceURI;
+    item.source = targetURI;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
 
     ResponseStatusCode status = sessionHandler.setupTargetByClient(nextSyncMode,alert);
     QCOMPARE( status, REFRESH_REQUIRED );

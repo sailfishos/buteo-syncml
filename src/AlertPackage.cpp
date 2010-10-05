@@ -42,40 +42,59 @@
 
 using namespace DataSync;
 
-AlertPackage::AlertPackage( AlertType aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase )
+AlertPackage::AlertPackage( qint32 aAlertCode )
+ : iParams( CommandParams::COMMAND_ALERT)
 {
     FUNCTION_CALL_TRACE;
-
-    iParams.data = aAlertCode;
-    iParams.sourceDatabase = aSourceDatabase;
-    iParams.targetDatabase = aTargetDatabase;
+    iParams.data = QString::number( aAlertCode );
 }
 
-AlertPackage::AlertPackage( AlertType aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase,
-                            const QString& aLocalLastAnchor, const QString& aLocalNextAnchor )
+AlertPackage::AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase )
+ : iParams( CommandParams::COMMAND_ALERT )
 {
     FUNCTION_CALL_TRACE;
 
-    iParams.data = aAlertCode;
+    iParams.data = QString::number( aAlertCode );
 
-    iParams.sourceDatabase = aSourceDatabase;
-    iParams.targetDatabase = aTargetDatabase;
-    iParams.lastAnchor = aLocalLastAnchor;
-    iParams.nextAnchor = aLocalNextAnchor;
+    ItemParams item;
+    item.source = aSourceDatabase;
+    item.target = aTargetDatabase;
+    iParams.items.append(item);
+}
+
+AlertPackage::AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase,
+                            const QString& aLocalLastAnchor, const QString& aLocalNextAnchor )
+ : iParams( CommandParams::COMMAND_ALERT )
+{
+    FUNCTION_CALL_TRACE;
+
+    iParams.data = QString::number( aAlertCode );
+
+    ItemParams item;
+    item.source = aSourceDatabase;
+    item.target = aTargetDatabase;
+    item.meta.anchor.last = aLocalLastAnchor;
+    item.meta.anchor.next = aLocalNextAnchor;
+    iParams.items.append(item);
 
     // This is needed for S60, do NOT remove
-    if( iParams.lastAnchor.isEmpty() ) {
-        iParams.lastAnchor  = '0';
+    // @todo: should this be here, or in session handling??
+    if( iParams.items.first().meta.anchor.last.isEmpty() ) {
+        iParams.items.first().meta.anchor.last = '0';
     }
 }
 
-AlertPackage::AlertPackage( const QString& aSourceDatabase, const QString& aMIMEType, AlertType aAlertCode )
+AlertPackage::AlertPackage( const QString& aSourceDatabase, const QString& aMIMEType, qint32 aAlertCode )
+: iParams( CommandParams::COMMAND_ALERT )
 {
     FUNCTION_CALL_TRACE;
 
-    iParams.data = aAlertCode;
-    iParams.sourceDatabase = aSourceDatabase;
-    iParams.type = aMIMEType;
+    iParams.data = QString::number( aAlertCode );
+
+    ItemParams item;
+    item.source = aSourceDatabase;
+    item.meta.type = aMIMEType;
+    iParams.items.append(item);
 }
 
 AlertPackage::~AlertPackage()
@@ -86,7 +105,7 @@ bool AlertPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
 {
     FUNCTION_CALL_TRACE
 
-    iParams.cmdID = aMessage.getNextCmdId();
+    iParams.cmdId = aMessage.getNextCmdId();
     SyncMLAlert* alertObject = new SyncMLAlert( iParams );
     aMessage.addToBody( alertObject );
     aSizeThreshold -= alertObject->sizeAsXML();

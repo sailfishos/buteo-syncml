@@ -34,8 +34,8 @@
 #include "SyncMLStatus.h"
 
 #include "SyncMLMeta.h"
-
-#include "internals.h"
+#include "Fragments.h"
+#include "datatypes.h"
 
 using namespace DataSync;
 
@@ -43,11 +43,8 @@ SyncMLStatus::SyncMLStatus(const StatusParams& aParams)
 
     : SyncMLCmdObject(SYNCML_ELEMENT_STATUS)
 {
-    Q_ASSERT( aParams.cmdID >= 0 );
-    Q_ASSERT( aParams.msgRef >= 0 );
-    Q_ASSERT( aParams.cmdRef >= 0 );
 
-    SyncMLCmdObject* cmdIdObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDID, QString::number(aParams.cmdID) );
+    SyncMLCmdObject* cmdIdObject = new SyncMLCmdObject( SYNCML_ELEMENT_CMDID, QString::number(aParams.cmdId) );
     addChild(cmdIdObject);
 
     SyncMLCmdObject* msgRefObject = new SyncMLCmdObject( SYNCML_ELEMENT_MSGREF, QString::number(aParams.msgRef) );
@@ -91,18 +88,32 @@ SyncMLStatus::SyncMLStatus(const StatusParams& aParams)
         addChild(item);
     }
 
-    for( int i = 0; i < aParams.itemList.count(); ++i )
+    for( int i = 0; i < aParams.items.count(); ++i )
     {
 
         SyncMLCmdObject* itemObject = new SyncMLCmdObject( SYNCML_ELEMENT_ITEM );
 
-        SyncMLCmdObject* sourceLocURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI,
-                                                                   aParams.itemList[i].source );
+        if( !aParams.items[i].source.isEmpty() )
+        {
+            SyncMLCmdObject* sourceLocURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI,
+                                                                       aParams.items[i].source );
 
-        SyncMLCmdObject* sourceObject = new SyncMLCmdObject( SYNCML_ELEMENT_SOURCE );
-        sourceObject->addChild( sourceLocURIObject );
+            SyncMLCmdObject* sourceObject = new SyncMLCmdObject( SYNCML_ELEMENT_SOURCE );
+            sourceObject->addChild( sourceLocURIObject );
 
-        itemObject->addChild( sourceObject );
+            itemObject->addChild( sourceObject );
+        }
+
+        if( !aParams.items[i].target.isEmpty() )
+        {
+            SyncMLCmdObject* targetLocURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI,
+                                                                       aParams.items[i].target );
+
+            SyncMLCmdObject* targetObject = new SyncMLCmdObject( SYNCML_ELEMENT_TARGET );
+            targetObject->addChild( targetLocURIObject );
+
+            itemObject->addChild( targetObject );
+        }
 
         addChild( itemObject );
     }

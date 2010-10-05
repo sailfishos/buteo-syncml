@@ -35,7 +35,7 @@
 
 #include "Package.h"
 
-#include "internals.h"
+#include "Fragments.h"
 
 class AlertPackageTest;
 
@@ -52,6 +52,11 @@ class AlertPackage : public Package {
 
 public:
 
+    /*! \brief Constructor for Alerts that include only the alert code
+     *
+     */
+    AlertPackage( qint32 aAlertCode );
+
     /*! \brief Constructor for Alert that includes source and target databases
      *
      * This should be used for example which Alerts related to suspend & resume and
@@ -61,7 +66,7 @@ public:
      * @param aSourceDatabase Source database
      * @param aTargetDatabase Target database
      */
-    AlertPackage( AlertType aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase );
+    AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase );
 
 
     /*! \brief Constructor for Alert that includes source/target databases and anchor information
@@ -74,7 +79,7 @@ public:
      * @param aLocalLastAnchor Local last anchor
      * @param aLocalNextAnchor Local next anchor
      */
-    AlertPackage( AlertType aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase,
+    AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase,
                   const QString& aLocalLastAnchor, const QString& aLocalNextAnchor );
 
 
@@ -86,7 +91,7 @@ public:
      * @param aMIMEType MIME type
      * @param aAlertCode Code of this Alert
      */
-    AlertPackage( const QString& aSourceDatabase, const QString& aMIMEType, AlertType aAlertCode );
+    AlertPackage( const QString& aSourceDatabase, const QString& aMIMEType, qint32 aAlertCode );
 
     /*! \brief Destructor
      *
@@ -99,7 +104,7 @@ protected:
 
 private:
 
-    AlertParams iParams;
+    CommandParams iParams;
 
     friend class ::AlertPackageTest;
 

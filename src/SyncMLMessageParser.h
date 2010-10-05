@@ -37,7 +37,7 @@
 #include <QXmlStreamReader>
 #include <QHash>
 
-#include "internals.h"
+#include "Fragments.h"
 
 class SyncMLMessageParserTest;
 
@@ -118,17 +118,19 @@ private:
 
 	void readSync();
 
-	void readAlert();
-
     void readPut();
 
 	void readResults();
 
     void readMap();
 
-    void readMapItem( MapItem& aParams );
+    void readMapItem( MapItemParams& aParams );
 
-	void readSyncActionData( const QString& aAction, SyncActionData& aParams );
+    bool readCommand( const QStringRef& aName, CommandParams& aCommand );
+
+    void readLeafCommand( CommandParams& aParams, const QString& aCommand );
+
+    void readContainerCommand( CommandParams& aParams, const QString& aCommand );
 
     void readChal( ChalParams& aParams );
 

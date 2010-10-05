@@ -34,7 +34,7 @@
 #ifndef LOCALCHANGESPACKAGETEST_H
 #define LOCALCHANGESPACKAGETEST_H
 
-#include <QObject>
+#include <QTest>
 
 #include "StoragePlugin.h"
 

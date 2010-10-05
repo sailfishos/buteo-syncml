@@ -32,14 +32,7 @@
 */
 
 #include "SyncMLLocalChangeTest.h"
-#include <QtTest>
-#include "TestLoader.h"
-#include "SyncMLLocalChange.h"
-#include "internals.h"
-using namespace DataSync;
 
-void SyncMLLocalChangeTest::testSycnMLLocalChange() {
-    SyncMLLocalChange LocalChange();
-    // @TODO add the actual test .
-}
+#include "TestLoader.h"
+
 TESTLOADER_ADD_TEST(SyncMLLocalChangeTest);

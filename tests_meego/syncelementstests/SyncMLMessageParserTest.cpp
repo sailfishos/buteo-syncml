@@ -72,7 +72,7 @@ void SyncMLMessageParserTest::testResp1()
     // Header
     QVERIFY( !fragments.isEmpty() );
     DataSync::Fragment* fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_HEADER );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_HEADER );
 
     HeaderParams* header = static_cast<HeaderParams*>( fragment );
 
@@ -88,19 +88,20 @@ void SyncMLMessageParserTest::testResp1()
     // Status
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_STATUS );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_STATUS );
 
     StatusParams* status = static_cast<StatusParams*>( fragment );
 
-    QCOMPARE(status->cmdID,1);
+    QCOMPARE(status->cmdId,1);
     QCOMPARE(status->data,SUCCESS);
     QCOMPARE(status->msgRef,5);
     QCOMPARE(status->cmdRef,0);
     QCOMPARE(status->cmd,QString(SYNCML_ELEMENT_SYNCHDR));
     QCOMPARE(status->targetRef,QString("http://localhost:8080/funambol/ds/card"));
     QCOMPARE(status->sourceRef,QString("sc-pim-75af2bff-3a5e-4cba-affb-4c555b9ee740"));
-    QCOMPARE(status->itemList.at(0).target,QString("note"));
-    QCOMPARE(status->itemList.at(0).source,QString("memo"));
+    QVERIFY(!status->items.isEmpty());
+    QCOMPARE(status->items.at(0).target,QString("note"));
+    QCOMPARE(status->items.at(0).source,QString("memo"));
     QCOMPARE(status->chal.meta.type,QString("syncml:auth-md5"));
     QCOMPARE(status->chal.meta.format,QString("b64"));
     QCOMPARE(status->chal.meta.nextNonce,QString("ZG9iZWhhdmUNCg=="));
@@ -111,35 +112,37 @@ void SyncMLMessageParserTest::testResp1()
     // Alert
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_ALERT );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_COMMAND );
 
-    AlertParams* alert = static_cast<AlertParams*>( fragment );
+    CommandParams* command = static_cast<CommandParams*>( fragment );
+    QVERIFY( command->commandType == CommandParams::COMMAND_ALERT );
 
-    QCOMPARE(alert->cmdID,2);
-    QCOMPARE((int)alert->data,201);
-    QCOMPARE(alert->targetDatabase,QString("addressbook"));
-    QCOMPARE(alert->sourceDatabase,QString("card"));
-    QCOMPARE(alert->nextAnchor,QString("1232981790235"));
-    QCOMPARE(alert->lastAnchor,QString("1232366487448"));
+    QCOMPARE(command->cmdId,2);
+    QCOMPARE(command->data,QString( "201" ) );
+    QVERIFY(!command->items.isEmpty());
+    QCOMPARE(command->items.first().target,QString("addressbook"));
+    QCOMPARE(command->items.first().source,QString("card"));
+    QCOMPARE(command->items.first().meta.anchor.next,QString("1232981790235"));
+    QCOMPARE(command->items.first().meta.anchor.last,QString("1232366487448"));
 
-    delete alert;
-    alert = NULL;
+    delete command;
+    command = NULL;
 
     // Sync
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_SYNC );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_SYNC );
 
     SyncParams* sync = static_cast<SyncParams*>( fragment );
 
-    QCOMPARE(sync->cmdID,3);
-    QCOMPARE(sync->targetDatabase,QString("addressbook"));
-    QCOMPARE(sync->sourceDatabase,QString("card"));
-    QCOMPARE( sync->actionList.count(), 3 );
+    QCOMPARE(sync->cmdId,3);
+    QCOMPARE(sync->target,QString("addressbook"));
+    QCOMPARE(sync->source,QString("card"));
+    QCOMPARE( sync->commands.count(), 3 );
 
-    verifyAdd( sync->actionList.at(0) );
-    verifyReplace( sync->actionList.at(1) );
-    verifyDelete( sync->actionList.at(2) );
+    verifyAdd( sync->commands.at(0) );
+    verifyReplace( sync->commands.at(1) );
+    verifyDelete( sync->commands.at(2) );
 
     delete sync;
     sync = NULL;
@@ -147,7 +150,7 @@ void SyncMLMessageParserTest::testResp1()
     // Results
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_RESULTS );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_RESULTS );
 
     ResultsParams* results = static_cast<ResultsParams*>( fragment );
     delete results;
@@ -156,23 +159,23 @@ void SyncMLMessageParserTest::testResp1()
     // Map
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
-    QCOMPARE( fragment->iType, Fragment::FRAGMENT_MAP );
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_MAP );
 
     MapParams* map = static_cast<MapParams*>( fragment );
 
-    QCOMPARE(map->cmdID,7);
+    QCOMPARE(map->cmdId,7);
     QCOMPARE(map->target,QString("http://www.datasync.org/servlet/syncit"));
     QCOMPARE(map->source,QString("IMEI:001004FF1234567"));
 
-    QCOMPARE(map->mapItemList.count(), 3 );
-    QCOMPARE(map->mapItemList.at(0).target,QString("./0123456789ABCDEF"));
-    QCOMPARE(map->mapItemList.at(0).source,QString("./01"));
+    QCOMPARE(map->mapItems.count(), 3 );
+    QCOMPARE(map->mapItems.at(0).target,QString("./0123456789ABCDEF"));
+    QCOMPARE(map->mapItems.at(0).source,QString("./01"));
 
-    QCOMPARE(map->mapItemList.at(1).target,QString("./0123456789ABCDF0"));
-    QCOMPARE(map->mapItemList.at(1).source,QString("./02"));
+    QCOMPARE(map->mapItems.at(1).target,QString("./0123456789ABCDF0"));
+    QCOMPARE(map->mapItems.at(1).source,QString("./02"));
 
-    QCOMPARE(map->mapItemList.at(2).target,QString("./0123456789ABCDF1"));
-    QCOMPARE(map->mapItemList.at(2).source,QString("./03"));
+    QCOMPARE(map->mapItems.at(2).target,QString("./0123456789ABCDF1"));
+    QCOMPARE(map->mapItems.at(2).source,QString("./03"));
 
     delete map;
     map = NULL;
@@ -235,30 +238,30 @@ void SyncMLMessageParserTest::testInvalid1()
     QCOMPARE( errorSpy.count(), 6 );
 }
 
-void SyncMLMessageParserTest::verifyAdd( const DataSync::SyncActionData& aData )
+void SyncMLMessageParserTest::verifyAdd( const DataSync::CommandParams& aData )
 {
-    QCOMPARE(aData.cmdID,4);
+    QCOMPARE(aData.cmdId,4);
     QCOMPARE(aData.meta.type,QString("text/x-vcard"));
     QCOMPARE(aData.items.count(), 1 );
     QCOMPARE(aData.items[0].source, QString( "0" ) );
     QCOMPARE(aData.items[0].sourceParent, QString( "1" ) );
-    QCOMPARE(aData.items[0].Data.simplified(), QString( "BEGIN:VCARD VERSION:2.1 N:Lahtela;Tatu;;; FN:Lahtela, Tatu TEL;TYPE=PREF:+35840 7532165 EMAIL;INTERNET:tatu.lahtela TITLE: ORG:; END:VCARD") );
+    QCOMPARE(aData.items[0].data.simplified(), QString( "BEGIN:VCARD VERSION:2.1 N:Lahtela;Tatu;;; FN:Lahtela, Tatu TEL;TYPE=PREF:+35840 7532165 EMAIL;INTERNET:tatu.lahtela TITLE: ORG:; END:VCARD") );
 }
 
-void SyncMLMessageParserTest::verifyReplace( const DataSync::SyncActionData& aData )
+void SyncMLMessageParserTest::verifyReplace( const DataSync::CommandParams& aData )
 {
-    QCOMPARE(aData.cmdID,5);
+    QCOMPARE(aData.cmdId,5);
     QCOMPARE(aData.meta.type,QString("x-type/x-subtype"));
     QCOMPARE(aData.items.count(), 1);
     QCOMPARE(aData.items.at(0).target,QString("244"));
     QCOMPARE(aData.items.at(0).targetParent,QString("245"));
-    QCOMPARE(aData.items.at(0).Data,QString("ReplaceData"));
+    QCOMPARE(aData.items.at(0).data,QString("ReplaceData"));
 }
 
 
-void SyncMLMessageParserTest::verifyDelete( const DataSync::SyncActionData& aData )
+void SyncMLMessageParserTest::verifyDelete( const DataSync::CommandParams& aData )
 {
-    QCOMPARE(aData.cmdID,6);
+    QCOMPARE(aData.cmdId,6);
     QCOMPARE(aData.meta.type,QString("x-type/x-subtype2"));
     QCOMPARE(aData.items.at(0).target,QString("128"));
 }
@@ -463,6 +466,65 @@ void SyncMLMessageParserTest::testDevInf12()
     QCOMPARE( datastores[2].ctCaps().at(0).properties().at(0).iMaxOccur, 5 );
     QVERIFY( datastores[2].ctCaps().at(0).properties().at(0).iNoTruncate );
 
+}
+
+void SyncMLMessageParserTest::testSubcommands()
+{
+    QByteArray data;
+    QVERIFY( readFile( "testfiles/subcommands01.txt", data ) );
+    QBuffer buffer( &data );
+    buffer.open( QIODevice::ReadOnly );
+    buffer.seek( 0 );
+    SyncMLMessageParser parser;
+
+    parser.parseResponse( &buffer, true );
+    QCOMPARE( parser.iError, PARSER_ERROR_LAST );
+
+    QList<Fragment*> fragments = parser.takeFragments();
+
+    QCOMPARE( fragments.count(), 6 );
+
+    QVERIFY( fragments[0]->fragmentType == Fragment::FRAGMENT_HEADER );
+
+    QVERIFY( fragments[1]->fragmentType == Fragment::FRAGMENT_COMMAND );
+    QVERIFY( static_cast<CommandParams*>(fragments[1])->commandType == CommandParams::COMMAND_ALERT );
+
+    QVERIFY( fragments[2]->fragmentType == Fragment::FRAGMENT_COMMAND );
+    CommandParams* get = static_cast<CommandParams*>(fragments[2]);
+    QVERIFY( get->commandType == CommandParams::COMMAND_GET );
+
+    QVERIFY( fragments[3]->fragmentType == Fragment::FRAGMENT_COMMAND );
+    CommandParams* atomic = static_cast<CommandParams*>(fragments[3]);
+    QVERIFY( atomic->commandType == CommandParams::COMMAND_ATOMIC );
+
+    QCOMPARE( atomic->subCommands.count(), 2 );
+    QVERIFY( atomic->subCommands[0].commandType == CommandParams::COMMAND_ALERT );
+    QVERIFY( atomic->subCommands[1].commandType == CommandParams::COMMAND_ADD );
+
+    QVERIFY( fragments[4]->fragmentType == Fragment::FRAGMENT_COMMAND );
+    CommandParams* sequence = static_cast<CommandParams*>(fragments[4]);
+    QVERIFY( sequence->commandType == CommandParams::COMMAND_SEQUENCE );
+
+    QCOMPARE( sequence->subCommands.count(), 2 );
+    QVERIFY( sequence->subCommands[0].commandType == CommandParams::COMMAND_ALERT );
+    QVERIFY( sequence->subCommands[1].commandType == CommandParams::COMMAND_ADD );
+
+    QVERIFY( fragments[5]->fragmentType == Fragment::FRAGMENT_SYNC );
+    SyncParams* sync = static_cast<SyncParams*>(fragments[5]);
+
+    QCOMPARE( sync->commands.count(), 3 );
+    QVERIFY( sync->commands[0].commandType == CommandParams::COMMAND_ADD );
+    QVERIFY( sync->commands[1].commandType == CommandParams::COMMAND_ADD );
+    QVERIFY( sync->commands[2].commandType == CommandParams::COMMAND_ATOMIC );
+
+    atomic = &sync->commands[2];
+
+    QCOMPARE( atomic->subCommands.count(), 2 );
+    QVERIFY( atomic->subCommands[0].commandType == CommandParams::COMMAND_ADD );
+    QVERIFY( atomic->subCommands[1].commandType == CommandParams::COMMAND_ADD );
+
+    qDeleteAll(fragments);
+    fragments.clear();
 }
 
 TESTLOADER_ADD_TEST(SyncMLMessageParserTest);

@@ -132,10 +132,10 @@ bool SANHandler::parseSANMessage( const QByteArray& aMessage,
     qint16 sessionId = ( header[5] << 8 ) | header[6];
 
     if( version == SYNCMLVERSION_1_1 ) {
-        aData.iVersion = DS_1_1;
+        aData.iVersion = SYNCML_1_1;
     }
     else if( version == SYNCMLVERSION_1_2 ) {
-        aData.iVersion = DS_1_2;
+        aData.iVersion = SYNCML_1_2;
     }
     else {
         LOG_WARNING( "Unsupported SyncML version" );
@@ -234,12 +234,12 @@ bool SANHandler::generateSANMessage( const SANData& aData,
     unsigned char highByte = 0;
     unsigned char lowByte = 0;
 
-    if( aData.iVersion == DS_1_1 )
+    if( aData.iVersion == SYNCML_1_1 )
     {
         highByte = SYNCMLVERSION_1_1 >> 2;
         lowByte = (unsigned char)(SYNCMLVERSION_1_1 << 8);
     }
-    else if( aData.iVersion == DS_1_2 )
+    else if( aData.iVersion == SYNCML_1_2 )
     {
         highByte = SYNCMLVERSION_1_2 >> 2;
         lowByte = (unsigned char)(SYNCMLVERSION_1_2 << 8);

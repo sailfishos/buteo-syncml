@@ -31,74 +31,60 @@
 * 
 */
 
-#include <QtTest>
-#include <QObject>
 #include "SyncMLHdrTest.h"
-#include "SyncMLHdr.h"
-#include "internals.h"
-#include "TestLoader.h"
-#include "SyncAgentConfig.h"
-#include "QtEncoder.h"
 
-#include <QDebug>
+#include "SyncMLHdr.h"
+#include "QtEncoder.h"
+#include "Fragments.h"
+#include "TestUtils.h"
+
+#include "TestLoader.h"
+
 using namespace DataSync;
 
-//initialise the header params
-void SyncMLHdrTest::testStart() {
-	iHdrParams = new DataSync::HeaderParams;
-	QVERIFY(iHdrParams);
-	iHdrParams->msgID = 100;
-	iHdrParams->sessionID = "12345";
-	iHdrParams->sourceDevice = "addressbook";
-	iHdrParams->targetDevice = "card";
-	iHdrParams->maxMsgSize = 20;
-	iHdrParams->maxObjSize = 40;
+void SyncMLHdrTest::testSyncMLHdr_11()
+{
+    HeaderParams headerParams;
+    headerParams.verDTD = SYNCML_DTD_VERSION_1_1;
+    headerParams.verProto = DS_VERPROTO_1_1;
+    headerParams.msgID = 100;
+    headerParams.sessionID = "12345";
+    headerParams.sourceDevice = "addressbook";
+    headerParams.targetDevice = "card";
+    headerParams.meta.maxMsgSize = 20;
+    headerParams.meta.maxObjSize = 40;
+
+    SyncMLHdr hdr(headerParams);
+
+    QByteArray expected;
+    QVERIFY( readFile( "testfiles/SyncMLHdrTest_11.txt", expected ) );
+    QtEncoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( hdr, output, true ) );
+    QCOMPARE( output, expected );
 }
 
-//test the header params passed
-void SyncMLHdrTest::testSyncMLHdr() {
-	if(iHdrParams) {
-		SyncMLHdr hdr(*iHdrParams, DS_1_2);
-		QFile hdrFile("testfiles/SyncMLHdrTest.txt");
-		if(!hdrFile.open(QIODevice::ReadOnly)) {
-			QFAIL("failed to open the file testfiles/SyncMLHdrTest");
-		} else {
-		    QtEncoder encoder;
-		    QByteArray output;
-		    QVERIFY( encoder.encodeToXML( hdr, output, true ) );
-			QCOMPARE( output,hdrFile.readAll());
-			hdrFile.close();
-		}
-	} else {
-		QFAIL("iHdrParams not initialised..Invalid Sequence of Testing.. ");
-	}
+void SyncMLHdrTest::testSyncMLHdr_12()
+{
+    HeaderParams headerParams;
+    headerParams.verDTD = SYNCML_DTD_VERSION_1_2;
+    headerParams.verProto = DS_VERPROTO_1_2;
+    headerParams.msgID = 100;
+    headerParams.sessionID = "12345";
+    headerParams.sourceDevice = "addressbook";
+    headerParams.targetDevice = "card";
+    headerParams.meta.maxMsgSize = 20;
+    headerParams.meta.maxObjSize = 40;
+
+    SyncMLHdr hdr(headerParams);
+
+    QByteArray expected;
+    QVERIFY( readFile( "testfiles/SyncMLHdrTest.txt", expected ) );
+    QtEncoder encoder;
+    QByteArray output;
+    QVERIFY( encoder.encodeToXML( hdr, output, true ) );
+    QCOMPARE( output, expected );
 }
 
-//delete the memory held
-void SyncMLHdrTest::testEnd() {
-	if (iHdrParams) {
-		delete iHdrParams;
-		iHdrParams = NULL;
-	}
-}
-
-
-void SyncMLHdrTest::testSyncMLHdr_11() {
-    if(iHdrParams) {
-            SyncMLHdr hdr(*iHdrParams, DS_1_1);
-            QFile hdrFile("testfiles/SyncMLHdrTest_11.txt");
-            if(!hdrFile.open(QIODevice::ReadOnly)) {
-                QFAIL("failed to open the file testfiles/SyncMLHdrTest_11");
-            } else {
-                QtEncoder encoder;
-                QByteArray output;
-                QVERIFY( encoder.encodeToXML( hdr, output, true ) );
-                QCOMPARE( output,hdrFile.readAll());
-                hdrFile.close();
-            }
-        } else {
-            QFAIL("iHdrParams not initialised..Invalid Sequence of Testing.. ");
-        }
-}
 
 TESTLOADER_ADD_TEST(SyncMLHdrTest);

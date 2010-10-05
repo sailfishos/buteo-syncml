@@ -33,13 +33,13 @@
 #ifndef LOCALMAPPINGSPACKAGE_H
 #define LOCALMAPPINGSPACKAGE_H
 
-#include <QObject>
+#include "Package.h"
+
+#include <QString>
+#include <QList>
 
 #include "SyncMLGlobals.h"
-#include "Package.h"
-#include "internals.h"
 
-class QString;
 class LocalMappingsPackageTest;
 
 namespace DataSync

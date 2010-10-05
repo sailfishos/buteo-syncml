@@ -91,7 +91,7 @@ bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
 
         // Compose GET
         SyncMLGet* get = new SyncMLGet( aMessage.getNextCmdId(), SYNCML_CONTTYPE_DEVINF_XML,
-                                        iVersion == DS_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
+                                        iVersion == SYNCML_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
 
         aSizeThreshold -= put->sizeAsXML();
         aMessage.addToBody( put );
@@ -116,7 +116,7 @@ bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
                                                     iRole );
         // Compose GET
         SyncMLGet* get = new SyncMLGet( aMessage.getNextCmdId(), SYNCML_CONTTYPE_DEVINF_XML,
-                                        iVersion == DS_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
+                                        iVersion == SYNCML_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
 
         aSizeThreshold -= results->sizeAsXML();
         aMessage.addToBody( results );

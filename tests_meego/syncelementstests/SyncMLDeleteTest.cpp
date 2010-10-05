@@ -33,22 +33,6 @@
 
 #include "SyncMLDeleteTest.h"
 
-#include <QtTest>
 #include "TestLoader.h"
-#include "SyncMLDelete.h"
-#include "internals.h"
-using namespace DataSync;
 
-void SyncMLDeleteTest::testSyncMLDelete() {
-    SyncMLDelete Delete(10);
-    // @TODO : below code is failing.. check it later
-//    qDebug() << Delete.toXML();
-//    QFile toXMLfile("testfiles/testDelete.txt");
-//    if(!toXMLfile.open(QIODevice::ReadOnly)) {
-//        QFAIL("Failed to open the file testfiles/testDevInf.txt");
-//    } else {
-//        QCOMPARE(Delete.toXML(),toXMLfile.readAll());
-//        toXMLfile.close();
-//    }
-}
 TESTLOADER_ADD_TEST(SyncMLDeleteTest);

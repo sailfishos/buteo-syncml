@@ -33,10 +33,14 @@
 
 #ifndef SYNCMLALERTTEST_H
 #define SYNCMLALERTTEST_H
+
 #include <QTest>
-class SyncMLAlertTest: public QObject {
+
+class SyncMLAlertTest: public QObject
+{
     Q_OBJECT
 private slots:
     void testSyncMLAlert();
 };
+
 #endif // SYNCMLALERTTEST_H

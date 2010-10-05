@@ -33,16 +33,6 @@
 
 #include "SyncMLReplaceTest.h"
 
-#include "SyncMLReplaceTest.h"
-#include <QtTest>
 #include "TestLoader.h"
-#include "SyncMLReplace.h"
-#include "internals.h"
-using namespace DataSync;
-
-void SyncMLReplaceTest::testSycnMLReplace() {
-    SyncMLReplace Replace(10);
-    // @TODO add the actual test .
-}
 
 TESTLOADER_ADD_TEST(SyncMLReplaceTest);

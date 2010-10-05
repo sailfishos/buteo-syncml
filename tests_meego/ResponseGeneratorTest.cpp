@@ -32,14 +32,13 @@
 */
 
 #include "ResponseGeneratorTest.h"
+
 #include "ResponseGenerator.h"
-#include "internals.h"
 #include "LocalMappingsPackage.h"
 #include "QtEncoder.h"
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
 
-#include <QDebug>
+#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -56,7 +55,7 @@ void ResponseGeneratorTest::testAddStatus2()
 {
     ResponseGenerator respGen;
     ResponseStatusCode responseCode = SUCCESS;
-    SyncActionData data;
+    CommandParams data( CommandParams::COMMAND_ADD );
     ItemParams item1;
     ItemParams item2;
     QList<ItemParams> itemList;
@@ -64,33 +63,15 @@ void ResponseGeneratorTest::testAddStatus2()
     itemList.append(item2);
     data.items = itemList;
     
-    data.action = SYNCML_ADD;
+    data.commandType = CommandParams::COMMAND_ADD;
     respGen.addStatus(data, responseCode);
     
-    data.action = SYNCML_DELETE;
+    data.commandType = CommandParams::COMMAND_DELETE;
     respGen.addStatus(data, responseCode);
     
-    data.action = SYNCML_REPLACE;
+    data.commandType = CommandParams::COMMAND_REPLACE;
     respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_PUT;
-    respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_GET;
-    respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_ATOMIC;
-    respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_COPY;
-    respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_MOVE;
-    respGen.addStatus(data, responseCode);
-    
-    data.action = SYNCML_SEQUENCE;
-    respGen.addStatus(data, responseCode);
-    
+        
 }
 
 void ResponseGeneratorTest::testNB182304()
@@ -106,7 +87,7 @@ void ResponseGeneratorTest::testNB182304()
     hdr.msgID = 8;
     hdr.targetDevice = "IMEI:356407011863641";
     hdr.sourceDevice = "IMEI:004402130345691";
-    hdr.maxMsgSize = 65535;
+    hdr.meta.maxMsgSize = 65535;
     respGen.setHeaderParams( hdr );
     respGen.setRemoteMsgId(8);
 
@@ -277,7 +258,7 @@ void ResponseGeneratorTest::testNB182304()
 
     respGen.addPackage( map );
 
-    SyncMLMessage* msg = respGen.generateNextMessage( maxMsgSize, DS_1_1 );
+    SyncMLMessage* msg = respGen.generateNextMessage( maxMsgSize, SYNCML_1_1 );
 
     QVERIFY( msg );
 

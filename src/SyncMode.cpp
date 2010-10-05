@@ -46,7 +46,7 @@ SyncMode::SyncMode( SyncDirection aDirection,
 }
 
 
-SyncMode::SyncMode( int aSyncMLCode )
+SyncMode::SyncMode( qint32 aSyncMLCode )
 :   iDirection(DIRECTION_TWO_WAY),
     iInitiator(INIT_CLIENT),
     iType(TYPE_FAST)
@@ -187,10 +187,10 @@ void SyncMode::toClientInitiated()
 }
 
 
-int SyncMode::toSyncMLCode() const
+qint32 SyncMode::toSyncMLCode() const
 {
 
-    int code = -1;
+    qint32 code = -1;
 
     if( iDirection == DIRECTION_TWO_WAY ) {
 

@@ -35,7 +35,6 @@
 
 #include <QSignalSpy>
 
-#include "internals.h"
 #include "CommandHandler.h"
 #include "ResponseGenerator.h"
 #include "ConflictResolver.h"
@@ -60,107 +59,6 @@ CommandHandlerTest::~CommandHandlerTest()
 {
 
 }
-
-// @todo:
-/*
-void CommandHandlerTest::testPut()
-{
-    SyncActionData actionData;
-    actionData.cmdID = 1;
-    actionData.action = SYNCML_PUT;
-    actionData.meta.type = SYNCML_CONTTYPE_DEVINF_XML;
-
-    ItemParams item;
-    actionData.items.append( item );
-
-    ResponseGenerator generator;
-    generator.setRemoteMsgId( 1 );
-
-    CommandHandler handler( ROLE_CLIENT );
-
-    actionData.items[0].source = SYNCML_DEVINF_PATH_11;
-
-    handler.handlePut( actionData, DS_1_1, generator );
-    handler.handlePut( actionData, DS_1_2, generator );
-
-    actionData.items[0].source = SYNCML_DEVINF_PATH_12;
-
-    handler.handlePut( actionData, DS_1_1, generator );
-    handler.handlePut( actionData, DS_1_2, generator );
-
-    actionData.meta.type = "foo";
-
-    handler.handlePut( actionData, DS_1_1, generator );
-    handler.handlePut( actionData, DS_1_2, generator );
-
-    actionData.meta.type = SYNCML_CONTTYPE_DEVINF_XML;
-    actionData.items[0].source = "foo";
-
-    handler.handlePut( actionData, DS_1_1, generator );
-    handler.handlePut( actionData, DS_1_2, generator );
-
-    QtEncoder encoder;
-    QByteArray document;
-    SyncMLMessage* message = generator.generateNextMessage( 65535, DS_1_2 );
-    QVERIFY( encoder.encodeToXML( *message, document, false ) );
-    delete message;
-    message = NULL;
-
-    QByteArray correct;
-    QVERIFY( readFile( "testfiles/cmdhandler_put.txt", correct ) );
-
-    QVERIFY( correct.simplified() == document.simplified() );
-
-}
-
-void CommandHandlerTest::testGet()
-{
-    SyncActionData actionData;
-    actionData.cmdID = 1;
-    actionData.action = SYNCML_GET;
-    actionData.meta.type = SYNCML_CONTTYPE_DEVINF_XML;
-
-    ItemParams item;
-    actionData.items.append( item );
-
-    ResponseGenerator generator;
-    generator.setRemoteMsgId( 1 );
-
-    CommandHandler handler( ROLE_CLIENT );
-    QList<StoragePlugin*> dataStores;
-    DeviceInfo devInfo;
-
-
-    actionData.items[0].target = SYNCML_DEVINF_PATH_11;
-    handler.handleGet( actionData, DS_1_2, dataStores, devInfo, generator );
-
-    actionData.items[0].target = SYNCML_DEVINF_PATH_12;
-    handler.handleGet( actionData, DS_1_1, dataStores, devInfo, generator );
-
-    actionData.meta.type = "foo";
-    handler.handleGet( actionData, DS_1_1, dataStores, devInfo, generator );
-
-    actionData.meta.type = SYNCML_CONTTYPE_DEVINF_XML;
-    actionData.items[0].target = "foo";
-    handler.handleGet( actionData, DS_1_2, dataStores, devInfo, generator );
-
-    actionData.items[0].target = SYNCML_DEVINF_PATH_12;
-    handler.handleGet( actionData, DS_1_2, dataStores, devInfo, generator );
-
-    QtEncoder encoder;
-    QByteArray document;
-    SyncMLMessage* message = generator.generateNextMessage( 65535, DS_1_2 );
-    QVERIFY( encoder.encodeToXML( *message, document, false ) );
-    delete message;
-    message = NULL;
-
-    QByteArray correct;
-    QVERIFY( readFile( "testfiles/cmdhandler_get.txt", correct ) );
-
-    QVERIFY( correct.simplified() == document.simplified() );
-
-}
-*/
 
 void CommandHandlerTest::testAdd_Client01()
 {
@@ -194,22 +92,20 @@ void CommandHandlerTest::testAdd_Client01()
 
     SyncParams syncParams;
 
-    syncParams.cmdID = cmdId++;
-    syncParams.sourceDatabase = remoteDb;
-    syncParams.targetDatabase = localDb;
+    syncParams.cmdId = cmdId++;
+    syncParams.source = remoteDb;
+    syncParams.target = localDb;
 
-    SyncActionData add;
-
-    add.cmdID = cmdId++;
-    add.action = SYNCML_ADD;
+    CommandParams add( CommandParams::COMMAND_ADD );
+    add.cmdId = cmdId++;
 
     ItemParams addItem;
     addItem.source = itemId;
-    addItem.Data = "foodata";
+    addItem.data = "foodata";
     addItem.meta.type = mime;
     add.items.append( addItem );
 
-    syncParams.actionList.append( add );
+    syncParams.commands.append( add );
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
@@ -269,22 +165,20 @@ void CommandHandlerTest::testAdd_Server01()
 
     SyncParams syncParams;
 
-    syncParams.cmdID = cmdId++;
-    syncParams.sourceDatabase = remoteDb;
-    syncParams.targetDatabase = localDb;
+    syncParams.cmdId = cmdId++;
+    syncParams.source = remoteDb;
+    syncParams.target = localDb;
 
-    SyncActionData add;
-
-    add.cmdID = cmdId++;
-    add.action = SYNCML_ADD;
+    CommandParams add( CommandParams::COMMAND_ADD );
+    add.cmdId = cmdId++;
 
     ItemParams addItem;
     addItem.source = itemId;
-    addItem.Data = "foodata";
+    addItem.data = "foodata";
     addItem.meta.type = mime;
     add.items.append( addItem );
 
-    syncParams.actionList.append( add );
+    syncParams.commands.append( add );
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
@@ -333,41 +227,37 @@ void CommandHandlerTest::testSyncAdd()
 
     int cmdId = 1;
 
-    syncParams.cmdID = cmdId++;
-    syncParams.sourceDatabase = localDb;
-    syncParams.targetDatabase = remoteDb;
+    syncParams.cmdId = cmdId++;
+    syncParams.source = localDb;
+    syncParams.target = remoteDb;
 
-    SyncActionData add;
-
-    add.cmdID = cmdId++;
-    add.action = SYNCML_ADD;
+    CommandParams add( CommandParams::COMMAND_ADD );
+    add.cmdId = cmdId++;
 
     ItemParams addItem;
     addItem.source = "fooid";
-    addItem.Data = "foodata";
+    addItem.data = "foodata";
     addItem.meta.type = "mime/foo1";
     add.items.append( addItem );
 
-    syncParams.actionList.append( add );
+    syncParams.commands.append( add );
 
-    SyncActionData replace;
-
-    replace.cmdID = cmdId++;
-    replace.action = SYNCML_REPLACE;
+    CommandParams replace( CommandParams::COMMAND_REPLACE );
+    replace.cmdId = cmdId++;
 
     ItemParams replaceItem1;
     replaceItem1.source = "key1";
-    replaceItem1.Data = "foodata";
+    replaceItem1.data = "foodata";
     replaceItem1.meta.type = "mime/foo2";
     replace.items.append( replaceItem1 );
 
     ItemParams replaceItem2;
     replaceItem2.source = "key2";
-    replaceItem2.Data = "foodata";
+    replaceItem2.data = "foodata";
     replaceItem2.meta.type = "mime/foo3";
     replace.items.append( replaceItem2 );
 
-    syncParams.actionList.append( replace );
+    syncParams.commands.append( replace );
 
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
     qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
@@ -420,34 +310,32 @@ void CommandHandlerTest::testSyncReplace()
 
     int cmdId = 1;
 
-    syncParams.cmdID = cmdId++;
-    syncParams.sourceDatabase = localDb;
-    syncParams.targetDatabase = remoteDb;
+    syncParams.cmdId = cmdId++;
+    syncParams.source = localDb;
+    syncParams.target = remoteDb;
 
-    SyncActionData replace;
-
-    replace.cmdID = cmdId++;
-    replace.action = SYNCML_REPLACE;
+    CommandParams replace( CommandParams::COMMAND_REPLACE );
+    replace.cmdId = cmdId++;
 
     ItemParams replaceItem1;
     replaceItem1.source = "key1";
-    replaceItem1.Data = "foodata";
+    replaceItem1.data = "foodata";
     replaceItem1.meta.type = "mime/foo1";
     replace.items.append( replaceItem1 );
 
     ItemParams replaceItem2;
     replaceItem2.source = "key2";
-    replaceItem2.Data = "foodata";
+    replaceItem2.data = "foodata";
     replaceItem2.meta.type = "mime/foo2";
     replace.items.append( replaceItem2 );
 
     ItemParams replaceItem3;
     replaceItem3.source = "secretkey";
-    replaceItem3.Data = "foodata";
+    replaceItem3.data = "foodata";
     replaceItem3.meta.type = "mime/foo3";
     replace.items.append( replaceItem3 );
 
-    syncParams.actionList.append( replace );
+    syncParams.commands.append( replace );
 
     UIDMapping mapping;
     mapping.iRemoteUID= "key1";
@@ -504,14 +392,13 @@ void CommandHandlerTest::testSyncDelete()
 
     int cmdId = 1;
 
-    syncParams.cmdID = cmdId++;
-    syncParams.sourceDatabase = localDb;
-    syncParams.targetDatabase = remoteDb;
+    syncParams.cmdId = cmdId++;
+    syncParams.source = localDb;
+    syncParams.target = remoteDb;
 
-    SyncActionData del;
+    CommandParams del( CommandParams::COMMAND_DELETE );
+    del.cmdId = cmdId++;
 
-    del.cmdID = cmdId++;
-    del.action = SYNCML_DELETE;
 
     ItemParams deleteItem1;
     deleteItem1.source = "key1";
@@ -521,7 +408,7 @@ void CommandHandlerTest::testSyncDelete()
     deleteItem2.source = "key2";
     del.items.append( deleteItem2 );
 
-    syncParams.actionList.append( del );
+    syncParams.commands.append( del );
 
     UIDMapping mapping;
     mapping.iRemoteUID = "key1";

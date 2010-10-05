@@ -148,7 +148,7 @@ public:
      *
      * @return Full path to database file
      */
-    QString getDatabaseFilePath() const;
+    const QString& getDatabaseFilePath() const;
 
     /*! \brief Sets the local device name to be used in sync
      *
@@ -207,7 +207,7 @@ public:
      *
      * @param aRemoteDeviceName Name of the remote device to synchronize with.
      *                          If not set, defaults to unknown device "/"
-     * @param aVersion Protocol version to use. If not set, defaults to DS_1_2
+     * @param aVersion Protocol version to use. If not set, defaults to SYNCML_1_2
      * @param aSyncMode Type of sync to be used. If not set, defaults to
      *                  two-way fast sync initiated by client
      */
@@ -242,16 +242,19 @@ public:
      * @param aAuthType Authentication type to use
      * @param aUsername Username to use (if required, otherwise empty)
      * @param aPassword Password to use (if required, otherwise empty)
+     * @param aNonce Externally provided nonce to use with MD5. Usually
+     *               there's no need to provide this.
      */
-    void setAuthParams( const AuthenticationType& aAuthType,
+    void setAuthParams( const AuthType& aAuthType,
                         const QString& aUsername,
-                        const QString& aPassword );
+                        const QString& aPassword,
+                        const QString& aNonce = "" );
 
     /*! \brief Returns the authentication type to be used
      *
      * @return
      */
-    const AuthenticationType& getAuthenticationType() const;
+    const AuthType& getAuthType() const;
 
     /*! \brief Returns the user name to use
      *
@@ -264,6 +267,12 @@ public:
      * @return
      */
     const QString& getPassword() const;
+
+    /*! \brief Returns the nonce to be used in SyncML MD5 authentication
+     *
+     * @return
+     */
+    const QString& getNonce() const;
 
     /*! \brief Adds a target for sync
      *
@@ -403,9 +412,10 @@ private:
     QString                         iRemoteDeviceName;
     ProtocolVersion                 iProtocolVersion;
     SyncMode                        iSyncMode;
-    AuthenticationType              iAuthenticationType;
+    AuthType                        iAuthenticationType;
     QString                         iUsername;
     QString                         iPassword;
+    QString                         iNonce;
 
     QMap<QString, QVariant>         iExtensions;
 

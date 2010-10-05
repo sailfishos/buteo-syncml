@@ -33,11 +33,14 @@
 
 #ifndef SYNCMLREPLACETEST_H
 #define SYNCMLREPLACETEST_H
+
 #include <QTest>
-class SyncMLReplaceTest: public QObject {
+
+class SyncMLReplaceTest: public QObject
+{
     Q_OBJECT
 private slots:
-    void testSycnMLReplace();
+
 };
 
 #endif // SYNCMLREPLACETEST_H

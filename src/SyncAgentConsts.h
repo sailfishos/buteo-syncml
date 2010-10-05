@@ -41,9 +41,9 @@ namespace DataSync {
  *
  */
 enum ProtocolVersion {
-    DS_1_2,         /*!<SyncML 1.2*/
-    DS_1_1,         /*!<SyncML 1.1*/
-    DS_UNKNOWN      /*!<Protocol is unknown (can be used as initialization value)*/
+    SYNCML_1_2,         /*!<SyncML 1.2*/
+    SYNCML_1_1,         /*!<SyncML 1.1*/
+    SYNCML_UNKNOWN      /*!<Protocol is unknown (can be used as initialization value)*/
 };
 
 /*! \brief Direction of sync
@@ -76,7 +76,7 @@ enum SyncType {
 /*! \brief SyncML authentication to use
  *
  */
-enum AuthenticationType {
+enum AuthType {
     AUTH_NONE,      /*!<No authentication should be attempted*/
     AUTH_BASIC,     /*!<Use SyncML Basic authentication*/
     AUTH_MD5        /*!<Use SyncML MD5 authentication*/

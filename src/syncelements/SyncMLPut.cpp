@@ -33,9 +33,9 @@
 
 #include "SyncMLPut.h"
 
+#include "datatypes.h"
 #include "SyncMLMeta.h"
 #include "SyncMLDevInf.h"
-#include "internals.h"
 
 using namespace DataSync;
 

@@ -32,12 +32,13 @@
 */
 #ifndef SYNCMLCREDTEST_H
 #define SYNCMLCREDTEST_H
+
 #include <QTest>
-class SyncMLCredTest: public QObject {
-        Q_OBJECT
-  private slots:
-   void testBasicAuth();
-   void testMD5Auth();
+
+class SyncMLCredTest: public QObject
+{
+    Q_OBJECT
+private slots:
 
 };
 

@@ -33,15 +33,10 @@
 
 #include "SyncMLStatusTest.h"
 
-#include "SyncMLStatusTest.h"
-#include <QtTest>
 #include "TestLoader.h"
-#include "SyncMLStatus.h"
-#include "internals.h"
-using namespace DataSync;
 
-void SyncMLStatusTest::testSycnMLStatus() {
-    SyncMLStatus Status();
-    // @TODO add the actual test .
+void SyncMLStatusTest::testSyncMLStatus()
+{
 }
+
 TESTLOADER_ADD_TEST(SyncMLStatusTest);

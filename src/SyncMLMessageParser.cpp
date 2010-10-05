@@ -210,13 +210,6 @@ void SyncMLMessageParser::readBody()
                 readStatus();
             } else if (name == SYNCML_ELEMENT_SYNC) {
                 readSync();
-            } else if (name == SYNCML_ELEMENT_ALERT) {
-                readAlert();
-            } else if (name == SYNCML_ELEMENT_GET) {
-                SyncActionData *actionData = new SyncActionData();
-                readSyncActionData(name.toString(), *actionData );
-                actionData->action = SYNCML_GET;
-                iFragments.append(actionData);
             } else if (name == SYNCML_ELEMENT_PUT) {
                 readPut();
             } else if (name == SYNCML_ELEMENT_RESULTS) {
@@ -226,9 +219,21 @@ void SyncMLMessageParser::readBody()
             }else if (name == SYNCML_ELEMENT_FINAL) {
                 iLastMessageInPackage = true;
             } else {
-                LOG_WARNING("UNKNOWN  TOKEN TYPE in BODY:NOT HANDLED BY PARSER" << name );
+                CommandParams* command = new CommandParams();
+
+                if( readCommand( name, *command ) ) {
+                    iFragments.append( command );
+                }
+                else {
+                    delete command;
+                    command = 0;
+                    LOG_WARNING("UNKNOWN  TOKEN TYPE in BODY:NOT HANDLED BY PARSER" << name );
+                }
+
             }
+
         }
+
     }
 
     if( iReader.atEnd() ) {
@@ -273,9 +278,6 @@ void SyncMLMessageParser::readHeader()
             else if (name == SYNCML_ELEMENT_SESSIONID) {
                 header->sessionID = readString();
             }
-            else if (name == SYNCML_ELEMENT_NORESP) {
-                header->noResp = true;
-            }
             else if (name == SYNCML_ELEMENT_MSGID) {
                 header->msgID = readInt();
             }
@@ -285,20 +287,17 @@ void SyncMLMessageParser::readHeader()
             else if (name == SYNCML_ELEMENT_SOURCE) {
                 header->sourceDevice = readURI();
             }
-            else if (name == SYNCML_ELEMENT_MAXMSGSIZE) {
-                header->maxMsgSize = readInt();
-            }
-            else if (name == SYNCML_ELEMENT_MAXOBJSIZE) {
-                header->maxObjSize = readInt();
-            }
-            else if (name == SYNCML_ELEMENT_EMI) {
-                header->EMI.append( readString() );
-            }
             else if (name == SYNCML_ELEMENT_RESPURI) {
                 header->respURI = readString();
             }
+            else if (name == SYNCML_ELEMENT_NORESP) {
+                header->noResp = true;
+            }
             else if (name == SYNCML_ELEMENT_CRED) {
                 readCred( header->cred );
+            }
+            else if (name == SYNCML_ELEMENT_META) {
+                readMeta( header->meta );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in HEADER:NOT HANDLED BY PARSER" << name );
@@ -358,7 +357,7 @@ void SyncMLMessageParser::readStatus()
         if( iReader.isStartElement() ) {
 
             if(name == SYNCML_ELEMENT_CMDID) {
-                status->cmdID = readInt();
+                status->cmdId = readInt();
             }
             else if (name == SYNCML_ELEMENT_MSGREF) {
                 status->msgRef = readInt();
@@ -382,9 +381,10 @@ void SyncMLMessageParser::readStatus()
             else if (name == SYNCML_ELEMENT_ITEM) {
                 ItemParams item;
                 readItem( item );
-                status->itemList.append( item );
+                status->items.append( item );
             }
             else if (name == SYNCML_ELEMENT_CHAL) {
+                status->hasChal = true;
                 readChal( status->chal );
             }
             else {
@@ -417,7 +417,7 @@ void SyncMLMessageParser::readSync()
         if( iReader.isStartElement() ) {
 
             if (name == SYNCML_ELEMENT_CMDID) {
-                sync->cmdID = readInt();
+                sync->cmdId = readInt();
             }
             else if (name == SYNCML_ELEMENT_NORESP) {
                 sync->noResp = true;
@@ -426,55 +426,23 @@ void SyncMLMessageParser::readSync()
                 readMeta( sync->meta );
             }
             else if (name == SYNCML_ELEMENT_TARGET) {
-                sync->targetDatabase = readURI();
+                sync->target = readURI();
             }
             else if (name == SYNCML_ELEMENT_SOURCE) {
-                sync->sourceDatabase = readURI();
+                sync->source = readURI();
             }
-            else if (name == SYNCML_ELEMENT_ADD) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_ADD;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_ATOMIC) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_ATOMIC;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_COPY) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_COPY;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_DELETE) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_DELETE;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_MOVE) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_MOVE;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_SEQUENCE) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_SEQUENCE;
-                sync->actionList << actionData;
-            }
-            else if (name == SYNCML_ELEMENT_REPLACE) {
-                SyncActionData actionData;
-                readSyncActionData( name.toString(), actionData );
-                actionData.action = SYNCML_REPLACE;
-                sync->actionList << actionData;
+            else if( name == SYNCML_ELEMENT_NUMOFCHANGES ) {
+                sync->numberOfChanges = readInt();
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in SYNC:NOT HANDLED BY PARSER" << name);
+                CommandParams command;
+                if( readCommand( name, command ) ) {
+                    sync->commands.append(command);
+                }
+                else {
+                    LOG_WARNING("UNKNOWN TOKEN TYPE in SYNC:NOT HANDLED BY PARSER" << name);
+                }
+
             }
 
         }
@@ -482,60 +450,6 @@ void SyncMLMessageParser::readSync()
     }
 
     iFragments.append(sync);
-
-}
-
-void SyncMLMessageParser::readAlert()
-{
-    FUNCTION_CALL_TRACE
-
-    AlertParams *alert = new AlertParams();
-
-    while( shouldContinue() ) {
-
-        iReader.readNext();
-
-        QStringRef name = iReader.name();
-
-        if( iReader.isEndElement() && name == SYNCML_ELEMENT_ALERT ) {
-            break;
-        }
-        if( iReader.isStartElement() ) {
-
-            if (name == SYNCML_ELEMENT_CMDID) {
-                alert->cmdID = readInt();
-            }
-            else if (name == SYNCML_ELEMENT_NORESP) {
-                alert->noResp = true;
-            }
-            else if (name == SYNCML_ELEMENT_DATA) {
-                alert->data = (AlertType)readInt();
-                LOG_DEBUG(iAlertCodeMap[alert->data] << ":" << alert->data);
-            }
-            else if (name == SYNCML_ELEMENT_TARGET) {
-                alert->targetDatabase = readURI();
-            }
-            else if (name == SYNCML_ELEMENT_SOURCE) {
-                alert->sourceDatabase = readURI();
-            }
-            else if (name == SYNCML_ELEMENT_LAST) {
-                alert->lastAnchor = readString();
-            }
-            else if (name == SYNCML_ELEMENT_NEXT) {
-                alert->nextAnchor = readString();
-            }
-            else if (name == SYNCML_ELEMENT_TYPE) {
-                alert->type = readString();
-            }
-            else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in ALERT:NOT HANDLED BY PARSER" << name );
-            }
-
-        }
-
-    }
-
-    iFragments.append(alert);
 
 }
 
@@ -557,7 +471,7 @@ void SyncMLMessageParser::readMap()
 
         if( iReader.isStartElement() ) {
             if( name == SYNCML_ELEMENT_CMDID) {
-                map->cmdID = readInt();
+                map->cmdId = readInt();
             }
             else if (name == SYNCML_ELEMENT_TARGET) {
                 map->target = readURI();
@@ -568,13 +482,10 @@ void SyncMLMessageParser::readMap()
             else if (name == SYNCML_ELEMENT_META) {
                 readMeta( map->meta );
             }
-            else if (name == SYNCML_ELEMENT_CRED) {
-                readCred( map->cred );
-            }
             else if (name == SYNCML_ELEMENT_MAPITEM) {
-                MapItem item;
+                MapItemParams item;
                 readMapItem( item );
-                map->mapItemList.append( item );
+                map->mapItems.append( item );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in MAP:NOT HANDLED BY PARSER" << name );
@@ -588,7 +499,7 @@ void SyncMLMessageParser::readMap()
 
 }
 
-void SyncMLMessageParser::readMapItem( MapItem& aParams )
+void SyncMLMessageParser::readMapItem( MapItemParams& aParams )
 {
     FUNCTION_CALL_TRACE
 
@@ -640,7 +551,7 @@ void SyncMLMessageParser::readPut()
         {
             if (name == SYNCML_ELEMENT_CMDID)
             {
-                put->cmdID = readInt();
+                put->cmdId = readInt();
             }
             else if (name == SYNCML_ELEMENT_NORESP)
             {
@@ -691,7 +602,7 @@ void SyncMLMessageParser::readResults()
         if( iReader.isStartElement() ) {
 
             if (name == SYNCML_ELEMENT_CMDID) {
-                results->cmdID = readInt();
+                results->cmdId = readInt();
             }
             else if (name == SYNCML_ELEMENT_MSGREF) {
                 results->msgRef = readInt();
@@ -731,9 +642,62 @@ void SyncMLMessageParser::readResults()
 
 }
 
-void SyncMLMessageParser::readSyncActionData( const QString& aAction, SyncActionData& aParams )
+bool SyncMLMessageParser::readCommand( const QStringRef& aName, CommandParams& aCommand )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE;
+
+    bool found = true;
+
+    if( aName == SYNCML_ELEMENT_ALERT ) {
+        aCommand.commandType = CommandParams::COMMAND_ALERT;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_ALERT );
+    }
+    else if (aName == SYNCML_ELEMENT_ADD) {
+        aCommand.commandType = CommandParams::COMMAND_ADD;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_ADD );
+    }
+    else if (aName == SYNCML_ELEMENT_REPLACE) {
+        aCommand.commandType = CommandParams::COMMAND_REPLACE;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_REPLACE );
+    }
+    else if (aName == SYNCML_ELEMENT_DELETE) {
+        aCommand.commandType = CommandParams::COMMAND_DELETE;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_DELETE );
+    }
+    else if (aName == SYNCML_ELEMENT_GET) {
+        aCommand.commandType = CommandParams::COMMAND_GET;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_GET );
+    }
+    else if (aName == SYNCML_ELEMENT_COPY) {
+        aCommand.commandType = CommandParams::COMMAND_COPY;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_COPY );
+    }
+    else if (aName == SYNCML_ELEMENT_MOVE) {
+        aCommand.commandType = CommandParams::COMMAND_MOVE;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_MOVE );
+    }
+    else if (aName == SYNCML_ELEMENT_EXEC ) {
+        aCommand.commandType = CommandParams::COMMAND_EXEC;
+        readLeafCommand( aCommand, SYNCML_ELEMENT_EXEC );
+    }
+    else if (aName == SYNCML_ELEMENT_ATOMIC) {
+        aCommand.commandType = CommandParams::COMMAND_ATOMIC;
+        readContainerCommand( aCommand, SYNCML_ELEMENT_ATOMIC );
+    }
+    else if (aName == SYNCML_ELEMENT_SEQUENCE) {
+        aCommand.commandType = CommandParams::COMMAND_SEQUENCE;
+        readContainerCommand( aCommand, SYNCML_ELEMENT_SEQUENCE );
+    }
+    else {
+        found = false;
+    }
+
+    return found;
+}
+
+void SyncMLMessageParser::readLeafCommand( CommandParams& aParams, const QString& aCommand )
+{
+    FUNCTION_CALL_TRACE;
 
     while( shouldContinue() ) {
 
@@ -741,23 +705,20 @@ void SyncMLMessageParser::readSyncActionData( const QString& aAction, SyncAction
 
         QStringRef name = iReader.name();
 
-        if( iReader.isEndElement() && name == aAction ) {
+        if( iReader.isEndElement() && name == aCommand ) {
             break;
         }
 
         if( iReader.isStartElement() ) {
 
             if( name == SYNCML_ELEMENT_CMDID ) {
-                aParams.cmdID = readInt();
+                aParams.cmdId = readInt();
             }
             else if( name == SYNCML_ELEMENT_NORESP ) {
                 aParams.noResp = true;
             }
-            else if( name == SYNCML_ELEMENT_LANG ) {
-                aParams.lang = readString();
-            }
-            else if( name == SYNCML_ELEMENT_CRED ) {
-                readCred( aParams.cred );
+            else if (name == SYNCML_ELEMENT_DATA) {
+                aParams.data = readString();
             }
             else if( name == SYNCML_ELEMENT_META ) {
                 readMeta( aParams.meta );
@@ -767,11 +728,52 @@ void SyncMLMessageParser::readSyncActionData( const QString& aAction, SyncAction
                 readItem( item );
                 aParams.items.append( item );
             }
-            else if( name == SYNCML_ELEMENT_NUMOFCHANGES ) {
-                aParams.numberOfChanges = readInt();
+            else {
+                LOG_WARNING("UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name);
+            }
+
+        }
+
+    }
+
+}
+
+void SyncMLMessageParser::readContainerCommand( CommandParams& aParams, const QString& aCommand )
+{
+    FUNCTION_CALL_TRACE;
+
+    while( shouldContinue() ) {
+
+        iReader.readNext();
+
+        QStringRef name = iReader.name();
+
+        if( iReader.isEndElement() && name == aCommand ) {
+            break;
+        }
+
+        if( iReader.isStartElement() ) {
+
+            if( name == SYNCML_ELEMENT_CMDID ) {
+                aParams.cmdId = readInt();
+            }
+            else if( name == SYNCML_ELEMENT_NORESP ) {
+                aParams.noResp = true;
+            }
+            else if( name == SYNCML_ELEMENT_META ) {
+                readMeta( aParams.meta );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in SYNC ACTIONDATA:NOT HANDLED BY PARSER" << name);
+                CommandParams command;
+
+                if( readCommand( name, command ) )
+                {
+                    aParams.subCommands.append(command);
+                }
+                else {
+                    LOG_WARNING("UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name);
+                }
+
             }
 
         }
@@ -837,10 +839,19 @@ void SyncMLMessageParser::readMeta( MetaParams& aParams )
                 readAnchor( aParams.anchor );
             }
             else if (name == SYNCML_ELEMENT_VERSION) {
-                aParams.Version = readString();
+                aParams.version = readString();
             }
             else if (name == SYNCML_ELEMENT_NEXTNONCE) {
                 aParams.nextNonce = readString();
+            }
+            else if (name == SYNCML_ELEMENT_MAXMSGSIZE) {
+                aParams.maxMsgSize = readInt();
+            }
+            else if (name == SYNCML_ELEMENT_MAXOBJSIZE) {
+                aParams.maxObjSize = readInt();
+            }
+            else if (name == SYNCML_ELEMENT_EMI) {
+                aParams.EMI.append( readString() );
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in META:NOT HANDLED BY PARSER" << name);
@@ -868,10 +879,10 @@ void SyncMLMessageParser::readAnchor( AnchorParams& aParams )
 
         if( iReader.isStartElement() ) {
             if (name == SYNCML_ELEMENT_NEXT) {
-                aParams.Next = readString();
+                aParams.next = readString();
             }
             else if (name == SYNCML_ELEMENT_LAST) {
-                aParams.Last = readString();
+                aParams.last = readString();
             }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in ANCHOR:NOT HANDLED BY PARSER" << name);
@@ -1486,12 +1497,11 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
                 aParams.sourceParent = readURI();
             }
             else if (name == SYNCML_ELEMENT_DATA) {
-                aParams.Data = readString();
+                aParams.data = readString();
             }
             else if (name == SYNCML_ELEMENT_MOREDATA) {
                 aParams.moreData = true;
             }
-
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);
             }

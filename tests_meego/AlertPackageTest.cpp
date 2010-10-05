@@ -42,36 +42,48 @@ using namespace DataSync;
 
 void AlertPackageTest::testConstruction()
 {
-    AlertParams params;
-    params.data = TWO_WAY_SYNC;
-    params.sourceDatabase = "src";
-    params.targetDatabase = "dst";
-    params.type = "type";
+
+    QString data = QString::number( TWO_WAY_SYNC );
+    QString source( "src" );
+    QString target( "dst" );
+    QString type( "type" );
 
     // One test block for each constructor type.
     {
-        AlertPackage pkg(params.data, params.sourceDatabase, params.targetDatabase);
-        AlertParams result_params = pkg.iParams;
-        QCOMPARE(result_params.data, params.data);
-        QCOMPARE(result_params.sourceDatabase, params.sourceDatabase);
-        QCOMPARE(result_params.targetDatabase, params.targetDatabase);
+        AlertPackage pkg(data.toInt());
+        CommandParams result_params = pkg.iParams;
+        QVERIFY( result_params.commandType == CommandParams::COMMAND_ALERT );
+        QCOMPARE(result_params.data, data);
+    }
+    {
+        AlertPackage pkg(data.toInt(), source, target);
+        CommandParams result_params = pkg.iParams;
+        QVERIFY( result_params.commandType == CommandParams::COMMAND_ALERT );
+        QCOMPARE(result_params.data, data);
+        QCOMPARE(result_params.items.count(), 1 );
+        QCOMPARE(result_params.items.first().source, source);
+        QCOMPARE(result_params.items.first().target, target);
     }
 
     {
-        AlertPackage pkg( params.data, params.sourceDatabase, params.targetDatabase, "", "" );
-        AlertParams result_params = pkg.iParams;
-        QCOMPARE(result_params.data, params.data);
-        QCOMPARE(result_params.sourceDatabase, params.sourceDatabase);
-        QCOMPARE(result_params.targetDatabase, params.targetDatabase);
-        QVERIFY(result_params.lastAnchor == "0");
+        AlertPackage pkg( data.toInt(), source, target, "", "" );
+        CommandParams result_params = pkg.iParams;
+        QVERIFY( result_params.commandType == CommandParams::COMMAND_ALERT );
+        QCOMPARE(result_params.data, data);
+        QCOMPARE(result_params.items.count(), 1 );
+        QCOMPARE(result_params.items.first().source, source);
+        QCOMPARE(result_params.items.first().target, target);
+        QVERIFY(result_params.items.first().meta.anchor.last == "0");
     }
 
     {
-        AlertPackage pkg( params.sourceDatabase, params.type, params.data );
-        AlertParams result_params = pkg.iParams;
-        QCOMPARE(result_params.data, params.data);
-        QCOMPARE(result_params.sourceDatabase, params.sourceDatabase);
-        QCOMPARE(result_params.type, params.type);
+        AlertPackage pkg( source, type, data.toInt() );
+        CommandParams result_params = pkg.iParams;
+        QVERIFY( result_params.commandType == CommandParams::COMMAND_ALERT );
+        QCOMPARE(result_params.data, data);
+        QCOMPARE(result_params.items.count(), 1 );
+        QCOMPARE(result_params.items.first().source, source);
+        QCOMPARE(result_params.items.first().meta.type, type);
     }
 
 }
@@ -79,7 +91,7 @@ void AlertPackageTest::testConstruction()
 void AlertPackageTest::testWrite()
 {
     AlertPackage pkg(SLOW_SYNC, "foo", "bar");
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
 
     QtEncoder encoder;
     QByteArray initial_xml;

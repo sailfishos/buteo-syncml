@@ -38,7 +38,7 @@
 
 namespace DataSync {
 
-struct AlertParams;
+struct CommandParams;
 
 /*! \brief SyncMLAlert is class for generating SyncML Alert XML object
  */
@@ -50,7 +50,7 @@ public:
      *
      * @param aAlertParams Parameters to use when generating XML object
      */
-    explicit SyncMLAlert( AlertParams& aAlertParams );
+    explicit SyncMLAlert( CommandParams& aAlertParams );
 
     /*! \brief Destructor
      *

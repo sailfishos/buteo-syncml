@@ -36,7 +36,8 @@
 
 #include <QTest>
 
-class SyncMLMessageTest: public QObject {
+class SyncMLMessageTest: public QObject
+{
     Q_OBJECT
 private slots:
     void testSyncMLMessage();

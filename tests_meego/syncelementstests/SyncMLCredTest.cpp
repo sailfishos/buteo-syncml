@@ -32,48 +32,10 @@
 */
 
 #include "SyncMLCredTest.h"
-#include "SyncMLCred.h"
-#include "internals.h"
-#include "TestLoader.h"
-#include <QDebug>
 
-using namespace DataSync;
+#include "TestLoader.h"
 
 // @todo: SyncMLCred no longer generates basic and md5 data by itself, now it
 //        is handled by AuthHelper. Proper tests should be written for it
 
-void SyncMLCredTest::testBasicAuth()
-{
-    /*
-    QString username("user");
-    QString pass("pass");
-
-    QString b64("dXNlcjpwYXNz");
-
-    SyncMLCred c( username, pass);
-    QString cred = c.toXML();
-
-    QVERIFY( cred.indexOf( "b64" ) != -1 );
-    QVERIFY( cred.indexOf( SYNCML_FORMAT_AUTH_BASIC) != -1 );
-    QVERIFY( cred.indexOf( b64 ) != -1 );
-    */
-}
-
-void SyncMLCredTest::testMD5Auth()
-{
-    /*
-    QString username( "Bruce2" );
-    QString pass( "OhBehave" );
-    QString nonce( "Nonce" );
-    QString b64("Zz6EivR3yeaaENcRN6lpAQ==");
-
-    SyncMLCred c( username, pass, nonce );
-
-    QString cred = c.toXML();
-
-    QVERIFY( cred.indexOf( "b64" ) != -1 );
-    QVERIFY( cred.indexOf( SYNCML_FORMAT_AUTH_MD5) != -1 );
-    QVERIFY( cred.indexOf( b64 ) != -1 );
-    */
-}
 TESTLOADER_ADD_TEST(SyncMLCredTest);

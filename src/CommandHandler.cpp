@@ -62,9 +62,9 @@ ResponseStatusCode CommandHandler::handleMap( const MapParams& aMapParams, SyncT
     FUNCTION_CALL_TRACE;
 
     UIDMapping mapping;
-    for( int i = 0; i < aMapParams.mapItemList.count(); ++i ) {
-        mapping.iRemoteUID = aMapParams.mapItemList[i].source;
-        mapping.iLocalUID = aMapParams.mapItemList[i].target;
+    for( int i = 0; i < aMapParams.mapItems.count(); ++i ) {
+        mapping.iRemoteUID = aMapParams.mapItems[i].source;
+        mapping.iLocalUID = aMapParams.mapItems[i].target;
         aTarget.addUIDMapping( mapping );
     }
 
@@ -102,18 +102,32 @@ void CommandHandler::rejectSync( const SyncParams& aSyncParams, ResponseGenerato
 {
     FUNCTION_CALL_TRACE;
 
-    if( !aSyncParams.noResp ) {
+    if( !aSyncParams.noResp )
+    {
         aResponseGenerator.addStatus( aSyncParams, aResponseCode );
     }
 
-    foreach (const SyncActionData& actionData, aSyncParams.actionList) {
-
-        if( !actionData.noResp ) {
-            aResponseGenerator.addStatus( actionData, aResponseCode );
-        }
-
+    for( int i = 0; i < aSyncParams.commands.count(); ++i )
+    {
+        rejectCommand( aSyncParams.commands[i], aResponseGenerator, aResponseCode );
     }
 
+}
+
+void CommandHandler::rejectCommand( const CommandParams& aCommand, ResponseGenerator& aResponseGenerator,
+                                    ResponseStatusCode aResponseCode )
+{
+    FUNCTION_CALL_TRACE;
+
+    if( !aCommand.noResp )
+    {
+        aResponseGenerator.addStatus( aCommand, aResponseCode );
+    }
+
+    for( int i = 0; i < aCommand.subCommands.count(); ++i )
+    {
+        rejectCommand( aCommand.subCommands[i], aResponseGenerator, aResponseCode );
+    }
 }
 
 void CommandHandler::handleStatus(StatusParams* aStatusParams )
@@ -272,9 +286,9 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
     FUNCTION_CALL_TRACE;
 
     // Batch updates
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+    for( int i = 0; i < aSyncParams.commands.count(); ++i ) {
 
-        const SyncActionData& data = aSyncParams.actionList[i];
+        const CommandParams& data = aSyncParams.commands[i];
 
         QString defaultType = data.meta.type;
         QString defaultFormat = data.meta.format;
@@ -286,7 +300,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
             // Resolve id of the item
             ItemId id;
-            id.iCmdId = data.cmdID;
+            id.iCmdId = data.cmdId;
             id.iItemIndex = a;
 
             // Resolve type of the item
@@ -307,7 +321,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 format = defaultFormat;
             }
 
-            if( data.action == SYNCML_ADD ) {
+            if( data.commandType == CommandParams::COMMAND_ADD ) {
 
                 // Resolve item key
                 QString remoteKey = item.source;
@@ -357,7 +371,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                     if( aStorageHandler.buildingLargeObject() ) {
 
-                        if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+                        if( aStorageHandler.appendLargeObjectData( item.data ) ) {
 
                             aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
                                                                              aTarget.getSourceDatabase(),
@@ -381,7 +395,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                                                                          aTarget.getTargetDatabase() ) );
                         aResponses.insert( id, COMMAND_NOT_ALLOWED );
                     }
-                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+                    else if( aStorageHandler.appendLargeObjectData( item.data ) ) {
                         if( !aStorageHandler.finishLargeObject( id ) ) {
                             aResponses.insert( id, COMMAND_FAILED );
                         }
@@ -393,11 +407,11 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // Normal object
                 else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), QString(), parentKey,
-                                                   type, format, item.Data ) ) {
+                                                   type, format, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }
             }
-            else if( data.action == SYNCML_REPLACE ) {
+            else if( data.commandType == CommandParams::COMMAND_REPLACE ) {
 
                 // Resolve item key
                 QString localKey;
@@ -454,7 +468,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                     if( aStorageHandler.buildingLargeObject() ) {
 
-                        if( aStorageHandler.appendLargeObjectData( item.Data.toUtf8() ) ) {
+                        if( aStorageHandler.appendLargeObjectData( item.data.toUtf8() ) ) {
                             aResponseGenerator.addPackage( new AlertPackage( NEXT_MESSAGE,
                                                                              aTarget.getSourceDatabase(),
                                                                              aTarget.getTargetDatabase() ) );
@@ -477,7 +491,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                                                                          aTarget.getTargetDatabase() ) );
                         aResponses.insert( id, COMMAND_NOT_ALLOWED );
                     }
-                    else if( aStorageHandler.appendLargeObjectData( item.Data ) ) {
+                    else if( aStorageHandler.appendLargeObjectData( item.data ) ) {
                         if( !aStorageHandler.finishLargeObject( id ) ) {
                             aResponses.insert( id, COMMAND_FAILED );
                         }
@@ -489,13 +503,13 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // Normal object
                 else if( !aStorageHandler.replaceItem( id, *aTarget.getPlugin(), localKey,
-                                                       parentKey, type, format, item.Data ) ) {
+                                                       parentKey, type, format, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }
 
 
             }
-            else if( data.action == SYNCML_DELETE ) {
+            else if( data.commandType == CommandParams::COMMAND_DELETE ) {
 
                 // Resolve item key
                 QString localKey;
@@ -514,7 +528,10 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
             }
             else {
-                aResponses.insert( id, NOT_SUPPORTED );
+                // @todo: This is OK if we receive Copy/Move inside Sync, but what about
+                //        Atomic/Sequence, should we also send status about the subcommands?
+                aResponses.insert( id, NOT_IMPLEMENTED );
+
             }
 
         }
@@ -550,9 +567,9 @@ void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictRes
 
     // Process commit results and convert them to result codes
 
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+    for( int i = 0; i < aSyncParams.commands.count(); ++i ) {
 
-        const SyncActionData& data = aSyncParams.actionList[i];
+        const CommandParams& data = aSyncParams.commands[i];
 
         // Process items associated with the command
         for( int a = 0; a < data.items.count(); ++a ) {
@@ -560,7 +577,7 @@ void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictRes
             const ItemParams& item = data.items[a];
             ItemId id;
 
-            id.iCmdId = data.cmdID;
+            id.iCmdId = data.cmdId;
             id.iItemIndex = a;
 
             if( !aResponses.contains( id ) ) {
@@ -671,29 +688,28 @@ void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<I
     FUNCTION_CALL_TRACE;
 
     // Process result codes and write corresponding status elements
-    for( int i = 0; i < aSyncParams.actionList.count(); ++i ) {
+    for( int i = 0; i < aSyncParams.commands.count(); ++i ) {
 
-        const SyncActionData& data = aSyncParams.actionList[i];
+        const CommandParams& data = aSyncParams.commands[i];
 
         // Process items associated with the command
         for( int a = 0; a < data.items.count(); ++a ) {
 
-            const ItemParams& item = data.items[a];
-
             ItemId id;
 
-            id.iCmdId = data.cmdID;
+            id.iCmdId = data.cmdId;
             id.iItemIndex = a;
 
             ResponseStatusCode response = aResponses.value( id );
 
             if( !data.noResp ) {
-                aResponseGenerator.addStatus( data, item, response );
+                aResponseGenerator.addStatus( data, response, a );
             }
 
         }
 
     }
+
 }
 
 void CommandHandler::manageNewMappings( SyncTarget& aTarget, const QList<UIDMapping>& aNewMappings,

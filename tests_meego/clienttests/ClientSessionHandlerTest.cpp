@@ -50,7 +50,7 @@ void ClientSessionHandlerTest::initTestCase()
 {
     iDbHandler = new DatabaseHandler( "/tmp/clientsessionhandler.db");
     iClientId = QString("clientId");
-    iConfig = new MockConfig();
+    iConfig = new SyncAgentConfig();
     iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
     const SyncAgentConfig *tempConstConfig = iConfig;
@@ -86,24 +86,6 @@ void ClientSessionHandlerTest::testResendPackage()
 
     iHandler->setSyncState(FINALIZING);
     iHandler->resendPackage();
-}
-
-void ClientSessionHandlerTest::testSyncAlertReceived()
-{
-    SyncMode mode;
-    AlertParams alertParams;
-
-    iHandler->setSyncState(PREPARED);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(REMOTE_INIT);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(LOCAL_INIT);
-    iHandler->syncAlertReceived(mode, alertParams);
-
-    iHandler->setSyncState(SENDING_ITEMS);
-    iHandler->syncAlertReceived(mode, alertParams);
 }
 
 void ClientSessionHandlerTest::testSyncReceived()
@@ -162,7 +144,7 @@ void ClientSessionHandlerTest::testBusyStatusReceived()
 {
 	StatusParams *busyStatusParams = new StatusParams;
 
-	busyStatusParams->data = IN_PROGRESS;
+    busyStatusParams->data = IN_PROGRESS;
 	busyStatusParams->cmdRef = 0;
 
     iHandler->setSyncState(PREPARED);
@@ -197,9 +179,12 @@ void ClientSessionHandlerTest::regression_NB166841_01()
     sessionHandler.iSyncTargets.append( target );
 
     SyncMode syncMode;
-    AlertParams alert;
-    alert.targetDatabase = sourceURI;
-    alert.nextAnchor = nextAnchor;
+
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.target = sourceURI;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.acknowledgeTarget( syncMode, alert );
     QCOMPARE( status, SUCCESS );
 
@@ -225,8 +210,10 @@ void ClientSessionHandlerTest::regression_NB166841_02()
     sessionHandler.iSyncTargets.append( target );
 
     SyncMode syncMode;
-    AlertParams alert;
-    alert.nextAnchor = nextAnchor;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.meta.anchor.next = nextAnchor;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.acknowledgeTarget( syncMode, alert );
     QCOMPARE( status, INCOMPLETE_COMMAND );
 
@@ -251,8 +238,10 @@ void ClientSessionHandlerTest::regression_NB166841_03()
     sessionHandler.iSyncTargets.append( target );
 
     SyncMode syncMode;
-    AlertParams alert;
-    alert.targetDatabase = sourceURI;
+    CommandParams alert( CommandParams::COMMAND_ALERT );
+    ItemParams item;
+    item.target = sourceURI;
+    alert.items.append(item);
     ResponseStatusCode status = sessionHandler.acknowledgeTarget( syncMode, alert );
     QCOMPARE( status, INCOMPLETE_COMMAND );
 

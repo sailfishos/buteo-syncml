@@ -35,7 +35,6 @@
 #define SYNCMLHDR_H
 
 #include "SyncMLCmdObject.h"
-#include "SyncAgentConsts.h"
 
 namespace DataSync {
 
@@ -50,10 +49,9 @@ public:
     /*! \brief Constructor
      *
      * @param aHeaderParams SyncML header parameters to use
-     * @param aVersion Protocol version to use
      *
      */
-    SyncMLHdr( const HeaderParams& aHeaderParams, ProtocolVersion aVersion );
+    SyncMLHdr( const HeaderParams& aHeaderParams );
 
     /*! \brief Destructor
      *
@@ -61,7 +59,7 @@ public:
     virtual ~SyncMLHdr();
 
 private:
-    ProtocolVersion iVersion;
+
 };
 }
 #endif // SYNCMLHDR_H

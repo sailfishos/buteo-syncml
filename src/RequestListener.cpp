@@ -157,15 +157,20 @@ void RequestListener::parsingComplete( bool aLastMessageInPackage )
 
     for( int i = 0; i < fragments.count(); ++i )
     {
-        if( fragments[i]->iType == Fragment::FRAGMENT_ALERT )
+        if( fragments[i]->fragmentType == Fragment::FRAGMENT_COMMAND )
         {
-            AlertParams* alert = static_cast<AlertParams*>( fragments[i] );
-            SyncMode syncMode( alert->data );
+            CommandParams* command = static_cast<CommandParams*>(fragments[i]);
 
-            if( syncMode.isValid() )
+            if( command->commandType == CommandParams::COMMAND_ALERT )
             {
-                syncModes.append( syncMode );
+                SyncMode syncMode( command->data.toInt() );
+
+                if( syncMode.isValid() )
+                {
+                    syncModes.append( syncMode );
+                }
             }
+
         }
     }
 

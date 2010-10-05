@@ -33,11 +33,14 @@
 
 #ifndef SYNCMLITEMTEST_H
 #define SYNCMLITEMTEST_H
+
 #include <QTest>
-class SyncMLItemTest: public QObject {
+
+class SyncMLItemTest: public QObject
+{
     Q_OBJECT
 private slots:
-    void testSycnMLItem();
+    void testSyncMLItem();
     void regressionNB188615_01();
     void regressionNB188615_02();
     void regressionNB188615_03();

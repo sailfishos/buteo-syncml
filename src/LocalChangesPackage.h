@@ -34,11 +34,13 @@
 #define LOCALCHANGESPACKAGE_H
 
 #include "Package.h"
-#include "internals.h"
+
+#include "LocalChanges.h"
 #include "SyncMLCommand.h"
 #include "SyncItemKey.h"
 #include "SyncAgentConsts.h"
 #include "SyncItemPrefetcher.h"
+#include "datatypes.h"
 
 class LocalChangesPackageTest;
 

@@ -50,26 +50,6 @@ NonceStorage::~NonceStorage()
 
 }
 
-bool NonceStorage::createNonceTable()
-{
-    FUNCTION_CALL_TRACE;
-
-    const QString queryString = "CREATE TABLE IF NOT EXISTS nonces(id integer primary key autoincrement, local_device varchar(512), remote_device varchar(512), nonce varchar(512))";
-    QSqlQuery query( iDbHandle );
-
-    query.prepare( queryString );
-    query.exec();
-
-    bool success = true;
-
-    if (query.lastError().isValid()) {
-        success = false;
-        LOG_WARNING("Query failed: " << query.lastError());
-    }
-
-    return success;
-}
-
 QByteArray NonceStorage::generateNonce() const
 {
     return QByteArray::number( QDateTime::currentDateTime().toTime_t() );
@@ -78,6 +58,11 @@ QByteArray NonceStorage::generateNonce() const
 void NonceStorage::addNonce( const QString& aLocalDevice, const QString& aRemoteDevice, const QByteArray& aNonce )
 {
     FUNCTION_CALL_TRACE;
+
+    if( !createNonceTable() )
+    {
+        return;
+    }
 
     clearNonce( aLocalDevice, aRemoteDevice );
 
@@ -103,22 +88,27 @@ QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QStri
 
     QByteArray nonce;
 
-    const QString queryString( "SELECT nonce FROM nonces WHERE local_device = :local_device AND remote_device = :remote_device" );
-    QSqlQuery query( iDbHandle );
+    if( createNonceTable() )
+    {
 
-    query.prepare( queryString );
-    query.bindValue( ":local_device", aLocalDevice );
-    query.bindValue( ":remote_device", aRemoteDevice );
-    query.exec();
+        const QString queryString( "SELECT nonce FROM nonces WHERE local_device = :local_device AND remote_device = :remote_device" );
+        QSqlQuery query( iDbHandle );
+
+        query.prepare( queryString );
+        query.bindValue( ":local_device", aLocalDevice );
+        query.bindValue( ":remote_device", aRemoteDevice );
+        query.exec();
 
 
-    if (query.lastError().isValid()) {
-        LOG_WARNING("Query Error" << query.lastError());
-    }
-    else {
-        if (query.next()) {
-            LOG_DEBUG("Query Successful");
-            nonce = query.value(0).toByteArray();
+        if (query.lastError().isValid()) {
+            LOG_WARNING("Query Error" << query.lastError());
+        }
+        else {
+            if (query.next()) {
+                LOG_DEBUG("Query Successful");
+                nonce = query.value(0).toByteArray();
+            }
+
         }
 
     }
@@ -129,6 +119,11 @@ QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QStri
 void NonceStorage::clearNonce( const QString& aLocalDevice, const QString& aRemoteDevice )
 {
     FUNCTION_CALL_TRACE;
+
+    if( !createNonceTable() )
+    {
+        return;
+    }
 
     // Clear existing mappings
     const QString deleteQuery( "DELETE FROM nonces WHERE local_device = :local_device AND remote_device = :remote_device" );
@@ -143,4 +138,24 @@ void NonceStorage::clearNonce( const QString& aLocalDevice, const QString& aRemo
     if( query.lastError().isValid() ) {
         LOG_WARNING("Query failed: " << query.lastError());
     }
+}
+
+bool NonceStorage::createNonceTable()
+{
+    FUNCTION_CALL_TRACE;
+
+    const QString queryString = "CREATE TABLE IF NOT EXISTS nonces(id integer primary key autoincrement, local_device varchar(512), remote_device varchar(512), nonce varchar(512))";
+    QSqlQuery query( iDbHandle );
+
+    query.prepare( queryString );
+    query.exec();
+
+    bool success = true;
+
+    if (query.lastError().isValid()) {
+        success = false;
+        LOG_WARNING("Query failed: " << query.lastError());
+    }
+
+    return success;
 }

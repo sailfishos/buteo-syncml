@@ -37,15 +37,15 @@
 #include <QObject>
 
 #include "SyncAgentConsts.h"
-#include "internals.h"
 #include "Transport.h"
 
+#include "SessionAuthentication.h"
+#include "SessionParams.h"
 #include "CommandHandler.h"
 #include "DatabaseHandler.h"
 #include "StorageHandler.h"
 #include "ResponseGenerator.h"
 #include "SyncMLMessageParser.h"
-#include "NonceStorage.h"
 #include "DevInfHandler.h"
 
 class ServerSessionHandlerTest;
@@ -98,8 +98,9 @@ public:
 
     /*! \brief Perform various preparation for a sync session
      *
+     * @return True on success, otherwise false
      */
-    void prepareSync();
+    bool prepareSync();
 
     /*! \brief Returns true if sync session has finished
      *
@@ -203,7 +204,7 @@ protected slots:
      *
      * @param aDevice IO device that can be used to read the package
      */
-    virtual void SANPackageReceived( QIODevice* aDevice );
+    void SANPackageReceived( QIODevice* aDevice );
 
     /*! \brief Called when the parser finds a header element in the message being parsed
      *
@@ -215,7 +216,7 @@ protected slots:
      *
      * @param aStatusParams Parameters of the response message status element
      */
-    virtual void handleStatusElement( DataSync::StatusParams* aStatusParams );
+    void handleStatusElement( DataSync::StatusParams* aStatusParams );
 
     /*! \brief Called when the parser finds a sync element in the message being parsed
      *
@@ -227,13 +228,13 @@ protected slots:
      *
      * @param aAlertParams Parameters of the response message alert element
      */
-    void handleAlertElement(DataSync::AlertParams* aAlertParams);
+    void handleAlertElement(DataSync::CommandParams* aAlertParams);
 
     /*! \brief Called when the parser finds a Get element in the message being parsed
      *
      * @param aGetParams Get parameters
      */
-    void handleGetElement( DataSync::SyncActionData* aGetParams );
+    void handleGetElement( DataSync::CommandParams* aGetParams );
 
     /*! \brief Called when the parser finds a Put element in the message being parsed
      *
@@ -299,7 +300,7 @@ protected:
      * @param aSyncMode Sync mode of Alert
      * @param aAlertParams Alert params
      */
-    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, AlertParams& aAlertParams ) = 0;
+    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, CommandParams& aAlertParams ) = 0;
 
     /*! \brief Invoked when Sync related to receiving items has been received from
      *         remote side
@@ -369,17 +370,6 @@ protected:
      */
     void composeLocalChanges();
 
-    /*! \brief Adds authentication to the outgoing message
-     *
-     */
-    void composeAuthentication();
-
-    /*! \brief Handles authentication info received from remote side
-     *
-     * @param aHeaderParams Header parameters
-     */
-    void authenticationInformationReceived( const HeaderParams& aHeaderParams );
-
     /*! \brief Set up session based on header received from remote party ( remote
      *         side is initiating sync )
      *
@@ -397,18 +387,6 @@ protected:
      *
      */
     void saveSession();
-
-    /*! \brief Return current session ID
-     *
-     * @return Current session ID
-     */
-    const QString& getSessionId() const;
-
-    /*! \brief Sets session ID
-     *
-     * @param aSessionId Session ID
-     */
-    void setSessionId( const QString& aSessionId );
 
     /*! \brief Sets protocol version of this session
      *
@@ -500,63 +478,23 @@ protected:
      */
     const HeaderParams& getLocalHeaderParams() const;
 
-    /*! \brief Sets the maximum permitted size of SyncML message sent to remote device
-     *
-     * By default set to maximum transmit size of transport. Can be overridden by remote device
-     *
-     * @param aMaxMsgSize New maximum permitted size
-     */
-    void setRemoteMaxMsgSize( int aMaxMsgSize );
-
-    /*! \brief Get the maximum permitted size of SyncML message sent to remote device
-     *
-     * @return Maximum permitted size
-     */
-    int getRemoteMaxMsgSize() const;
-
-    /*! \brief Sets the maximum permitted size of SyncML messages that we can receive
-     *
-     * By default read from configuration. Can be overridden by remote device
-     *
-     * @param aMaxMsgSize New maximum permitted size
-     */
-    void setLocalMaxMsgSize( int aMaxMsgSize );
-
-    /*! \brief Get the maximum permitted size of SyncML messages that we can receive
-     *
-     * @return
-     */
-    int getLocalMaxMsgSize();
-
     /*! \brief Sets the URI to use in next send operation
      *
      * @param aURI New URI to remote side
      */
     void setRemoteLocURI( const QString& aURI );
 
-    /*! \brief Returns whether the session has been authenticated
-     *
-     * @return True if session has been authenticated, otherwise false
-     */
-    bool getSessionAuthenticated() const;
-
-    /*! \brief Sets whether the session has been authenticated
-     *
-     * @param aAuthenticated True if session authenticated, otherwise false
-     */
-    void setSessionAuthenticated( bool aAuthenticated );
-
-    /*! \brief Sets the authentication type to use
-     *
-     * @param aAuthenticationType Authentication type
-     */
-    void setAuthenticationType( const AuthenticationType& aAuthenticationType );
-
-    /*! \brief Gets the authentication type to use
+    /*! \brief Access session authentication object
      *
      * @return
      */
-    AuthenticationType getAuthenticationType() const;
+    SessionAuthentication& authentication();
+
+    /*! \brief Access session parameters
+     *
+     * @return
+     */
+    SessionParams& params();
 
     /*! \brief Returns pointer to configuration object
      *
@@ -598,30 +536,6 @@ protected:
      * @return
      */
     void resetRemoteBusyStatus();
-
-    /*! \brief Sets the name of the local device in this session
-     *
-     * @param aLocalDeviceName Local device name
-     */
-    void setLocalDeviceName( const QString& aLocalDeviceName );
-
-    /*! \brief Retrieves the name of the local device in this session
-     *
-     * @return
-     */
-    const QString& getLocalDeviceName() const;
-
-    /*! \brief Sets the name of the remote device in this session
-     *
-     * @param aRemoteDeviceName Remote device name
-     */
-    void setRemoteDeviceName( const QString& aRemoteDeviceName );
-
-    /*! \brief Retrieves the name of the remote device in this session
-     *
-     * @return
-     */
-    const QString& getRemoteDeviceName() const;
 
     /*! \brief Retrieves device info handler
      *
@@ -674,40 +588,31 @@ private: // functions
      */
     void connectSignals();
 
-    ResponseStatusCode handleInformativeAlert( const AlertParams& aAlertParams );
-
-    void handleChallenge( const ChalParams& aChallenge );
+    ResponseStatusCode handleInformativeAlert( const CommandParams& aAlertParams );
 
 private: // data
+    DatabaseHandler                     iDatabaseHandler;           ///< Handler for database operations
+    SessionAuthentication               iSessionAuth;               ///< Handles authentication of the session
+    SessionParams                       iSessionParams;             ///< Maintains important parameters of the session
     CommandHandler                      iCommandHandler;            ///< A pointer to command handler object
     StorageHandler                      iStorageHandler;            ///< Handles sync item storage operations
     DevInfHandler                       iDevInfHandler;             ///< Handles device info related things
     ResponseGenerator                   iResponseGenerator;         ///< Response generator object
-    const DataSync::SyncAgentConfig*    iConfig;                    ///< A pointer to configuration
     SyncMLMessageParser                 iParser;                    ///< XML parser
+    const DataSync::SyncAgentConfig*    iConfig;                    ///< A pointer to configuration
     QList<StoragePlugin*>               iStorages;                  ///< A list of reserved storages
     QList<SyncTarget*>                  iSyncTargets;               ///< A list of sync targets
     SyncState                           iSyncState;                 ///< State of the synchronization session
-    QString                             iSessionId;                 ///< Session ID
     QString                             iLocalNextAnchor;           ///< Local NEXT anchor of this session
     QString                             iSyncError;                 ///< Human-readable description upon sync abort
     bool                                iSyncWithoutInitPhase;      ///< Perform synchronization without init phase
-    int                                 iLocalMaxMsgSize;           ///< Maximum size for messages received from remote device
-    int                                 iRemoteMaxMsgSize;          ///< Maximum size for messages sent to remote device
-    DatabaseHandler                     iDatabaseHandler;           ///< Handler for database operations
-    AuthenticationType                  iAuthenticationType;        ///< Type of authentication to use
-    QList<ItemReference>                iItemReferences;            ///<Keeps track which status refers to which item in which database
-    NonceStorage*                       iNonceStorage;              ///< Storage for MD5 nonces
+    QList<ItemReference>                iItemReferences;            ///< Keeps track which status refers to which item in which database
     bool                                iSyncFinished;              ///< Set to true when sync has ended
     bool                                iSessionClosed;             ///< Set to true when Session tearing down started.
-    bool                                iSessionAuthenticated;      ///< Set to true when session has been authenticated
-    bool                                iAuthenticationPending;     ///< True if authentication is pending from remote side
     bool                                iProcessing;                ///< Set to true when we are processing a message
     ProtocolVersion                     iProtocolVersion;           ///< Protocol version in use in current session
-    bool				iRemoteReportedBusy;        ///< indicates that server reported busy
+    bool                                iRemoteReportedBusy;        ///< indicates that server reported busy
     Role                                iRole;                      ///< Role in use
-    QString                             iLocalDeviceName;           ///< Name of the local device in this session
-    QString                             iRemoteDeviceName;          ///< Name of the remote device in this session
     ///< A quick way to get the response a remote party sent to the last "cmd" command we sent
     QMap<QString, ResponseStatusCode>     cmdRespMap;
 

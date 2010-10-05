@@ -32,12 +32,14 @@
 */
 
 #include "LocalMappingsPackageTest.h"
+
 #include "LocalMappingsPackage.h"
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
-#include "internals.h"
 #include "Mock.h"
 #include "QtEncoder.h"
+#include "Fragments.h"
+
+#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -65,7 +67,7 @@ void LocalMappingsPackageTest::testPackage()
     QCOMPARE(pkg.iMappings.at(1).iRemoteUID, mapping2.iRemoteUID);
 
     // Write, only first mapping should fit.
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     const int SIZE_THRESHOLD = 160;
     int remaining = SIZE_THRESHOLD;
     QCOMPARE(pkg.write(msg, remaining), false);

@@ -558,9 +558,8 @@ class SessionHandler;
  * an object created in the thread (since the QThread object itself was created
  * in another thread)." So, all actions pertaining to SyncAgent should be done
  * in one single thread. If the Agent is created in one thread and subsequent
- * commands (for example prepareSync() ) are issued in another thread,
- * Qt's parent child relationship between multiple threads prevents the
- * Signals to be emitted to parents in another thread.
+ * commands are issued in another thread, Qt's parent child relationship between
+ * multiple threads prevents the Signals to be emitted to parents in another thread.
  *
  * The behavior for "Issuing the same command twice" is unsupported and undefined.
  *

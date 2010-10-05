@@ -40,7 +40,6 @@
 #include "AlertPackage.h"
 #include "SyncTarget.h"
 #include "LocalChangesPackage.h"
-#include "AuthenticationPackage.h"
 #include "FinalPackage.h"
 #include "StoragePlugin.h"
 #include "ConflictResolver.h"
@@ -55,22 +54,16 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
                                 const Role& aRole,
                                 QObject* aParent ) :
     QObject( aParent ),
+    iDatabaseHandler( aConfig->getDatabaseFilePath() ),
     iCommandHandler( aRole ),
     iDevInfHandler( aConfig->getDeviceInfo() ),
     iConfig(aConfig),
     iSyncState( NOT_PREPARED ),
     iSyncWithoutInitPhase( false ),
-    iLocalMaxMsgSize ( -1 ),
-    iRemoteMaxMsgSize( -1 ),
-    iDatabaseHandler( aConfig->getDatabaseFilePath() ),
-    iAuthenticationType( AUTH_NONE ),
-    iNonceStorage( 0 ),
     iSyncFinished( false ),
     iSessionClosed(false) ,
-    iSessionAuthenticated( false ),
-    iAuthenticationPending( false ),
     iProcessing( false ),
-    iProtocolVersion( DS_1_2 ),
+    iProtocolVersion( SYNCML_1_2 ),
     iRemoteReportedBusy(false),
     iRole( aRole )
 
@@ -97,59 +90,63 @@ SessionHandler::~SessionHandler()
     // Make sure that all allocated objects are released.
     releaseStoragesAndTargets();
 
-    delete iNonceStorage;
-    iNonceStorage = NULL;
-
 }
 
-void SessionHandler::prepareSync()
+bool SessionHandler::prepareSync()
 {
     FUNCTION_CALL_TRACE;
 
     if( !iDatabaseHandler.isValid() ) {
         abortSync( INTERNAL_ERROR, "Could not open database file" );
+        return false;
     }
 
-    // @todo: sanitize this
-
-    // Configuration is valid, set up changelog
-    iNonceStorage = new NonceStorage( getDatabaseHandler().getDbHandle() );
-    bool nonces = iNonceStorage->createNonceTable();
-
-    if( nonces ) {
-
-        int localMaxMsgSize = DEFAULT_MAX_MESSAGESIZE;
-
-        int confValue = getConfig()->getAgentProperty( MAXMESSAGESIZEPROP ).toInt();
-
-        if( confValue > 0 )
-        {
-            localMaxMsgSize = confValue;
-        }
-
-        setLocalMaxMsgSize( localMaxMsgSize );
-        setRemoteMaxMsgSize( localMaxMsgSize );
-
-        // Set up transport
-        Transport& transport = getTransport();
-
-        connect( &transport, SIGNAL(sendEvent(DataSync::TransportStatusEvent, QString )),
-                 this, SLOT(setTransportStatus(DataSync::TransportStatusEvent , QString )));
-        connect( &transport, SIGNAL(readXMLData(QIODevice *, bool)) ,
-                 &iParser, SLOT(parseResponse(QIODevice *, bool)));
-        connect( &transport, SIGNAL(readSANData(QIODevice *)) ,
-                 this, SLOT(SANPackageReceived(QIODevice *)));
-        connect( this, SIGNAL(purgeAndResendBuffer()) ,
-                 &transport, SLOT(purgeAndResendBuffer()));
-
-        setLocalNextAnchor( QString::number( QDateTime::currentDateTime().toTime_t() ) );
-        connectSignals();
-        iItemReferences.clear();
-        setSyncState( PREPARED );
+    // Check for credentials if authentication is to be used. Don't
+    // allow empty username, allow empty password
+    if( iConfig->getAuthType() != AUTH_NONE &&
+        iConfig->getUsername().isEmpty() )
+    {
+        LOG_CRITICAL( "Authentication requested to be used, but no credentials provided" );
+        abortSync( AUTHENTICATION_FAILURE, "Authentication requested to be used, but no credentials provided" );
+        return false;
     }
-    else {
-        abortSync( INTERNAL_ERROR, "Failed to set up database tables" );
+
+    authentication().setSessionParams( getConfig()->getAuthType(),
+                                       getConfig()->getUsername(),
+                                       getConfig()->getPassword(),
+                                       getConfig()->getNonce() );
+
+
+    int localMaxMsgSize = DEFAULT_MAX_MESSAGESIZE;
+
+    int confValue = getConfig()->getAgentProperty( MAXMESSAGESIZEPROP ).toInt();
+
+    if( confValue > 0 )
+    {
+        localMaxMsgSize = confValue;
     }
+
+    params().setLocalMaxMsgSize( localMaxMsgSize );
+    params().setRemoteMaxMsgSize( localMaxMsgSize );
+
+    // Set up transport
+    Transport& transport = getTransport();
+
+    connect( &transport, SIGNAL(sendEvent(DataSync::TransportStatusEvent, QString )),
+             this, SLOT(setTransportStatus(DataSync::TransportStatusEvent , QString )));
+    connect( &transport, SIGNAL(readXMLData(QIODevice *, bool)) ,
+             &iParser, SLOT(parseResponse(QIODevice *, bool)));
+    connect( &transport, SIGNAL(readSANData(QIODevice *)) ,
+             this, SLOT(SANPackageReceived(QIODevice *)));
+    connect( this, SIGNAL(purgeAndResendBuffer()) ,
+             &transport, SLOT(purgeAndResendBuffer()));
+
+    setLocalNextAnchor( QString::number( QDateTime::currentDateTime().toTime_t() ) );
+    connectSignals();
+    iItemReferences.clear();
+    setSyncState( PREPARED );
+
+    return true;
 
 }
 
@@ -279,53 +276,59 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
     {
         DataSync::Fragment* fragment = aFragments.takeFirst();
 
-        if( fragment->iType == Fragment::FRAGMENT_HEADER )
+        if( fragment->fragmentType == Fragment::FRAGMENT_HEADER )
         {
             HeaderParams* header = static_cast<HeaderParams*>(fragment);
             handleHeaderElement(header);
         }
-        else if( fragment->iType == Fragment::FRAGMENT_STATUS )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_STATUS )
         {
             StatusParams* status = static_cast<StatusParams*>(fragment);
             handleStatusElement(status);
         }
-        else if( fragment->iType == Fragment::FRAGMENT_ALERT )
-        {
-            AlertParams* alert = static_cast<AlertParams*>(fragment);
-            handleAlertElement(alert);
-        }
-        else if( fragment->iType == Fragment::FRAGMENT_SYNC )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_SYNC )
         {
             SyncParams* sync = static_cast<SyncParams*>(fragment);
             handleSyncElement(sync);
         }
-        else if( fragment->iType == Fragment::FRAGMENT_MAP )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_MAP )
         {
             MapParams* map = static_cast<MapParams*>(fragment);
             handleMapElement(map);
         }
-        else if( fragment->iType == Fragment::FRAGMENT_PUT )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_PUT )
         {
             PutParams* put = static_cast<PutParams*>(fragment);
             handlePutElement( put );
         }
-        else if( fragment->iType == Fragment::FRAGMENT_RESULTS )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_RESULTS )
         {
             ResultsParams* results = static_cast<ResultsParams*>(fragment);
             handleResultsElement(results);
         }
-        else if( fragment->iType == Fragment::FRAGMENT_COMMAND )
+        else if( fragment->fragmentType == Fragment::FRAGMENT_COMMAND )
         {
-            SyncActionData* action = static_cast<SyncActionData*>(fragment);
+            CommandParams* command = static_cast<CommandParams*>(fragment);
 
-            if( action->action == SYNCML_GET )
+            if( command->commandType == CommandParams::COMMAND_ALERT )
             {
-                handleGetElement(action);
+                handleAlertElement( command );
+            }
+            else if( command->commandType == CommandParams::COMMAND_GET )
+            {
+                handleGetElement( command );
             }
             else
             {
-                delete fragment;
+                LOG_WARNING( "Unsupported command. Command Id:" << command->cmdId );
+                iCommandHandler.rejectCommand( *command, getResponseGenerator(), NOT_IMPLEMENTED );
+                delete command;
+                command = 0;
             }
+        }
+        else
+        {
+            Q_ASSERT(0);
         }
     }
 
@@ -406,13 +409,13 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
     // If remote party sent max message size, save it.
     // If remote partys max message size is smaller than ours, reduce our
     // max message size to match
-    if( aHeaderParams->maxMsgSize > 0 )
+    if( aHeaderParams->meta.maxMsgSize > 0 )
     {
-        setRemoteMaxMsgSize( aHeaderParams->maxMsgSize );
+        params().setRemoteMaxMsgSize( aHeaderParams->meta.maxMsgSize );
 
-        if( getRemoteMaxMsgSize() < getLocalMaxMsgSize() )
+        if( params().remoteMaxMsgSize() < params().localMaxMsgSize() )
         {
-            setLocalMaxMsgSize( getRemoteMaxMsgSize() );
+            params().setLocalMaxMsgSize( params().remoteMaxMsgSize() );
         }
     }
 
@@ -422,46 +425,19 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
     // Dedicated handling for server/client
     messageReceived( *aHeaderParams );
 
-    // Handle authentication
+    SessionAuthentication::HeaderStatus status = authentication().analyzeHeader( *aHeaderParams,
+                                                                                 getResponseGenerator() );
 
-    if( !aHeaderParams->cred.data.isEmpty() ) {
-
-        // Authentication received
-
-        authenticationInformationReceived( *aHeaderParams );
+    if( status == SessionAuthentication::HEADER_HANDLED_ABORT )
+    {
+        abortSync( AUTHENTICATION_FAILURE, authentication().getLastError() );
     }
-    else if( !iAuthenticationPending && !getSessionAuthenticated() ) {
-
-        // Expecting authentication, send challenge
-
-        ChalParams challenge;
-        challenge.meta.format = SYNCML_FORMAT_ENCODING_B64;
-
-        if( getAuthenticationType() == AUTH_BASIC ) {
-            challenge.meta.type = SYNCML_FORMAT_AUTH_BASIC;
-        }
-        else if( getAuthenticationType() == AUTH_MD5 ) {
-            challenge.meta.type = SYNCML_FORMAT_AUTH_MD5;
-
-            QByteArray nonce = iNonceStorage->generateNonce();
-
-            challenge.meta.nextNonce = nonce.toBase64();
-
-            iNonceStorage->addNonce( getLocalDeviceName(),
-                                     getRemoteDeviceName(), nonce );
-
-        }
-
-        getResponseGenerator().addStatus( *aHeaderParams, challenge, MISSING_CRED );
-
-    }
-    else {
-
+    else if( status == SessionAuthentication::HEADER_NOT_HANDLED )
+    {
         // Everything OK
-
         getResponseGenerator().addStatus( *aHeaderParams, SUCCESS );
-
     }
+    // else: SessionAuthentication::HEADER_HANDLED_OK
 
     delete aHeaderParams;
     aHeaderParams = NULL;
@@ -479,106 +455,67 @@ void SessionHandler::handleStatusElement( StatusParams* aStatusParams )
     LOG_DEBUG( "Remote device responded with " << aStatusParams->data << " for cmd " << cmd );
 
     // Common status handling
-    if( aStatusParams->cmdRef == 0 ) {
+    if( aStatusParams->cmdRef == 0 )
+    {
 
-        QString remoteDevice = getRemoteDeviceName();
-        QString localDevice = getLocalDeviceName();
+        SessionAuthentication::StatusStatus status = authentication().analyzeHeaderStatus( *aStatusParams,
+                                                                                           getDatabaseHandler(),
+                                                                                           params().localDeviceName(),
+                                                                                           params().remoteDeviceName() );
 
-        // Header status
-
-        if( aStatusParams->data == AUTH_ACCEPTED ) {
-
-            // Authenticated for session
-            iAuthenticationPending = false;
-            setSessionAuthenticated( true );
-
-            if( getAuthenticationType() == AUTH_MD5 ) {
-                // Clear possible nonce
-                iNonceStorage->clearNonce( remoteDevice, localDevice );
-            }
-
-            // If remote party sent us a challenge when authentication was successful,
-            // we must save the next nonce
-            if( aStatusParams->chal.meta.type == SYNCML_FORMAT_AUTH_MD5 ) {
-                QByteArray nonce = aStatusParams->chal.meta.nextNonce.toAscii();
-
-                iNonceStorage->addNonce( remoteDevice, localDevice, nonce );
-            }
-
+        if( status == SessionAuthentication::STATUS_HANDLED_ABORT )
+        {
+            abortSync( AUTHENTICATION_FAILURE, authentication().getLastError() );
         }
-        else if( aStatusParams->data == MISSING_CRED ) {
+        else if( status == SessionAuthentication::STATUS_HANDLED_RESEND )
+        {
+            resendPackage();
+        }
+        else if( status == SessionAuthentication::STATUS_NOT_HANDLED )
+        {
+            if( aStatusParams->data == SUCCESS )
+            {
+                // @todo: should we handle SUCCESS with auths where we should resend auth in every syncml message?
+            }
+            else if ( aStatusParams->data == IN_PROGRESS ){
+                // remote reported busy
+                // request for the results
+                iRemoteReportedBusy = true;
+            } else {
+                // Unknown code for header, abort
+                abortSync( INTERNAL_ERROR, "Unknown status code received for SyncHdr" );
+            }
+        }
+        // else: SessionAuthentication::STATUS_HANDLED_OK
 
-            if( aStatusParams->chal.meta.type.isEmpty() ) {
+    }
+    else
+    {
 
-                if( getAuthenticationType() == AUTH_MD5 ) {
-                    // Clear possible nonce
-                    iNonceStorage->clearNonce( remoteDevice, localDevice );
+        // Support only server-layer authentication, do not allow
+        // challenges anywhere else but header status
+        if( !aStatusParams->chal.meta.type.isEmpty() ) {
+            abortSync( AUTHENTICATION_FAILURE, "Database-layer authentication is not supported" );
+        }
+        else if( aStatusParams->cmd == SYNCML_ELEMENT_ALERT ){
+
+            // Reverting to slow sync occured
+            if( aStatusParams->data == REFRESH_REQUIRED ) {
+                QString sourceDb = aStatusParams->sourceRef;
+
+                SyncTarget* target = getSyncTarget( sourceDb );
+
+                if( target ) {
+                    target->revertSyncMode();
                 }
 
-                abortSync( AUTHENTICATION_FAILURE, "Authentication required" );
-            }
-            else {
-                // Handle challenge
-                handleChallenge( aStatusParams->chal );
             }
 
         }
-        else if( aStatusParams->data == INVALID_CRED ) {
-
-            // Already sent auth which failed, or auth failed without challenge
-            // sent to us
-            if( iAuthenticationPending || aStatusParams->chal.meta.type.isEmpty() ) {
-
-                if( getAuthenticationType() == AUTH_MD5 ) {
-                    // Clear possible nonce
-                    iNonceStorage->clearNonce( remoteDevice, localDevice );
-                }
-
-                abortSync( AUTHENTICATION_FAILURE, "Authentication failed" );
-            }
-            else {
-                // Handle challenge
-                handleChallenge( aStatusParams->chal );
-            }
-
-        }
-        else if( aStatusParams->data == SUCCESS ) {
-
-            // @todo: should we handle SUCCESS with auths where we should resend auth in every syncml message?
-
-        }
-        else if ( aStatusParams->data == IN_PROGRESS ){
-        	// remote reported busy
-        	// request for the results
-        	iRemoteReportedBusy = true;
-        } else {
-            // Unknown code for header, abort
-            abortSync( INTERNAL_ERROR, "Unknown status code received for SyncHdr" );
+        else {
+            iCommandHandler.handleStatus( aStatusParams );
         }
 
-    }
-    // Support only server-layer authentication, do not allow
-    // challenges anywhere else but header status
-    if( !aStatusParams->chal.meta.type.isEmpty() ) {
-        abortSync( AUTHENTICATION_FAILURE, "Database-layer authentication is not supported" );
-    }
-    else if( aStatusParams->cmd == SYNCML_ELEMENT_ALERT ){
-
-        // Reverting to slow sync occured
-        if( aStatusParams->data == REFRESH_REQUIRED ) {
-            QString sourceDb = aStatusParams->sourceRef;
-
-            SyncTarget* target = getSyncTarget( sourceDb );
-
-            if( target ) {
-                target->revertSyncMode();
-            }
-
-        }
-
-    }
-    else {
-        iCommandHandler.handleStatus( aStatusParams );
     }
 
     delete aStatusParams;
@@ -592,7 +529,7 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
     QSharedPointer<SyncParams> params( aSyncParams );
 
     // Don't process Sync elements if we are not authenticated
-    if( !iSessionAuthenticated ) {
+    if( !authentication().authenticated() ) {
         iCommandHandler.rejectSync( *aSyncParams, iResponseGenerator, INVALID_CRED  );
         return;
     }
@@ -602,7 +539,7 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
         return;
     }
 
-    SyncTarget* target = getSyncTarget( aSyncParams->targetDatabase );
+    SyncTarget* target = getSyncTarget( aSyncParams->target );
 
     if( !target ) {
         iCommandHandler.rejectSync( *aSyncParams, iResponseGenerator,NOT_FOUND );
@@ -642,15 +579,15 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
 
 }
 
-void SessionHandler::handleAlertElement( AlertParams* aAlertParams )
+void SessionHandler::handleAlertElement( CommandParams* aAlertParams )
 {
     FUNCTION_CALL_TRACE;
 
     ResponseStatusCode status;
 
-    if( iSessionAuthenticated ) {
+    if( authentication().authenticated() ) {
 
-        SyncMode syncMode( aAlertParams->data );
+        SyncMode syncMode( aAlertParams->data.toInt() );
 
         if( syncMode.isValid() ) {
             status = syncAlertReceived( syncMode, *aAlertParams );
@@ -672,13 +609,13 @@ void SessionHandler::handleAlertElement( AlertParams* aAlertParams )
 
 }
 
-void SessionHandler::handleGetElement( DataSync::SyncActionData* aGetParams )
+void SessionHandler::handleGetElement( DataSync::CommandParams* aGetParams )
 {
     FUNCTION_CALL_TRACE;
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !iSessionAuthenticated )
+    if( !authentication().authenticated() )
     {
         code = INVALID_CRED;
     }
@@ -711,7 +648,7 @@ void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !iSessionAuthenticated )
+    if( !authentication().authenticated() )
     {
         code = INVALID_CRED;
     }
@@ -741,7 +678,7 @@ void SessionHandler::handleResultsElement(DataSync::ResultsParams* aResults)
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !iSessionAuthenticated )
+    if( !authentication().authenticated() )
     {
         code = INVALID_CRED;
     }
@@ -769,7 +706,7 @@ void SessionHandler::handleMapElement( DataSync::MapParams* aMapParams )
     ResponseStatusCode status = NOT_FOUND;
     SyncTarget* target = NULL;
 
-    if (!iSessionAuthenticated) {
+    if (!authentication().authenticated()) {
         status = INVALID_CRED;
     }
     else if (!mapReceived()) {
@@ -794,7 +731,7 @@ void SessionHandler::handleFinal()
 {
     FUNCTION_CALL_TRACE;
 
-    if( iSessionAuthenticated ) {
+    if( authentication().authenticated() ) {
         finalReceived();
     }
 
@@ -832,7 +769,8 @@ void SessionHandler::sendNextMessage()
 
     // @todo: what if message generation fails?
 
-    SyncMLMessage* message = iResponseGenerator.generateNextMessage( iRemoteMaxMsgSize, getProtocolVersion(),
+    SyncMLMessage* message = iResponseGenerator.generateNextMessage( params().remoteMaxMsgSize(),
+                                                                     getProtocolVersion(),
                                                                      getTransport().usesWbXML() );
 
     // @todo: what if sending fails?
@@ -846,16 +784,6 @@ void SessionHandler::sendNextMessage()
 
     LOG_DEBUG( "Next message sent" );
 
-}
-
-const QString& SessionHandler::getSessionId() const
-{
-    return iSessionId;
-}
-
-void SessionHandler::setSessionId( const QString& aSessionId )
-{
-    iSessionId = aSessionId;
 }
 
 ProtocolVersion SessionHandler::getProtocolVersion() const
@@ -898,7 +826,7 @@ void SessionHandler::exitSync()
         // Release everything
     	releaseStoragesAndTargets();
 
-    	emit syncFinished( getRemoteDeviceName(), iSyncState, iSyncError);
+        emit syncFinished( params().remoteDeviceName(), iSyncState, iSyncError);
 
     }
 }
@@ -946,7 +874,7 @@ void DataSync::SessionHandler::connectSignals()
 
 }
 
-ResponseStatusCode SessionHandler::handleInformativeAlert( const AlertParams& aAlertParams )
+ResponseStatusCode SessionHandler::handleInformativeAlert( const CommandParams& aAlertParams )
 {
     FUNCTION_CALL_TRACE;
 
@@ -954,7 +882,8 @@ ResponseStatusCode SessionHandler::handleInformativeAlert( const AlertParams& aA
 
     // Do not implement: RESULT_ALERT, DISPLAY
     // @todo: implement NO_END_OF_DATA, ALERT_SUSPEND, ALERT_RESUME
-    switch( aAlertParams.data ) {
+    qint32 alertCode = aAlertParams.data.toInt();
+    switch( alertCode ) {
         case DISPLAY:
         case RESULT_ALERT:
         {
@@ -974,71 +903,6 @@ ResponseStatusCode SessionHandler::handleInformativeAlert( const AlertParams& aA
     }
 
     return status;
-
-}
-
-void SessionHandler::handleChallenge( const ChalParams& aChallenge )
-{
-    FUNCTION_CALL_TRACE;
-
-    setSessionAuthenticated( false );
-
-    // Support only b64-encoding in challenges
-    if( aChallenge.meta.format != SYNCML_FORMAT_ENCODING_B64 ) {
-        abortSync( AUTHENTICATION_FAILURE, "Unsupported encoding encounted in authentication challenge" );
-    }
-    // Support only basic and md5 authentication
-    else if( aChallenge.meta.type == SYNCML_FORMAT_AUTH_BASIC ) {
-
-        if( iAuthenticationPending && getAuthenticationType() == AUTH_BASIC ) {
-            // We have already sent auth using basic authentication, re-challenge
-            // means authentication has failed
-            abortSync( AUTHENTICATION_FAILURE, "Authentication failed" );
-        }
-        else {
-            setAuthenticationType( AUTH_BASIC );
-            resendPackage();
-        }
-    }
-    else if( aChallenge.meta.type == SYNCML_FORMAT_AUTH_MD5 ) {
-
-        if( iAuthenticationPending && getAuthenticationType() == AUTH_MD5 ) {
-
-            // We have already sent auth using md5 authentication, re-challenge
-            // means authentication has failed if we already own a nonce
-
-            QString nonce = iNonceStorage->retrieveNonce( getRemoteDeviceName(),
-                                                          getLocalDeviceName() );
-
-            if( nonce.isEmpty() ) {
-
-                QByteArray nonce = QByteArray::fromBase64( aChallenge.meta.nextNonce.toAscii() );
-                LOG_DEBUG("Found out nonce:" << nonce);
-
-                iNonceStorage->addNonce( getRemoteDeviceName(),
-                                         getLocalDeviceName(), nonce );
-
-                resendPackage();
-            }
-            else {
-                abortSync( AUTHENTICATION_FAILURE, "Challenged for MD5 authentication, but do not have a nonce!" );
-            }
-        }
-        else {
-            setAuthenticationType( AUTH_MD5 );
-
-            QByteArray nonce = QByteArray::fromBase64( aChallenge.meta.nextNonce.toAscii() );
-            LOG_DEBUG("Found out nonce:" << nonce);
-
-            iNonceStorage->addNonce( getRemoteDeviceName(),
-                                     getLocalDeviceName(), nonce );
-
-            resendPackage();
-        }
-    }
-    else {
-        abortSync( AUTHENTICATION_FAILURE, "Unsupported authentication type encountered" );
-    }
 
 }
 
@@ -1083,7 +947,7 @@ void SessionHandler::composeLocalChanges()
 
     LOG_DEBUG( "Setting number of changes to send per message to" << maxChangesPerMessage );
 
-    int largeObjectThreshold = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * getRemoteMaxMsgSize()), MINMSGOVERHEADBYTES );
+    int largeObjectThreshold = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * params().remoteMaxMsgSize()), MINMSGOVERHEADBYTES );
 
     const QList<SyncTarget*>& targets = getSyncTargets();
     foreach( const SyncTarget* syncTarget, targets ) {
@@ -1102,151 +966,11 @@ void SessionHandler::composeLocalChanges()
 
 }
 
-void SessionHandler::composeAuthentication()
-{
-    FUNCTION_CALL_TRACE;
-
-    AuthenticationType authType = getAuthenticationType();
-
-    if( authType == AUTH_BASIC ){
-
-        getResponseGenerator().addPackage( new AuthenticationPackage( getConfig()->getUsername(),
-                                                                      getConfig()->getPassword() ) );
-        iAuthenticationPending = true;
-
-    }
-    else if( authType == AUTH_MD5 ) {
-
-        QByteArray nonce = iNonceStorage->retrieveNonce( getRemoteDeviceName(),
-                                                         getLocalDeviceName() );
-
-        // If we're set to MD5 but we have no nonce, don't attempt to send auth as it will fail anyway.
-        // Remote side will surely challenge us and then we receive the nonce
-
-        if( !nonce.isEmpty() ) {
-            getResponseGenerator().addPackage( new AuthenticationPackage( getConfig()->getUsername(),
-                                                                          getConfig()->getPassword(),
-                                                                          nonce ) );
-        }
-
-        iAuthenticationPending = true;
-    }
-
-
-}
-
-void SessionHandler::authenticationInformationReceived( const HeaderParams& aHeaderParams )
-{
-    FUNCTION_CALL_TRACE;
-
-    AuthenticationType authType = getAuthenticationType();
-
-    if( authType == AUTH_NONE ) {
-        // Set to require no authentication -> auto-accept
-        setSessionAuthenticated( true );
-        getResponseGenerator().addStatus( aHeaderParams, AUTH_ACCEPTED );
-    }
-    else if( authType == AUTH_BASIC ) {
-
-        if( aHeaderParams.cred.meta.type != SYNCML_FORMAT_AUTH_BASIC ||
-            aHeaderParams.cred.meta.format != SYNCML_FORMAT_ENCODING_B64 ) {
-
-            // Expecting basic authentication, send a challenge back
-            ChalParams challenge;
-            challenge.meta.type = SYNCML_FORMAT_AUTH_BASIC;
-            challenge.meta.format = SYNCML_FORMAT_ENCODING_B64;
-            getResponseGenerator().addStatus( aHeaderParams, challenge, MISSING_CRED );
-
-        }
-        else {
-
-            AuthHelper helper;
-            AuthHelper::AuthData data;
-
-            if( helper.decodeBasicB64EncodedAuth( aHeaderParams.cred.data.toAscii(), data ) ) {
-
-                if( data.iUsername == getConfig()->getUsername() &&
-                    data.iPassword == getConfig()->getPassword() ) {
-
-                    // Authenticated
-                    setSessionAuthenticated( true );
-                    getResponseGenerator().addStatus( aHeaderParams, AUTH_ACCEPTED );
-
-                }
-                else {
-
-                    // Invalid credentials
-                    getResponseGenerator().addStatus( aHeaderParams, INVALID_CRED );
-
-                }
-
-            }
-            else {
-                // Decoding failure
-                getResponseGenerator().addStatus( aHeaderParams, PROCESSING_ERROR );
-            }
-
-        }
-
-    }
-    else if( authType == AUTH_MD5 ) {
-
-        if( aHeaderParams.cred.meta.type != SYNCML_FORMAT_AUTH_MD5 ||
-            aHeaderParams.cred.meta.format != SYNCML_FORMAT_ENCODING_B64 ) {
-
-            // Expecting md5 authentication, send a challenge back
-            ChalParams challenge;
-            challenge.meta.type = SYNCML_FORMAT_AUTH_MD5;
-            challenge.meta.format = SYNCML_FORMAT_ENCODING_B64;
-
-            QByteArray nonce = iNonceStorage->generateNonce();
-
-            challenge.meta.nextNonce = nonce.toBase64();
-
-            iNonceStorage->addNonce( getLocalDeviceName(),
-                                     getRemoteDeviceName(), nonce );
-
-            getResponseGenerator().addStatus( aHeaderParams, challenge, MISSING_CRED );
-        }
-        else {
-
-            AuthHelper helper;
-            AuthHelper::AuthData data;
-            data.iUsername = getConfig()->getUsername();
-            data.iPassword = getConfig()->getPassword();
-
-            QByteArray nonce = iNonceStorage->retrieveNonce( getLocalDeviceName(),
-                                                             getRemoteDeviceName() );
-
-            QByteArray hash = helper.encodeMD5B64Auth( data, nonce );
-
-            if( hash == aHeaderParams.cred.data.toAscii() ) {
-
-                // Authenticated
-                setSessionAuthenticated( true );
-                getResponseGenerator().addStatus( aHeaderParams, AUTH_ACCEPTED );
-
-            }
-            else {
-
-                // Invalid credentials
-                getResponseGenerator().addStatus( aHeaderParams, INVALID_CRED );
-
-            }
-
-        }
-    }
-    else {
-        abortSync( INTERNAL_ERROR, "Unknown authentication type" );
-    }
-}
-
-
 void SessionHandler::setupSession( HeaderParams& aHeaderParams )
 {
     FUNCTION_CALL_TRACE;
 
-    setSessionId( aHeaderParams.sessionID );
+    params().setSessionId( aHeaderParams.sessionID );
 
     // If remote party sent unknown device id, identify ourselves in the response
     if( aHeaderParams.targetDevice == SYNCML_UNKNOWN_DEVICE ) {
@@ -1259,32 +983,30 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
         }
     }
 
-    setLocalDeviceName( aHeaderParams.targetDevice );
-    setRemoteDeviceName( aHeaderParams.sourceDevice );
+    params().setLocalDeviceName( aHeaderParams.targetDevice );
+    params().setRemoteDeviceName( aHeaderParams.sourceDevice );
 
-    setAuthenticationType( getConfig()->getAuthenticationType() );
+    QString verDTD;
+    QString verProto;
 
     if( aHeaderParams.verDTD == SYNCML_DTD_VERSION_1_1 ) {
         LOG_DEBUG("Setting SyncML 1.1 protocol version");
-        setProtocolVersion( DS_1_1 );
+        setProtocolVersion( SYNCML_1_1 );
+        verDTD = SYNCML_DTD_VERSION_1_1;
+        verProto = DS_VERPROTO_1_1;
     }
     else if( aHeaderParams.verDTD == SYNCML_DTD_VERSION_1_2 ) {
         LOG_DEBUG("Setting SyncML 1.2 protocol version");
-        setProtocolVersion( DS_1_2 );
-    }
-
-    if( getAuthenticationType() == AUTH_NONE ) {
-        setSessionAuthenticated( true );
-    }
-    else {
-        setSessionAuthenticated( false );
+        setProtocolVersion( SYNCML_1_2 );
+        verDTD = SYNCML_DTD_VERSION_1_2;
+        verProto = DS_VERPROTO_1_2;
     }
 
     HeaderParams headerParams;
-    headerParams.sessionID = getSessionId();
-    headerParams.sourceDevice = getLocalDeviceName();
-    headerParams.targetDevice = getRemoteDeviceName();
-    headerParams.maxMsgSize = getLocalMaxMsgSize();
+    headerParams.sessionID = params().sessionId();
+    headerParams.sourceDevice = params().localDeviceName();
+    headerParams.targetDevice = params().remoteDeviceName();
+    headerParams.meta.maxMsgSize = params().localMaxMsgSize();
 
     if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
     {
@@ -1299,20 +1021,20 @@ void SessionHandler::setupSession( const QString& aSessionId )
 {
     FUNCTION_CALL_TRACE;
 
-    setSessionId( aSessionId );
+    params().setSessionId( aSessionId );
 
     if( !getConfig()->getLocalDeviceName().isEmpty() ) {
-        setLocalDeviceName( getConfig()->getLocalDeviceName() );
+        params().setLocalDeviceName( getConfig()->getLocalDeviceName() );
     }
     else {
-        setLocalDeviceName( getDevInfHandler().getLocalDeviceInfo().getDeviceID() );
+        params().setLocalDeviceName( getDevInfHandler().getLocalDeviceInfo().getDeviceID() );
     }
 
     if( !getConfig()->getRemoteDeviceName().isEmpty() ) {
-        setRemoteDeviceName( getConfig()->getRemoteDeviceName() );
+        params().setRemoteDeviceName( getConfig()->getRemoteDeviceName() );
     }
     else {
-        setRemoteDeviceName( SYNCML_UNKNOWN_DEVICE );
+        params().setRemoteDeviceName( SYNCML_UNKNOWN_DEVICE );
     }
 
     setProtocolVersion( getConfig()->getProtocolVersion() );
@@ -1321,24 +1043,33 @@ void SessionHandler::setupSession( const QString& aSessionId )
         setSyncWithoutInitPhase( true );
     }
 
-    setAuthenticationType( getConfig()->getAuthenticationType() );
+    QString verDTD;
+    QString verProto;
+
+    if( getProtocolVersion() == SYNCML_1_1 )
+    {
+        LOG_DEBUG("Setting SyncML 1.1 protocol version");
+        verDTD = SYNCML_DTD_VERSION_1_1;
+        verProto = DS_VERPROTO_1_1;
+    }
+    else if( getProtocolVersion() == SYNCML_1_2 )
+    {
+        LOG_DEBUG("Setting SyncML 1.2 protocol version");
+        verDTD = SYNCML_DTD_VERSION_1_2;
+        verProto = DS_VERPROTO_1_2;
+    }
 
     HeaderParams headerParams;
-    headerParams.sessionID = getSessionId();
-    headerParams.sourceDevice = getLocalDeviceName();
-    headerParams.targetDevice = getRemoteDeviceName();
-    headerParams.maxMsgSize = getLocalMaxMsgSize();
+    headerParams.verDTD = verDTD;
+    headerParams.verProto = verProto;
+    headerParams.sessionID = params().sessionId();
+    headerParams.sourceDevice = params().localDeviceName();
+    headerParams.targetDevice = params().remoteDeviceName();
+    headerParams.meta.maxMsgSize = params().localMaxMsgSize();
 
     if( getConfig()->extensionEnabled( EMITAGSEXTENSION ) )
     {
         insertEMITagsToken(headerParams);
-    }
-
-    if( getAuthenticationType() == AUTH_NONE ) {
-        setSessionAuthenticated( true );
-    }
-    else {
-        setSessionAuthenticated( false );
     }
 
     setLocalHeaderParams( headerParams );
@@ -1438,7 +1169,7 @@ SyncTarget* SessionHandler::createSyncTarget( StoragePlugin& aPlugin, const Sync
 
     if( !target ) {
 
-        ChangeLog* changelog = new ChangeLog( getRemoteDeviceName(),
+        ChangeLog* changelog = new ChangeLog( params().remoteDeviceName(),
                                               aPlugin.getSourceURI(),
                                               aSyncMode.syncDirection() );
 
@@ -1497,49 +1228,19 @@ const HeaderParams& SessionHandler::getLocalHeaderParams() const
     return iResponseGenerator.getHeaderParams();
 }
 
-void SessionHandler::setRemoteMaxMsgSize( int aMaxMsgSize )
-{
-    iRemoteMaxMsgSize = aMaxMsgSize;
-}
-
-int SessionHandler::getRemoteMaxMsgSize() const
-{
-    return iRemoteMaxMsgSize;
-}
-
-void SessionHandler::setLocalMaxMsgSize( int aMaxMsgSize )
-{
-    iLocalMaxMsgSize = aMaxMsgSize;
-}
-
-int SessionHandler::getLocalMaxMsgSize()
-{
-    return iLocalMaxMsgSize;
-}
-
 void SessionHandler::setRemoteLocURI( const QString& aURI )
 {
     getTransport().setRemoteLocURI(aURI);
 }
 
-bool SessionHandler::getSessionAuthenticated() const
+SessionAuthentication& SessionHandler::authentication()
 {
-    return iSessionAuthenticated;
+    return iSessionAuth;
 }
 
-void SessionHandler::setSessionAuthenticated( bool aAuthenticated )
+SessionParams& SessionHandler::params()
 {
-    iSessionAuthenticated = aAuthenticated;
-}
-
-void SessionHandler::setAuthenticationType( const AuthenticationType& aAuthenticationType )
-{
-    iAuthenticationType = aAuthenticationType;
-}
-
-AuthenticationType SessionHandler::getAuthenticationType() const
-{
-    return iAuthenticationType;
+    return iSessionParams;
 }
 
 const SyncAgentConfig* SessionHandler::getConfig() const
@@ -1620,26 +1321,6 @@ void DataSync::SessionHandler::resetRemoteBusyStatus()
 	iRemoteReportedBusy = false;
 }
 
-void SessionHandler::setLocalDeviceName( const QString& aLocalDeviceName )
-{
-    iLocalDeviceName = aLocalDeviceName;
-}
-
-const QString& SessionHandler::getLocalDeviceName() const
-{
-    return iLocalDeviceName;
-}
-
-void SessionHandler::setRemoteDeviceName( const QString& aRemoteDeviceName )
-{
-    iRemoteDeviceName = aRemoteDeviceName;
-}
-
-const QString& SessionHandler::getRemoteDeviceName() const
-{
-    return iRemoteDeviceName;
-}
-
 DevInfHandler& SessionHandler::getDevInfHandler()
 {
     return iDevInfHandler;
@@ -1653,9 +1334,9 @@ void SessionHandler::insertEMITagsToken( HeaderParams& aLocalHeader )
 
     QStringList tags = data.toStringList();
 
-    LOG_WARNING( "EMI tags extension: adding token" << tags[0] );
+    LOG_DEBUG( "EMI tags extension: adding token" << tags[0] );
 
-    aLocalHeader.EMI.append( tags[0] );
+    aLocalHeader.meta.EMI.append( tags[0] );
 
 
 }
@@ -1668,10 +1349,10 @@ void SessionHandler::handleEMITags( const HeaderParams& aRemoteHeader, HeaderPar
 
     QStringList tags = data.toStringList();
 
-    if( aRemoteHeader.EMI.contains( tags[0] ) )
+    if( aRemoteHeader.meta.EMI.contains( tags[0] ) )
     {
         LOG_DEBUG( "EMI tags extension: responding to" << tags[0] << "with" << tags[1] );
-        aLocalHeader.EMI.append( tags[1] );
+        aLocalHeader.meta.EMI.append( tags[1] );
     }
 
 }
@@ -1688,7 +1369,7 @@ void SessionHandler::clearEMITags()
 
     for( int i = 0; i < tags.count(); ++i )
     {
-        headerParams.EMI.removeOne( tags[i] );
+        headerParams.meta.EMI.removeOne( tags[i] );
     }
 
     setLocalHeaderParams( headerParams );

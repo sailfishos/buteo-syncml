@@ -33,20 +33,10 @@
 
 #include "SyncMLMessageTest.h"
 
-#include "SyncMLMessageTest.h"
-#include <QtTest>
 #include "TestLoader.h"
-#include "SyncMLMessage.h"
-#include "internals.h"
-#include "datatypes.h"
 
-using namespace DataSync;
-
-void SyncMLMessageTest::testSyncMLMessage() {
-
-   DataSync::HeaderParams hdr;
-   SyncMLMessage Message(hdr, ProtocolVersion(0));
+void SyncMLMessageTest::testSyncMLMessage()
+{
     // @TODO add the actual test .
-
 }
 TESTLOADER_ADD_TEST(SyncMLMessageTest);

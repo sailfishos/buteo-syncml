@@ -33,11 +33,14 @@
 
 #ifndef SYNCMLDELETETEST_H
 #define SYNCMLDELETETEST_H
+
 #include <QTest>
-class SyncMLDeleteTest: public QObject {
+
+class SyncMLDeleteTest: public QObject
+{
     Q_OBJECT
 private slots:
-    void testSyncMLDelete();
+
 };
 
 #endif // SYNCMLDELETETEST_H

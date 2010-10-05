@@ -33,11 +33,14 @@
 
 #ifndef SYNCMLLOCALCHANGETEST_H
 #define SYNCMLLOCALCHANGETEST_H
+
 #include <QTest>
-class SyncMLLocalChangeTest: public QObject {
+
+class SyncMLLocalChangeTest: public QObject
+{
     Q_OBJECT
 private slots:
-    void testSycnMLLocalChange();
+
 };
 
 #endif // SYNCMLLOCALCHANGETEST_H

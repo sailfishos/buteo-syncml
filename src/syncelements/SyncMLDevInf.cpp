@@ -32,14 +32,16 @@
 */
 
 #include "SyncMLDevInf.h"
+
+#include <QDomDocument>
+#include <QTextStream>
+
+#include "SyncMLGlobals.h"
 #include "DeviceInfo.h"
 #include "StoragePlugin.h"
 #include "SyncMLCTCap.h"
-#include "internals.h"
 #include "datatypes.h"
 #include "LogMacros.h"
-#include <QDomDocument>
-#include <QTextStream>
 
 using namespace DataSync;
 
@@ -52,7 +54,7 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
     SyncMLCmdObject* sourceObject = new SyncMLCmdObject(SYNCML_ELEMENT_SOURCE);
 
     SyncMLCmdObject* sourceURIObject = new SyncMLCmdObject(SYNCML_ELEMENT_LOCURI,
-            aVersion == DS_1_2 ? SYNCML_DEVINF_PATH_12 : SYNCML_DEVINF_PATH_11 );
+            aVersion == SYNCML_1_2 ? SYNCML_DEVINF_PATH_12 : SYNCML_DEVINF_PATH_11 );
     sourceObject->addChild(sourceURIObject);
     addChild(sourceObject);
 
@@ -62,7 +64,7 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
     devInfObject->addAttribute( XML_NAMESPACE,XML_NAMESPACE_VALUE_DEVINF );
 
     SyncMLCmdObject* verDTDObject = new SyncMLCmdObject(SYNCML_ELEMENT_VERDTD,
-            aVersion == DS_1_2 ? SYNCML_DTD_VERSION_1_2 : SYNCML_DTD_VERSION_1_1 );
+            aVersion == SYNCML_1_2 ? SYNCML_DTD_VERSION_1_2 : SYNCML_DTD_VERSION_1_1 );
     devInfObject->addChild( verDTDObject );
 
     SyncMLCmdObject* manObject = new SyncMLCmdObject( SYNCML_ELEMENT_MAN,
@@ -112,14 +114,14 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
     // capabilities of every storage plugin. In SyncML 1.2 CTCaps are sent with corresponding
     // DataStore element as parent
 
-    if( aVersion == DS_1_1 ) {
+    if( aVersion == SYNCML_1_1) {
 
         SyncMLCTCap* ctcap = NULL;
 
         for( int i = 0; i < aDataStores.count(); ++i ) {
             devInfObject->addChild( generateDataStore( *aDataStores[i], aRole ) );
 
-            QByteArray cap = aDataStores[i]->getPluginCTCaps( DS_1_1 );
+            QByteArray cap = aDataStores[i]->getPluginCTCaps( SYNCML_1_1 );
 
             if( !cap.isEmpty() ) {
 
@@ -137,12 +139,12 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
         }
 
     }
-    else if( aVersion == DS_1_2 ) {
+    else if( aVersion == SYNCML_1_2 ) {
 
         for( int i = 0; i < aDataStores.count(); ++i ) {
             SyncMLCmdObject* dataStore = generateDataStore( *aDataStores[i], aRole );
 
-            QByteArray cap = aDataStores[i]->getPluginCTCaps( DS_1_2 );
+            QByteArray cap = aDataStores[i]->getPluginCTCaps( SYNCML_1_2 );
             QDomDocument doc;
             if( !cap.isEmpty() && doc.setContent( cap ) ) {
 

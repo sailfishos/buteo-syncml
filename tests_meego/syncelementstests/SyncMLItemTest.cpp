@@ -33,18 +33,19 @@
 
 #include "SyncMLItemTest.h"
 
-#include <QtTest>
-#include "TestLoader.h"
 #include "SyncMLItem.h"
-#include "internals.h"
 #include "SyncItemKey.h"
 #include "QtEncoder.h"
 #include "LibWbXML2Encoder.h"
 #include "TestUtils.h"
+#include "TestLoader.h"
+#include "datatypes.h"
+
+#include <QtTest>
 
 using namespace DataSync;
 
-void SyncMLItemTest::testSycnMLItem()
+void SyncMLItemTest::testSyncMLItem()
 {
     SyncItemKey source("contacts");
     SyncItemKey target("calendar");
@@ -104,7 +105,7 @@ void SyncMLItemTest::regressionNB188615_02()
 
     LibWbXML2Encoder encoder;
     QByteArray output;
-    QVERIFY( encoder.encodeToXML( item, DS_1_2, output, false ) );
+    QVERIFY( encoder.encodeToXML( item, SYNCML_1_2, output, false ) );
 
     QVERIFY( output.contains( data ) );
 
@@ -126,7 +127,7 @@ void SyncMLItemTest::regressionNB188615_03()
 
     LibWbXML2Encoder encoder;
     QByteArray output;
-    QVERIFY( encoder.encodeToWbXML( item, DS_1_2, output ) );
+    QVERIFY( encoder.encodeToWbXML( item, SYNCML_1_2, output ) );
 
     QVERIFY( output.contains( data ) );
 

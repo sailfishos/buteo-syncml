@@ -261,6 +261,7 @@ namespace DataSync
     #define SYNCML_ELEMENT_PROPPARAM "PropParam"
     #define SYNCML_ELEMENT_MAXOCCUR "MaxOccur"
     #define SYNCML_ELEMENT_NOTRUNCATE "NoTruncate"
+    #define SYNCML_ELEMENT_EXEC "Exec"
 
     #define SYNCML_CONTENT_TYPE "Content-Type"
     #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"
@@ -273,16 +274,17 @@ namespace DataSync
     #define SYNCML_DEVINF_PATH_11 "./devinf11"
     #define SYNCML_DEVINF_PATH_12 "./devinf12"
 
-    #define XML_NAMESPACE          "xmlns"
-    #define XML_NAMESPACE_VALUE_SYNCML11  "SYNCML:SYNCML1.1"
-    #define XML_NAMESPACE_VALUE_SYNCML12  "SYNCML:SYNCML1.2"
-    #define XML_NAMESPACE_VALUE_DEVINF    "syncml:devinf"
-    #define XML_NAMESPACE_VALUE_METINF    "syncml:metinf"
-    #define SYNCML_DTD_VERSION_1_2     "1.2"
-    #define SYNCML12_VERPROTO "SyncML/1.2"
+    #define XML_NAMESPACE                   "xmlns"
+    #define XML_NAMESPACE_VALUE_SYNCML11    "SYNCML:SYNCML1.1"
+    #define SYNCML_DTD_VERSION_1_1          "1.1"
+    #define DS_VERPROTO_1_1                 "SyncML/1.1"
+    #define XML_NAMESPACE_VALUE_SYNCML12    "SYNCML:SYNCML1.2"
+    #define SYNCML_DTD_VERSION_1_2          "1.2"
+    #define DS_VERPROTO_1_2                 "SyncML/1.2"
+    #define XML_NAMESPACE_VALUE_DEVINF      "syncml:devinf"
+    #define XML_NAMESPACE_VALUE_METINF      "syncml:metinf"
 
-    #define SYNCML_DTD_VERSION_1_1     "1.1"
-    #define SYNCML11_VERPROTO "SyncML/1.1"
+
     #define SYNCML_UNKNOWN_DEVICE "/"
     #define SYNCML_URI_PREFIX "./"
 

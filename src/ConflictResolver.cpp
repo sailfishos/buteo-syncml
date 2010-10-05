@@ -32,9 +32,11 @@
 */
 
 #include "ConflictResolver.h"
-#include "LogMacros.h"
+
 #include "SyncAgentConsts.h"
-#include <QMap>
+#include "LocalChanges.h"
+#include "LogMacros.h"
+
 
 using namespace DataSync;
 

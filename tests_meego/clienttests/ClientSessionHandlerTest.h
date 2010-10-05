@@ -54,7 +54,6 @@ private slots:
 
     void testMapReceived();
     void testResendPackage();
-    void testSyncAlertReceived();
     void testSyncReceived();
     void testFinalReceived();
     void testBusyStatusReceived();
@@ -62,24 +61,6 @@ private slots:
     void regression_NB166841_01();
     void regression_NB166841_02();
     void regression_NB166841_03();
-
-//     void testPrepareSync();
-//     void testStartSync();
-//
-//     void testHandleResponseHeader();
-//     void testSetGetSyncStatus();
-//     void testAddGetSyncTargets();
-//     void testServerInitiatedSync();
-//
-//     void testMessageReceived();
-//
-//
-//
-//
-//     void testMessageParsed();
-//
-//     void testComposeServerModificationsPackage();
-//     void testAcknowledgeTarget();
 
 private:
     MockTransport*                      iTransport;

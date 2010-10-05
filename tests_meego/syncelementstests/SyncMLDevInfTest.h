@@ -33,8 +33,11 @@
 
 #ifndef SYNCMLDEVINFTEST_H
 #define SYNCMLDEVINFTEST_H
+
 #include <QTest>
-class SyncMLDevInfTest: public QObject {
+
+class SyncMLDevInfTest: public QObject
+{
     Q_OBJECT
 private slots:
     void testSyncMLDevInf();

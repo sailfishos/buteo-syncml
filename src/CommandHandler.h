@@ -37,9 +37,9 @@
 #include <QMap>
 
 #include "SyncMLGlobals.h"
-#include "internals.h"
 #include "SyncAgentConsts.h"
 #include "StorageHandler.h"
+#include "datatypes.h"
 
 namespace DataSync {
 
@@ -61,6 +61,12 @@ class StorageHandler;
 class ResponseGenerator;
 class ConflictResolver;
 class DeviceInfo;
+
+struct MapParams;
+struct SyncParams;
+struct StatusParams;
+struct CommandParams;
+
 class CommandHandlerTest;
 
 /*! \brief Responsible for handling and processing individual SyncML commands
@@ -113,6 +119,15 @@ public:
      */
     void rejectSync( const SyncParams& aSyncParams, ResponseGenerator& aResponseGenerator,
                      ResponseStatusCode aResponseCode );
+
+    /*! \brief Reject SyncML command (and all it's subcommands)
+     *
+     * @param aCommand Command element data
+     * @param aResponseGenerator Response generator to use
+     * @param aResponseCode Response code to use
+     */
+    void rejectCommand( const CommandParams& aCommand, ResponseGenerator& aResponseGenerator,
+                        ResponseStatusCode aResponseCode );
 
     /*! \brief Handle incoming status element
      *

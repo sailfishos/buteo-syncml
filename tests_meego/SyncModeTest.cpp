@@ -31,12 +31,12 @@
 * 
 */
 
-#include "SyncMode.h"
 #include "SyncModeTest.h"
+
+#include "SyncMode.h"
+#include "datatypes.h"
+
 #include "TestLoader.h"
-
-#include "internals.h"
-
 
 using namespace DataSync;
 

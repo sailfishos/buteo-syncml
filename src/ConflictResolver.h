@@ -35,9 +35,11 @@
 #define CONFLICTRESOLVER_H
 
 #include "SyncAgentConsts.h"
-#include "internals.h"
+#include "SyncItemKey.h"
 
 namespace DataSync {
+
+class LocalChanges;
 
 class ConflictResolverTest;
 

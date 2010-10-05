@@ -65,7 +65,10 @@ void ServerSessionHandler::initiateSync()
 {
     FUNCTION_CALL_TRACE;
 
-    prepareSync();
+    if( !prepareSync() )
+    {
+        return;
+    }
 
     QString sessionId = generateSessionID();
     setupSession( sessionId );
@@ -105,10 +108,10 @@ void ServerSessionHandler::initiateSync()
         return;
     }
 
-    if( protocolVersion == DS_1_1 ) {
+    if( protocolVersion == SYNCML_1_1 ) {
         serverInitiatedSyncDS11( storages );
     }
-    else if (protocolVersion == DS_1_2){
+    else if ( protocolVersion == SYNCML_1_2 ){
         serverInitiatedSyncDS12( storages );
     }
     else {
@@ -120,7 +123,10 @@ void ServerSessionHandler::serveRequest( QList<Fragment*>& aFragments )
 {
     FUNCTION_CALL_TRACE;
 
-    prepareSync();
+    if( !prepareSync() )
+    {
+        return;
+    }
 
     processMessage( aFragments, true );
 }
@@ -159,7 +165,7 @@ void ServerSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 }
 
 ResponseStatusCode ServerSessionHandler::syncAlertReceived( const SyncMode& aSyncMode,
-                                                            AlertParams& aAlertParams )
+                                                            CommandParams& aAlertParams )
 {
 
     FUNCTION_CALL_TRACE;
@@ -414,26 +420,37 @@ void ServerSessionHandler::resendPackage()
 }
 
 ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aSyncMode,
-                                                              AlertParams& aAlertParams )
+                                                              CommandParams& aAlertParams )
 {
     FUNCTION_CALL_TRACE;
+
+    if( aAlertParams.items.isEmpty() )
+    {
+        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        return INCOMPLETE_COMMAND;
+    }
 
     // Require remote device source database (which is our target database), and
     // either remote device target database (which is our source database) or mime type
     // of our source database. Also Next anchor
-    if( aAlertParams.sourceDatabase.isEmpty() ||
-        aAlertParams.nextAnchor.isEmpty() ||
-        ( aAlertParams.targetDatabase.isEmpty() && aAlertParams.type.isEmpty() ) ) {
+    const ItemParams& item = aAlertParams.items.first();
+    const MetaParams& meta = item.meta;
+    const AnchorParams& anchors = meta.anchor;
+    if( item.source.isEmpty() ||
+        anchors.next.isEmpty() ||
+        ( item.target.isEmpty() && meta.type.isEmpty() ) )
+    {
+        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
         return INCOMPLETE_COMMAND;
     }
 
     StoragePlugin* source = 0;
 
-    if( !aAlertParams.targetDatabase.isEmpty() ) {
-        source = createStorageByURI( aAlertParams.targetDatabase );
+    if( !item.target.isEmpty() ) {
+        source = createStorageByURI( item.target );
     }
-    else if( !aAlertParams.type.isEmpty() ){
-        source = createStorageByMIME( aAlertParams.type );
+    else if( !meta.type.isEmpty() ){
+        source = createStorageByMIME( meta.type );
     }
 
     if( !source ) {
@@ -449,10 +466,10 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
     ResponseStatusCode status = SUCCESS;
 
     target->setSyncMode( aSyncMode );
-    target->setRemoteNextAnchor( aAlertParams.nextAnchor );
-    target->setTargetDatabase( aAlertParams.sourceDatabase );
+    target->setRemoteNextAnchor( anchors.next );
+    target->setTargetDatabase( item.source );
 
-    if( anchorMismatch( aSyncMode, *target, aAlertParams.lastAnchor ) )
+    if( anchorMismatch( aSyncMode, *target, anchors.last ) )
     {
 
         LOG_DEBUG("Anchor mismatch, refresh required");
@@ -519,21 +536,31 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
 
 
 ResponseStatusCode ServerSessionHandler::acknowledgeTarget( const SyncMode& /*aSyncMode*/,
-                                                            AlertParams& aAlertParams )
+                                                            CommandParams& aAlertParams )
 {
     FUNCTION_CALL_TRACE;
 
-    if( aAlertParams.targetDatabase.isEmpty() ) {
+    if( aAlertParams.items.isEmpty() )
+    {
+        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
         return INCOMPLETE_COMMAND;
     }
 
-    SyncTarget* target = getSyncTarget( aAlertParams.targetDatabase );
+    const ItemParams& item = aAlertParams.items.first();
+
+    if( item.target.isEmpty() )
+    {
+        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
+        return INCOMPLETE_COMMAND;
+    }
+
+    SyncTarget* target = getSyncTarget( item.target );
 
     if( !target ) {
         return NOT_FOUND;
     }
 
-    target->setRemoteNextAnchor( aAlertParams.nextAnchor );
+    target->setRemoteNextAnchor( item.meta.anchor.next );
 
     target->revertSyncMode();
 
@@ -549,9 +576,7 @@ void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage( const QList<
 {
     FUNCTION_CALL_TRACE;
 
-    composeAuthentication();
-
-    AlertType alertCode = (AlertType)iConfig->getSyncMode().toSyncMLCode();
+    qint32 alertCode = iConfig->getSyncMode().toSyncMLCode();
 
     for( int i = 0; i < aStorages.count(); ++i )
     {
@@ -574,7 +599,7 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const
     SANHandler handler;
     SANData data;
 
-    data.iVersion = DS_1_2;
+    data.iVersion = SYNCML_1_2;
     data.iUIMode = SANUIMODE_BACKGROUND;
     data.iInitiator = SANINITIATOR_SERVER;
     data.iSessionId = 0;
@@ -651,7 +676,7 @@ void ServerSessionHandler::composeServerInitialization()
 
     foreach( const SyncTarget* target, targets) {
 
-        AlertPackage* package = new AlertPackage( (AlertType)target->getSyncMode()->toSyncMLCode(),
+        AlertPackage* package = new AlertPackage( target->getSyncMode()->toSyncMLCode(),
                                                   target->getSourceDatabase(),
                                                   target->getTargetDatabase(),
                                                   target->getLocalLastAnchor(),

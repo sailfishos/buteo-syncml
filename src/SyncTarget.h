@@ -37,7 +37,8 @@
 #include "SyncMode.h"
 #include "SyncAgentConsts.h"
 #include "SyncMLGlobals.h"
-#include "internals.h"
+#include "LocalChanges.h"
+#include "datatypes.h"
 
 
 namespace DataSync {

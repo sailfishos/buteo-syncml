@@ -36,7 +36,7 @@
 
 #include <QObject>
 
-#include "internals.h"
+#include "Fragments.h"
 
 class SyncMLMessageParserTest : public QObject
 {
@@ -48,11 +48,12 @@ private slots:
     void testInvalid1();
     void testDevInf11();
     void testDevInf12();
+    void testSubcommands();
 
 private:
-    void verifyAdd( const DataSync::SyncActionData& aData );
-    void verifyReplace( const DataSync::SyncActionData& aData );
-    void verifyDelete( const DataSync::SyncActionData& aData );
+    void verifyAdd( const DataSync::CommandParams& aData );
+    void verifyReplace( const DataSync::CommandParams& aData );
+    void verifyDelete( const DataSync::CommandParams& aData );
 
 };
 #endif // SYNCMLMESSAGEBUILDERTEST_H

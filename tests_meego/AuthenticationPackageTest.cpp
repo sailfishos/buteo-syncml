@@ -32,11 +32,13 @@
 */
 
 #include "AuthenticationPackageTest.h"
+
 #include "AuthenticationPackage.h"
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
-#include "internals.h"
 #include "QtEncoder.h"
+#include "TestLoader.h"
+#include "Fragments.h"
+#include "datatypes.h"
 
 using namespace DataSync;
 
@@ -49,7 +51,7 @@ void AuthenticationPackageTest::testWrite()
     QCOMPARE(pkg.iUsername, user_name);
     QCOMPARE(pkg.iPassword, password);
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
 
     QtEncoder encoder;
     QByteArray initial_xml;
@@ -80,7 +82,7 @@ void AuthenticationPackageTest::testWrite2()
 
     pkg.iNonce = QString::number( QDateTime::currentDateTime().toTime_t() ).toAscii();
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     QByteArray initial_xml;
 
     QVERIFY( encoder.encodeToXML( msg, initial_xml, true ) );

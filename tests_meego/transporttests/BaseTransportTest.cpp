@@ -33,10 +33,11 @@
 
 #include "BaseTransportTest.h"
 
-#include "internals.h"
 #include "SyncMLMessage.h"
 #include "TestLoader.h"
 #include "TestUtils.h"
+#include "Fragments.h"
+#include "Mock.h"
 
 #include <QSignalSpy>
 
@@ -58,20 +59,22 @@ void BaseTransportTest::cleanupTestCase()
 
 void BaseTransportTest::testBasicXMLSend()
 {
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
-    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
+    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice*, bool ) ) );
 
     transport.setWbXml( false );
 
     HeaderParams params;
 
+    params.verDTD = SYNCML_DTD_VERSION_1_2;
+    params.verProto = DS_VERPROTO_1_2;
     params.msgID = 1;
     params.targetDevice = "targetDevice";
     params.sourceDevice = "sourceDevice";
 
-    SyncMLMessage* message = new  SyncMLMessage( params, DS_1_2 );
+    SyncMLMessage* message = new  SyncMLMessage( params, SYNCML_1_2 );
 
     QVERIFY( transport.sendSyncML( NULL ) == false );
     QVERIFY( sendEvent.count() == 0  );
@@ -92,10 +95,10 @@ void BaseTransportTest::testBasicXMLSend()
 
 void BaseTransportTest::testBasicXMLReceive()
 {
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
-    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
+    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice*, bool ) ) );
 
     transport.setWbXml( false );
 
@@ -120,7 +123,7 @@ void BaseTransportTest::testBasicXMLReceive()
 
 void BaseTransportTest::testBasicWbXMLSend()
 {
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
     QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
@@ -133,7 +136,7 @@ void BaseTransportTest::testBasicWbXMLSend()
     params.targetDevice = "targetDevice";
     params.sourceDevice = "sourceDevice";
 
-    SyncMLMessage* message = new  SyncMLMessage( params, DS_1_2 );
+    SyncMLMessage* message = new  SyncMLMessage( params, SYNCML_1_2 );
 
     QVERIFY( transport.sendSyncML( NULL ) == false );
     QVERIFY( sendEvent.count() == 0  );
@@ -160,10 +163,10 @@ void BaseTransportTest::testBasicWbXMLSend()
 
 void BaseTransportTest::testBasicWbXMLReceive()
 {
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
-    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
+    QSignalSpy readData( &transport, SIGNAL( readXMLData( QIODevice*, bool ) ) );
 
     transport.setWbXml( true );
 
@@ -193,7 +196,7 @@ void BaseTransportTest::testSANReceive01()
 {
 
     // testSANReceive01: test SAN receive with correct content type
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
     QSignalSpy readXMLData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
@@ -226,7 +229,7 @@ void BaseTransportTest::testSANReceive02()
     // testSANReceive01: test SAN receive with bad content type. Nokia SW seems to
     // use wbxml content type with SAN, even though standard specifies a distinct
     // content type for it
-    TestTransport transport;
+    TestTransport transport( true );
 
     QSignalSpy sendEvent( &transport, SIGNAL( sendEvent( DataSync::TransportStatusEvent, const QString& ) ) );
     QSignalSpy readXMLData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
@@ -252,58 +255,6 @@ void BaseTransportTest::testSANReceive02()
 
     QCOMPARE( originalData, data );
 
-}
-
-TestTransport::TestTransport( QObject* aParent )
- : BaseTransport( aParent )
-{
-
-}
-
-TestTransport::~TestTransport()
-{
-
-}
-
-void TestTransport::setProperty( const QString& aProperty, const QString& aValue )
-{
-    Q_UNUSED( aProperty );
-    Q_UNUSED( aValue );
-}
-
-bool TestTransport::init()
-{
-    return true;
-}
-
-void TestTransport::close()
-{
-
-}
-
-bool TestTransport::prepareSend()
-{
-    return true;
-}
-
-bool TestTransport::doSend( const QByteArray& aData, const QString& aContentType )
-{
-
-    iData = aData;
-    iContentType = aContentType;
-
-    receive( aData, aContentType );
-
-    return true;
-}
-
-bool TestTransport::doReceive( const QString& aContentType )
-{
-    Q_UNUSED( aContentType );
-
-    receive( iData, iContentType );
-
-    return true;
 }
 
 TESTLOADER_ADD_TEST(BaseTransportTest);

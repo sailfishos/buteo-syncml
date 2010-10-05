@@ -84,7 +84,7 @@ protected:
 
     virtual void messageReceived( HeaderParams& aHeaderParams );
 
-    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    virtual ResponseStatusCode syncAlertReceived( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
     virtual bool syncReceived();
 
@@ -99,9 +99,9 @@ protected:
 
 private:
 
-    ResponseStatusCode setupTargetByClient( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    ResponseStatusCode setupTargetByClient( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
-    ResponseStatusCode acknowledgeTarget( const SyncMode& aSyncMode, AlertParams& aAlertParams );
+    ResponseStatusCode acknowledgeTarget( const SyncMode& aSyncMode, CommandParams& aAlertParams );
 
     void composeSyncML11ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages );
 

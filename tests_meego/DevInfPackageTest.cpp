@@ -39,6 +39,7 @@
 #include "Mock.h"
 #include "QtEncoder.h"
 #include "DeviceInfo.h"
+#include "Fragments.h"
 
 void DevInfPackageTest::testPutGet()
 {
@@ -49,9 +50,9 @@ void DevInfPackageTest::testPutGet()
     storage_plugins.append(&storage);
     const int SIZE_TRESHOLD = 10000;
 
-    DevInfPackage pkg(storage_plugins, devInfo, DS_1_2, ROLE_CLIENT );
+    DevInfPackage pkg(storage_plugins, devInfo, SYNCML_1_2, ROLE_CLIENT );
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
     QCOMPARE(pkg.write(msg, remaining), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
@@ -84,9 +85,9 @@ void DevInfPackageTest::testResults()
     const int SIZE_TRESHOLD = 10000;
     bool retrieveRemoteDevInf = false;
 
-    DevInfPackage pkg(msgId, cmdId, storage_plugins, devInfo, DS_1_2, ROLE_CLIENT, retrieveRemoteDevInf );
+    DevInfPackage pkg(msgId, cmdId, storage_plugins, devInfo, SYNCML_1_2, ROLE_CLIENT, retrieveRemoteDevInf );
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
     QCOMPARE(pkg.write(msg, remaining), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
@@ -125,9 +126,9 @@ void DevInfPackageTest::testResultsGet()
     const int SIZE_TRESHOLD = 10000;
     bool retrieveRemoteDevInf = true;
 
-    DevInfPackage pkg(msgId, cmdId, storage_plugins, devInfo, DS_1_2, ROLE_CLIENT, retrieveRemoteDevInf );
+    DevInfPackage pkg(msgId, cmdId, storage_plugins, devInfo, SYNCML_1_2, ROLE_CLIENT, retrieveRemoteDevInf );
 
-    SyncMLMessage msg(HeaderParams(), DS_1_2);
+    SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
     QCOMPARE(pkg.write(msg, remaining), true);
     QVERIFY(remaining < SIZE_TRESHOLD);

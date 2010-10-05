@@ -34,19 +34,20 @@
 #include "SyncMLHdr.h"
 
 #include "SyncMLMeta.h"
-#include "internals.h"
+#include "datatypes.h"
+#include "Fragments.h"
 
 using namespace DataSync;
 
-SyncMLHdr::SyncMLHdr( const HeaderParams& aHeaderParams, ProtocolVersion aVersion )
- : SyncMLCmdObject(SYNCML_ELEMENT_SYNCHDR), iVersion(aVersion)
+SyncMLHdr::SyncMLHdr( const HeaderParams& aHeaderParams )
+ : SyncMLCmdObject(SYNCML_ELEMENT_SYNCHDR)
 {
     SyncMLCmdObject* verDTDObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERDTD,
-            iVersion == DS_1_2 ? SYNCML_DTD_VERSION_1_2 : SYNCML_DTD_VERSION_1_1 );
+                                                         aHeaderParams.verDTD );
     addChild(verDTDObject);
 
     SyncMLCmdObject* verProtoObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERPROTO,
-            iVersion == DS_1_2 ? SYNCML12_VERPROTO : SYNCML11_VERPROTO );
+                                                           aHeaderParams.verProto );
     addChild(verProtoObject);
 
     SyncMLCmdObject* sessionIDObject = new SyncMLCmdObject( SYNCML_ELEMENT_SESSIONID,
@@ -77,26 +78,26 @@ SyncMLHdr::SyncMLHdr( const HeaderParams& aHeaderParams, ProtocolVersion aVersio
         addChild( respURIObject );
     }
 
-    if( aHeaderParams.maxMsgSize > 0 || aHeaderParams.maxObjSize > 0 ||
-        aHeaderParams.EMI.size() > 0 )
+    if( aHeaderParams.meta.maxMsgSize > 0 || aHeaderParams.meta.maxObjSize > 0 ||
+        aHeaderParams.meta.EMI.size() > 0 )
     {
 
         SyncMLMeta* metaObject = new SyncMLMeta;
 
-        if( aHeaderParams.maxMsgSize > 0 )
+        if( aHeaderParams.meta.maxMsgSize > 0 )
         {
-            metaObject->addMaxMsgSize( aHeaderParams.maxMsgSize );
+            metaObject->addMaxMsgSize( aHeaderParams.meta.maxMsgSize );
 
         }
 
-        if( aHeaderParams.maxObjSize > 0 )
+        if( aHeaderParams.meta.maxObjSize > 0 )
         {
-            metaObject->addMaxObjSize( aHeaderParams.maxObjSize );
+            metaObject->addMaxObjSize( aHeaderParams.meta.maxObjSize );
         }
 
-        for( int i = 0; i < aHeaderParams.EMI.size(); ++i )
+        for( int i = 0; i < aHeaderParams.meta.EMI.size(); ++i )
         {
-            metaObject->addEMI( aHeaderParams.EMI[i] );
+            metaObject->addEMI( aHeaderParams.meta.EMI[i] );
         }
 
         addChild(metaObject);

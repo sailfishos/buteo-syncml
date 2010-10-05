@@ -34,11 +34,6 @@
 #define BASETRANSPORTTEST_H
 
 #include <QTest>
-#include <QObject>
-
-#include "BaseTransport.h"
-
-using namespace DataSync;
 
 class BaseTransportTest : public QObject {
     Q_OBJECT;
@@ -57,39 +52,6 @@ private slots:
 
     void testSANReceive01();
     void testSANReceive02();
-
-};
-
-class TestTransport : public BaseTransport
-{
-    Q_OBJECT;
-
-public:
-
-    TestTransport( QObject* aParent = NULL );
-
-    virtual ~TestTransport();
-
-    virtual void setProperty( const QString& aProperty, const QString& aValue );
-
-    virtual bool init();
-
-    virtual void close();
-
-protected:
-
-    virtual bool prepareSend();
-
-    virtual bool doSend( const QByteArray& aData, const QString& aContentType );
-
-    virtual bool doReceive( const QString& aContentType );
-
-private:
-
-    QByteArray  iData;
-    QString     iContentType;
-
-    friend class BaseTransportTest;
 
 };
 

@@ -115,7 +115,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
     while( iStatuses.count() > 0 ) {
         StatusParams* params = iStatuses.first();
 
-        params->cmdID = message->getNextCmdId();
+        params->cmdId = message->getNextCmdId();
         SyncMLStatus* statusObject = new SyncMLStatus( *params );
 
         delete params;
@@ -196,17 +196,20 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, ResponseStatusCo
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = aParams.msgID;
-        statusParams->cmdRef = 0;
-        statusParams->cmd = SYNCML_ELEMENT_SYNCHDR;
-        statusParams->targetRef = aParams.targetDevice;
-        statusParams->sourceRef = aParams.sourceDevice;
-        statusParams->data = aStatusCode;
-
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = aParams.msgID;
+    statusParams->cmdRef = 0;
+    statusParams->cmd = SYNCML_ELEMENT_SYNCHDR;
+    statusParams->targetRef = aParams.targetDevice;
+    statusParams->sourceRef = aParams.sourceDevice;
+    statusParams->data = aStatusCode;
+
+    addStatus( statusParams );
 
 }
 
@@ -215,6 +218,8 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
 {
 
     FUNCTION_CALL_TRACE;
+
+    // Bypass iIgnoreStatuses flag: Status for SyncHdr should always be written
 
     StatusParams* statusParams = new StatusParams;
     statusParams->msgRef = aParams.msgID;
@@ -229,22 +234,93 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
 
 }
 
-void ResponseGenerator::addStatus( const AlertParams& aParams, ResponseStatusCode aStatusCode )
+void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
+                                   bool aWriteItemRefs, int aItemIndex )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-        statusParams->cmd = SYNCML_ELEMENT_ALERT;
-        statusParams->targetRef = aParams.targetDatabase;
-        statusParams->sourceRef = aParams.sourceDatabase;
-        statusParams->data = aStatusCode;
-        statusParams->nextAnchor = aParams.nextAnchor;
-
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->data = aStatusCode;
+
+    if( aParams.commandType == CommandParams::COMMAND_ALERT )
+    {
+        Q_ASSERT( !aParams.items.isEmpty() );
+        statusParams->cmd = SYNCML_ELEMENT_ALERT;
+        statusParams->nextAnchor = aParams.items.first().meta.anchor.next;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_ADD )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_ADD;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_REPLACE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_REPLACE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_DELETE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_DELETE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_GET )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_GET;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_COPY )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_COPY;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_MOVE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_MOVE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_EXEC )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_EXEC;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_ATOMIC )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_ATOMIC;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_SEQUENCE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_SEQUENCE;
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
+
+    if( aWriteItemRefs )
+    {
+        if( aItemIndex != -1 )
+        {
+            statusParams->sourceRef = aParams.items[aItemIndex].source;
+            statusParams->targetRef = aParams.items[aItemIndex].target;
+        }
+        else if( aParams.items.count() > 1 )
+        {
+            for (int i = 0; i < aParams.items.count(); ++i)
+            {
+                ItemParams item;
+                item.source = aParams.items[i].source;
+                item.target = aParams.items[i].target;
+                statusParams->items.append(item);
+            }
+        }
+        else if( !aParams.items.isEmpty() )
+        {
+            statusParams->sourceRef = aParams.items.first().source;
+            statusParams->targetRef = aParams.items.first().target;
+        }
+    }
+
+    addStatus( statusParams );
 
 }
 
@@ -252,17 +328,20 @@ void ResponseGenerator::addStatus( const SyncParams& aParams, ResponseStatusCode
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-        statusParams->cmd = SYNCML_ELEMENT_SYNC;
-        statusParams->targetRef = aParams.targetDatabase;
-        statusParams->sourceRef = aParams.sourceDatabase;
-        statusParams->data = aStatusCode;
-
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->cmd = SYNCML_ELEMENT_SYNC;
+    statusParams->targetRef = aParams.target;
+    statusParams->sourceRef = aParams.source;
+    statusParams->data = aStatusCode;
+
+    addStatus( statusParams );
 
 }
 
@@ -270,146 +349,19 @@ void ResponseGenerator::addStatus( const MapParams& aParams, ResponseStatusCode 
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-        statusParams->cmd = SYNCML_ELEMENT_MAP;
-        statusParams->targetRef = aParams.target;
-        statusParams->sourceRef = aParams.source;
-        statusParams->data = aStatusCode;
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
 
-}
-
-void ResponseGenerator::addStatus( const SyncActionData& aParams , ResponseStatusCode aStatusCode )
-
-{
-    FUNCTION_CALL_TRACE;
-
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-
-        switch( aParams.action )
-        {
-            case SYNCML_ADD:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_ADD;
-                break;
-            }
-            case SYNCML_DELETE:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_DELETE;
-                break;
-            }
-            case SYNCML_REPLACE:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_REPLACE;
-                break;
-            }
-            case SYNCML_PUT:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_PUT;
-                break;
-            }
-            case SYNCML_GET:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_GET;
-                break;
-            }
-            case SYNCML_ATOMIC:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_ATOMIC;
-                break;
-            }
-            case SYNCML_COPY:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_COPY;
-                break;
-            }
-            case SYNCML_MOVE:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_MOVE;
-                break;
-            }
-            case SYNCML_SEQUENCE:
-            {
-                statusParams->cmd = SYNCML_ELEMENT_SEQUENCE;
-                break;
-            }
-            default:
-            {
-                Q_ASSERT(0);
-                break;
-            }
-        }
-
-        if( aParams.items.count() > 1 ) {
-            for (int i = 0; i < aParams.items.count(); ++i) {
-                ItemParams item;
-                item.source = aParams.items[i].source;
-                item.target = aParams.items[i].target;
-                statusParams->itemList.append(item);
-            }
-        }
-        else if( aParams.items.count() > 0 ){
-            statusParams->sourceRef = aParams.items[0].source;
-            statusParams->targetRef = aParams.items[0].target;
-        }
-
-        statusParams->data = aStatusCode;
-        addStatus( statusParams );
-    }
-
-}
-
-void ResponseGenerator::addStatus( const SyncActionData& aParams, const ItemParams& aItem,
-                                   ResponseStatusCode aStatusCode )
-
-{
-    FUNCTION_CALL_TRACE;
-
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-
-        if (aParams.action == SYNCML_ADD) {
-            statusParams->cmd = SYNCML_ELEMENT_ADD;
-        }
-        else if (aParams.action == SYNCML_DELETE) {
-            statusParams->cmd = SYNCML_ELEMENT_DELETE;
-        }
-        else if (aParams.action == SYNCML_REPLACE) {
-            statusParams->cmd = SYNCML_ELEMENT_REPLACE;
-        }
-        else if( aParams.action == SYNCML_PUT ) {
-            statusParams->cmd = SYNCML_ELEMENT_PUT;
-        }
-        else if( aParams.action == SYNCML_GET ) {
-            statusParams->cmd = SYNCML_ELEMENT_GET;
-        }
-        else if( aParams.action == SYNCML_ATOMIC ) {
-            statusParams->cmd = SYNCML_ELEMENT_ATOMIC;
-        }
-        else if( aParams.action == SYNCML_COPY ) {
-            statusParams->cmd = SYNCML_ELEMENT_COPY;
-        }
-        else if( aParams.action == SYNCML_MOVE ) {
-            statusParams->cmd = SYNCML_ELEMENT_MOVE;
-        }
-        else if( aParams.action == SYNCML_SEQUENCE ) {
-            statusParams->cmd = SYNCML_ELEMENT_SEQUENCE;
-        }
-
-        statusParams->sourceRef = aItem.source;
-        statusParams->targetRef = aItem.target;
-        statusParams->data = aStatusCode;
-        addStatus( statusParams );
-    }
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->cmd = SYNCML_ELEMENT_MAP;
+    statusParams->targetRef = aParams.target;
+    statusParams->sourceRef = aParams.source;
+    statusParams->data = aStatusCode;
+    addStatus( statusParams );
 
 }
 
@@ -417,28 +369,36 @@ void ResponseGenerator::addStatus( const ResultsParams& aParams, ResponseStatusC
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-        statusParams->cmd = SYNCML_ELEMENT_RESULTS;
-        statusParams->data = aStatusCode;
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->cmd = SYNCML_ELEMENT_RESULTS;
+    statusParams->data = aStatusCode;
+    addStatus( statusParams );
+
 }
 
 void ResponseGenerator::addStatus( const PutParams& aParams, ResponseStatusCode aStatusCode )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
-        StatusParams* statusParams = new StatusParams;
-        statusParams->msgRef = iRemoteMsgId;
-        statusParams->cmdRef = aParams.cmdID;
-        statusParams->cmd = SYNCML_ELEMENT_PUT;
-        statusParams->data = aStatusCode;
-        addStatus( statusParams );
+    if( iIgnoreStatuses )
+    {
+        return;
     }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->cmd = SYNCML_ELEMENT_PUT;
+    statusParams->data = aStatusCode;
+    statusParams->sourceRef = aParams.devInf.source;
+    addStatus( statusParams );
 }
 
 const QList<StatusParams*>& ResponseGenerator::getStatuses() const
