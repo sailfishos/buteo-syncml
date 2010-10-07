@@ -1,6 +1,6 @@
 Source: libmeegosyncml
 Priority: extra
-Maintainer: Srikanth Kavoori <ext-srikanth.kavoori@nokia.com>
+Maintainer: Duggirala Karthik <karthik.2.duggirala@nokia.com>
 Build-Depends: debhelper (>= 5),doxygen, cdbs ,libqt4-dev (>= 4.5), libwbxml2-dev, libsqlite3-dev, libopenobex1-dev, libqt4-sql-sqlite
 Standards-Version: 3.7.2
 Section: libs
@@ -40,7 +40,7 @@ Package: libmeegosyncml-tests
 Section: tests
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends},libmeegosyncml, testrunner
+Depends: ${shlibs:Depends},libmeegosyncml, testrunner-lite
 XB-Maemo-CI-Stage: staging
 XB-Maemo-CI-Packages: libmeegosyncml-tests 
 Description: Module test package for libmeegosyncml.
