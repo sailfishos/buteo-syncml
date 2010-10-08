@@ -42,37 +42,7 @@
 
 using namespace DataSync;
 
-void ResponseGeneratorTest::testAddStatus()
-{
-    ResponseGenerator respGen;
-    ResponseStatusCode responseCode = SUCCESS;
-    MapParams mapParams;
-    respGen.addStatus(mapParams, responseCode);
-}
-
-
-void ResponseGeneratorTest::testAddStatus2()
-{
-    ResponseGenerator respGen;
-    ResponseStatusCode responseCode = SUCCESS;
-    CommandParams data( CommandParams::COMMAND_ADD );
-    ItemParams item1;
-    ItemParams item2;
-    QList<ItemParams> itemList;
-    itemList.append(item1);
-    itemList.append(item2);
-    data.items = itemList;
-    
-    data.commandType = CommandParams::COMMAND_ADD;
-    respGen.addStatus(data, responseCode);
-    
-    data.commandType = CommandParams::COMMAND_DELETE;
-    respGen.addStatus(data, responseCode);
-    
-    data.commandType = CommandParams::COMMAND_REPLACE;
-    respGen.addStatus(data, responseCode);
-        
-}
+// @todo: need better unit tests here
 
 void ResponseGeneratorTest::testNB182304()
 {

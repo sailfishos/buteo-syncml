@@ -40,6 +40,8 @@
 #include "Fragments.h"
 #include "datatypes.h"
 
+// @todo: need better tests here
+
 using namespace DataSync;
 
 void AuthenticationPackageTest::testWrite()
@@ -47,7 +49,7 @@ void AuthenticationPackageTest::testWrite()
     QString user_name("user");
     QString password("pw");
 
-    AuthenticationPackage pkg(user_name, password);
+    AuthenticationPackage pkg(AUTH_BASIC, user_name, password);
     QCOMPARE(pkg.iUsername, user_name);
     QCOMPARE(pkg.iPassword, password);
 
@@ -76,7 +78,7 @@ void AuthenticationPackageTest::testWrite2()
     QString password("pw");
 
     QtEncoder encoder;
-    AuthenticationPackage pkg(user_name, password);
+    AuthenticationPackage pkg(AUTH_BASIC, user_name, password);
     QCOMPARE(pkg.iUsername, user_name);
     QCOMPARE(pkg.iPassword, password);
 

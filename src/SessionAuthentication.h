@@ -81,21 +81,28 @@ public:
 
     /*! \brief Sets parameters for this session
      *
-     * @param aAuthType Authentication type to use in this session
-     * @param aUsername Username to use in this session
-     * @param aPassword Password to use in this session
-     * @param aNonce Explicitly defined nonce that should be used in this session
+     * @param aAuthType Authentication type to use when authenticating
+     * @param aUsername Username to use when authenticating
+     * @param aPassword Password to use when authenticating
+     * @param aNonce Explicitly defined nonce that should be used when authenticating with remote device
+     * @param aRequireLocalAuth True if also remote device should authenticate with local device
      */
     void setSessionParams( AuthType aAuthType,
                            const QString& aUsername,
                            const QString& aPassword,
-                           const QString& aNonce );
+                           const QString& aNonce,
+                           bool aRequireLocalAuth );
 
-    /*! \brief Returns whether current session is authenticated
+    /*! \brief Returns whether remote device has been authenticated to us
      *
-     * @return True if current session is authenticated, otherwise false
+     * @return True if remote device has been authenticatied, otherwise false
      */
-    bool authenticated();
+    bool remoteIsAuthed() const;
+
+    /*! \brief Returns whether we have been authenticated to the remote device
+     *
+     */
+    bool authedToRemote() const;
 
     /*! \brief Analyze SyncML header sent by remote device
      *
@@ -145,8 +152,11 @@ private:
 
     QByteArray decodeNonce( const ChalParams& aChallenge ) const;
 
-    bool                iAuthenticated;
-    bool                iAuthenticationPending;
+    bool                iAuthedToRemote;
+    bool                iRemoteAuthPending;
+    bool                iRemoteAuthed;
+    bool                iLocalAuthPending;
+
     AuthType            iAuthType;
     QString             iUsername;
     QString             iPassword;

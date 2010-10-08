@@ -42,9 +42,12 @@
 
 using namespace DataSync;
 
-AuthenticationPackage::AuthenticationPackage( const QString& aUsername, const QString& aPassword,
+AuthenticationPackage::AuthenticationPackage( const AuthType& aAuthType,
+                                              const QString& aUsername,
+                                              const QString& aPassword,
                                               const QByteArray& aNonce )
- : iUsername( aUsername ), iPassword( aPassword ), iNonce( aNonce )
+ : iAuthType( aAuthType ), iUsername( aUsername ), iPassword( aPassword ),
+   iNonce( aNonce )
 {
     FUNCTION_CALL_TRACE;
 
@@ -68,13 +71,19 @@ bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold 
     authData.iUsername = iUsername;
     authData.iPassword = iPassword;
 
-    if( iNonce.isEmpty() ) {
+    if( iAuthType == AUTH_BASIC )
+    {
         QByteArray data = helper.encodeBasicB64Auth( authData );
         cred = new SyncMLCred( SYNCML_FORMAT_ENCODING_B64, SYNCML_FORMAT_AUTH_BASIC, data );
     }
-    else {
+    else if( iAuthType == AUTH_MD5 )
+    {
         QByteArray data = helper.encodeMD5B64Auth( authData, iNonce );
         cred = new SyncMLCred( SYNCML_FORMAT_ENCODING_B64, SYNCML_FORMAT_AUTH_MD5, data );
+    }
+    else
+    {
+        Q_ASSERT( 0 );
     }
 
     aMessage.addToHeader( cred );

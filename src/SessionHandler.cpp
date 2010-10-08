@@ -114,7 +114,8 @@ bool SessionHandler::prepareSync()
     authentication().setSessionParams( getConfig()->getAuthType(),
                                        getConfig()->getUsername(),
                                        getConfig()->getPassword(),
-                                       getConfig()->getNonce() );
+                                       getConfig()->getNonce(),
+                                       false );
 
 
     int localMaxMsgSize = DEFAULT_MAX_MESSAGESIZE;
@@ -528,8 +529,8 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
 
     QSharedPointer<SyncParams> params( aSyncParams );
 
-    // Don't process Sync elements if we are not authenticated
-    if( !authentication().authenticated() ) {
+    // Don't process Sync elements if remote device has not authenticated
+    if( !authentication().remoteIsAuthed() ) {
         iCommandHandler.rejectSync( *aSyncParams, iResponseGenerator, INVALID_CRED  );
         return;
     }
@@ -585,7 +586,7 @@ void SessionHandler::handleAlertElement( CommandParams* aAlertParams )
 
     ResponseStatusCode status;
 
-    if( authentication().authenticated() ) {
+    if( authentication().remoteIsAuthed() ) {
 
         SyncMode syncMode( aAlertParams->data.toInt() );
 
@@ -600,8 +601,9 @@ void SessionHandler::handleAlertElement( CommandParams* aAlertParams )
         status = INVALID_CRED;
     }
 
-    if( !aAlertParams->noResp ) {
-        getResponseGenerator().addStatus( *aAlertParams, status );
+    if( !aAlertParams->noResp )
+    {
+        getResponseGenerator().addStatus( *aAlertParams, status, true );
     }
 
     delete aAlertParams;
@@ -615,7 +617,7 @@ void SessionHandler::handleGetElement( DataSync::CommandParams* aGetParams )
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !authentication().authenticated() )
+    if( !authentication().remoteIsAuthed() )
     {
         code = INVALID_CRED;
     }
@@ -632,9 +634,9 @@ void SessionHandler::handleGetElement( DataSync::CommandParams* aGetParams )
         code = NOT_IMPLEMENTED;
     }
 
-    // if noResp specified, do not write status
-    if( !aGetParams->noResp ) {
-        getResponseGenerator().addStatus( *aGetParams, code );
+    if( !aGetParams->noResp )
+    {
+        getResponseGenerator().addStatus( *aGetParams, code, true );
     }
 
 
@@ -648,7 +650,7 @@ void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !authentication().authenticated() )
+    if( !authentication().remoteIsAuthed() )
     {
         code = INVALID_CRED;
     }
@@ -661,8 +663,8 @@ void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
         code = NOT_IMPLEMENTED;
     }
 
-    // if noResp specified, do not write status
-    if( !aPutParams->noResp ) {
+    if( !aPutParams->noResp )
+    {
         getResponseGenerator().addStatus( *aPutParams, code );
     }
 
@@ -678,7 +680,7 @@ void SessionHandler::handleResultsElement(DataSync::ResultsParams* aResults)
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
-    if( !authentication().authenticated() )
+    if( !authentication().remoteIsAuthed() )
     {
         code = INVALID_CRED;
     }
@@ -706,7 +708,7 @@ void SessionHandler::handleMapElement( DataSync::MapParams* aMapParams )
     ResponseStatusCode status = NOT_FOUND;
     SyncTarget* target = NULL;
 
-    if (!authentication().authenticated()) {
+    if (!authentication().remoteIsAuthed() ) {
         status = INVALID_CRED;
     }
     else if (!mapReceived()) {
@@ -731,7 +733,7 @@ void SessionHandler::handleFinal()
 {
     FUNCTION_CALL_TRACE;
 
-    if( authentication().authenticated() ) {
+    if( authentication().authedToRemote() ) {
         finalReceived();
     }
 

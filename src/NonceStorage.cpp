@@ -105,7 +105,6 @@ QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QStri
         }
         else {
             if (query.next()) {
-                LOG_DEBUG("Query Successful");
                 nonce = query.value(0).toByteArray();
             }
 

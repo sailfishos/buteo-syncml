@@ -35,6 +35,8 @@
 
 #include "Package.h"
 
+#include "SyncAgentConsts.h"
+
 class AuthenticationPackageTest;
 
 namespace DataSync {
@@ -48,11 +50,12 @@ public:
 
     /*! \brief Constructor
      *
+     * @param aAuthType Type of authentication to use (either BASIC or MD5)
      * @param aUsername Username to use (BASIC and MD5)
      * @param aPassword Password to use (BASIC and MD5)
      * @param aNonce Nonce to use (MD5)
      */
-    AuthenticationPackage( const QString& aUsername, const QString& aPassword, const QByteArray& aNonce = "" );
+    AuthenticationPackage( const AuthType& aAuthType, const QString& aUsername, const QString& aPassword, const QByteArray& aNonce = "" );
 
     /*! \brief Destructor
      *
@@ -65,6 +68,7 @@ protected:
 
 private:
 
+    AuthType    iAuthType;
     QString     iUsername;
     QString     iPassword;
     QByteArray  iNonce;

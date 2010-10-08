@@ -121,7 +121,7 @@ void CommandHandler::rejectCommand( const CommandParams& aCommand, ResponseGener
 
     if( !aCommand.noResp )
     {
-        aResponseGenerator.addStatus( aCommand, aResponseCode );
+        aResponseGenerator.addStatus( aCommand, aResponseCode, true );
     }
 
     for( int i = 0; i < aCommand.subCommands.count(); ++i )
@@ -688,24 +688,46 @@ void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<I
     FUNCTION_CALL_TRACE;
 
     // Process result codes and write corresponding status elements
-    for( int i = 0; i < aSyncParams.commands.count(); ++i ) {
+    for( int i = 0; i < aSyncParams.commands.count(); ++i )
+    {
 
-        const CommandParams& data = aSyncParams.commands[i];
+        const CommandParams& command = aSyncParams.commands[i];
+
+        if( command.noResp )
+        {
+            continue;
+        }
+
+        QMultiMap<ResponseStatusCode, int> responses;
 
         // Process items associated with the command
-        for( int a = 0; a < data.items.count(); ++a ) {
+        for( int a = 0; a < command.items.count(); ++a )
+        {
 
             ItemId id;
 
-            id.iCmdId = data.cmdId;
+            id.iCmdId = command.cmdId;
             id.iItemIndex = a;
 
-            ResponseStatusCode response = aResponses.value( id );
+            responses.insert( aResponses.value( id ), i );
+        }
 
-            if( !data.noResp ) {
-                aResponseGenerator.addStatus( data, response, a );
+        QList<ResponseStatusCode> codes = responses.uniqueKeys();
+
+        for( int i = 0; i < codes.count(); ++i )
+        {
+            QList<int> itemIndexes = responses.values( codes[i] );
+
+            // values() returns items sorted by most recently added, so we need to
+            // reverse the list
+            QList<int> reverseIndexes;
+            QListIterator<int> iterator( itemIndexes );
+            for( iterator.toBack(); iterator.hasPrevious(); )
+            {
+                reverseIndexes.append( iterator.previous() );
             }
 
+            aResponseGenerator.addStatus( command, codes[i], reverseIndexes );
         }
 
     }

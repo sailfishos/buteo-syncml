@@ -120,7 +120,6 @@ QTDIR = /usr/lib/qt4
 QT += network \
     xml \
     sql \
-    dbus \
     xmlpatterns
 
 QT -= gui

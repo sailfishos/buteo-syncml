@@ -162,11 +162,20 @@ public:
      *
      * @param aParams Command params
      * @param aStatusCode Status code
-     * @param aWriteItemRefs True if SourceRef/TargetRef about Item(s) of the command should be written to the status
-     * @param aItemIndex Override index for item to reference
+     * @param aWriteItemRefs True if references of the Items(s) of the command should be
+     *                       written to the status
      */
     void addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
-                    bool aWriteItemRefs = true, int aItemIndex = -1);
+                    bool aWriteItemRefs );
+
+    /*! \brief Adds a status to the next outgoing message from command data
+     *
+     * @param aParams Command params
+     * @param aStatusCode Status code
+     * @param aItemIndexes List of item indexes which should be referenced in the status
+     */
+    void addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
+                    const QList<int>& aItemIndexes );
 
     /*! \brief Adds a status to the next outgoing message from Sync data
      *

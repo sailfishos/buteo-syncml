@@ -44,8 +44,10 @@ using namespace DataSync;
 
 
 SessionAuthentication::SessionAuthentication()
- : iAuthenticated( false ),
-   iAuthenticationPending( false )
+ : iAuthedToRemote( false ),
+   iRemoteAuthPending( false ),
+   iRemoteAuthed( false ),
+   iLocalAuthPending( false )
 {
 
 }
@@ -58,7 +60,8 @@ SessionAuthentication::~SessionAuthentication()
 void SessionAuthentication::setSessionParams( AuthType aAuthType,
                                               const QString& aUsername,
                                               const QString& aPassword,
-                                              const QString& aNonce )
+                                              const QString& aNonce,
+                                              bool aRequireLocalAuth )
 {
     FUNCTION_CALL_TRACE;
 
@@ -69,13 +72,28 @@ void SessionAuthentication::setSessionParams( AuthType aAuthType,
 
     if( iAuthType == AUTH_NONE )
     {
-        iAuthenticated = true;
+        iAuthedToRemote = true;
+        iRemoteAuthPending = false;
+        iRemoteAuthed = true;
+        iLocalAuthPending = false;
+    }
+    else
+    {
+        iAuthedToRemote = false;
+        iRemoteAuthPending = false;
+        iRemoteAuthed = !aRequireLocalAuth;
+        iLocalAuthPending = false;
     }
 }
 
-bool SessionAuthentication::authenticated()
+bool SessionAuthentication::remoteIsAuthed() const
 {
-    return iAuthenticated;
+    return iRemoteAuthed;
+}
+
+bool SessionAuthentication::authedToRemote() const
+{
+    return iAuthedToRemote;
 }
 
 SessionAuthentication::HeaderStatus SessionAuthentication::analyzeHeader( const HeaderParams& aHeader,
@@ -85,28 +103,34 @@ SessionAuthentication::HeaderStatus SessionAuthentication::analyzeHeader( const 
 
     HeaderStatus status = HEADER_NOT_HANDLED;
 
-    if( !iAuthenticated )
+    if( !aHeader.cred.data.isEmpty() )
     {
 
-        if( !aHeader.cred.data.isEmpty() )
+        // Handling of Cred's is not implemented, as we're fully supporting Basic+MD5 authentication only in client
+        // mode, and in client we do not do challenges. Server side does not support authentication at all, because
+        // it's purpose is to serve only D2D sync where authentication is not used. Therefore, abort the session
+        // if we receive Creds
+
+        // For now, do not support Creds sent by remote device. There's multiple reason why this is not implemented:
+        // 1. Primary use-case for authentication is in client mode, and we always send the Cred there. So remote device
+        //    should never send us Creds.
+        // 2. Primary use-case for server mode is D2D sync, where authentication is not commonly used
+        // 3. Handling of credentials should be better if we want to support authentication in server mode. They're directly
+        //    configured to SyncAgentConfig, which is pretty OK for client mode, but for server mode this is bad as user
+        //    might have multiple accounts. Also password handling should be more secure, for example by querying them
+        //    from outside the stack through some interface.
+
+        if( iRemoteAuthed )
         {
-            // Handling of Cred's is not implemented, as we're fully supporting Basic+MD5 authentication only in client
-            // mode, and in client we do not do challenges. Server side does not support authentication at all, because
-            // it's purpose is to serve only D2D sync where authentication is not used. Therefore, abort the session
-            // if we receive Creds
-
-            // For now, do not support Creds sent by remote device. There's multiple reason why this is not implemented:
-            // 1. Primary use-case for authentication is in client mode, and we always send the Cred there. So remote device
-            //    should never send us Creds.
-            // 2. Primary use-case for server mode is D2D sync, where authentication is not commonly used
-            // 3. Handling of credentials should be better if we want to support authentication in server mode. They're directly
-            //    configured to SyncAgentConfig, which is pretty OK for client mode, but for server mode this is bad as user
-            //    might have multiple accounts. Also password handling should be more secure, for example by querying them
-            //    from outside the stack through some interface.
-
+            aResponseGenerator.addStatus( aHeader, AUTH_ACCEPTED );
+            status = HEADER_HANDLED_OK;
+        }
+        else
+        {
             aResponseGenerator.addStatus( aHeader, INVALID_CRED );
             status = HEADER_HANDLED_OK;
         }
+
     }
 
     return status;
@@ -124,7 +148,8 @@ SessionAuthentication::StatusStatus SessionAuthentication::analyzeHeaderStatus( 
 
     if( aStatus.data == SUCCESS )
     {
-        iAuthenticated = true;
+        iAuthedToRemote = true;
+        iRemoteAuthPending = false;
         status = STATUS_HANDLED_OK;
     }
     else if( aStatus.data == AUTH_ACCEPTED ||
@@ -147,16 +172,15 @@ SessionAuthentication::StatusStatus SessionAuthentication::analyzeHeaderStatus( 
         if( aStatus.data == AUTH_ACCEPTED )
         {
             // Authentication was accepted
-            iAuthenticated = true;
-            iAuthenticationPending = false;
+            iAuthedToRemote = true;
+            iRemoteAuthPending = false;
             status = STATUS_HANDLED_OK;
         }
         else
         {
 
             // Authentication was rejected
-
-            iAuthenticated = false;
+            iAuthedToRemote = false;
 
             if( iAuthType == AUTH_NONE )
             {
@@ -191,9 +215,10 @@ void SessionAuthentication::composeAuthentication( ResponseGenerator& aResponseG
 
     if( iAuthType == AUTH_BASIC ){
 
-        aResponseGenerator.addPackage( new AuthenticationPackage( iUsername,
+        aResponseGenerator.addPackage( new AuthenticationPackage( iAuthType,
+                                                                  iUsername,
                                                                   iPassword ) );
-        iAuthenticationPending = true;
+        iRemoteAuthPending = true;
 
     }
     else if( iAuthType == AUTH_MD5 ) {
@@ -206,21 +231,24 @@ void SessionAuthentication::composeAuthentication( ResponseGenerator& aResponseG
             nonce = nonces.retrieveNonce( aLocalDeviceName, aRemoteDeviceName );
         }
 
+        aResponseGenerator.addPackage( new AuthenticationPackage( iAuthType,
+                                                                  iUsername,
+                                                                  iPassword,
+                                                                  nonce ) );
+
         if( !nonce.isEmpty() )
         {
-
-            aResponseGenerator.addPackage( new AuthenticationPackage( iUsername,
-                                                                      iPassword,
-                                                                      nonce ) );
-
-            iAuthenticationPending = true;
+            iRemoteAuthPending = true;
         }
         else
         {
-            LOG_WARNING( "MD5 authentication requested but no nonce found. Attempting without authentication." );
+            // We didn't have a nonce, so authentication will probably fail. We need to hope that
+            // remote device challenges us with a nonce, so don't put auth pending flag up.
+            LOG_WARNING( "MD5 authentication requested but no nonce found" );
         }
 
     }
+
 }
 
 QString SessionAuthentication::getLastError() const
@@ -246,7 +274,7 @@ SessionAuthentication::StatusStatus SessionAuthentication::handleChallenge( cons
             // If we have, they were rejected and we must abort.
             // If we have not, we'll send auth info if we have a nonce. Otherwise we must abort.
 
-            if( iAuthenticationPending )
+            if( iRemoteAuthPending )
             {
                 status = STATUS_HANDLED_ABORT;
                 iLastError = "Authentication failed";
@@ -298,7 +326,7 @@ SessionAuthentication::StatusStatus SessionAuthentication::handleChallenge( cons
              aChallenge.meta.type.isEmpty() )
     {
 
-        if( iAuthenticationPending && iAuthType == AUTH_BASIC )
+        if( iRemoteAuthPending && iAuthType == AUTH_BASIC )
         {
             // We have already sent auth using basic authentication, re-challenge
             // means authentication has failed

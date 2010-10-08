@@ -118,7 +118,6 @@ struct Fragment {
         FRAGMENT_HEADER = 0,
         FRAGMENT_STATUS,
         FRAGMENT_PUT,
-        FRAGMENT_GET,
         FRAGMENT_RESULTS,
         FRAGMENT_SYNC,
         FRAGMENT_MAP,

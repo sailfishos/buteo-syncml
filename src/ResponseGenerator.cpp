@@ -235,7 +235,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
 }
 
 void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
-                                   bool aWriteItemRefs, int aItemIndex )
+                                   bool aWriteItemRefs )
 {
     FUNCTION_CALL_TRACE;
 
@@ -251,9 +251,15 @@ void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusC
 
     if( aParams.commandType == CommandParams::COMMAND_ALERT )
     {
-        Q_ASSERT( !aParams.items.isEmpty() );
+
         statusParams->cmd = SYNCML_ELEMENT_ALERT;
-        statusParams->nextAnchor = aParams.items.first().meta.anchor.next;
+
+        // @todo: this could be made better
+        if( !aParams.items.isEmpty() )
+        {
+            statusParams->nextAnchor = aParams.items.first().meta.anchor.next;
+        }
+
     }
     else if( aParams.commandType == CommandParams::COMMAND_ADD )
     {
@@ -298,14 +304,15 @@ void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusC
 
     if( aWriteItemRefs )
     {
-        if( aItemIndex != -1 )
+
+        if( aParams.items.count() == 1 )
         {
-            statusParams->sourceRef = aParams.items[aItemIndex].source;
-            statusParams->targetRef = aParams.items[aItemIndex].target;
+            statusParams->sourceRef = aParams.items.first().source;
+            statusParams->targetRef = aParams.items.first().target;
         }
-        else if( aParams.items.count() > 1 )
+        else
         {
-            for (int i = 0; i < aParams.items.count(); ++i)
+            for( int i = 0; i < aParams.items.count(); ++i )
             {
                 ItemParams item;
                 item.source = aParams.items[i].source;
@@ -313,10 +320,93 @@ void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusC
                 statusParams->items.append(item);
             }
         }
-        else if( !aParams.items.isEmpty() )
+    }
+
+    addStatus( statusParams );
+
+}
+
+void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
+                                   const QList<int>& aItemIndexes )
+{
+    FUNCTION_CALL_TRACE;
+
+    if( iIgnoreStatuses )
+    {
+        return;
+    }
+
+    StatusParams* statusParams = new StatusParams;
+    statusParams->msgRef = iRemoteMsgId;
+    statusParams->cmdRef = aParams.cmdId;
+    statusParams->data = aStatusCode;
+
+    if( aParams.commandType == CommandParams::COMMAND_ALERT )
+    {
+
+        statusParams->cmd = SYNCML_ELEMENT_ALERT;
+
+        // @todo: this could be made better
+        if( !aParams.items.isEmpty() )
         {
-            statusParams->sourceRef = aParams.items.first().source;
-            statusParams->targetRef = aParams.items.first().target;
+            statusParams->nextAnchor = aParams.items.first().meta.anchor.next;
+        }
+
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_ADD )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_ADD;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_REPLACE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_REPLACE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_DELETE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_DELETE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_GET )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_GET;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_COPY )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_COPY;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_MOVE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_MOVE;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_EXEC )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_EXEC;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_ATOMIC )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_ATOMIC;
+    }
+    else if( aParams.commandType == CommandParams::COMMAND_SEQUENCE )
+    {
+        statusParams->cmd = SYNCML_ELEMENT_SEQUENCE;
+    }
+    else
+    {
+        Q_ASSERT(0);
+    }
+
+    if( aItemIndexes.count() == 1 )
+    {
+        statusParams->sourceRef = aParams.items[aItemIndexes.first()].source;
+        statusParams->targetRef = aParams.items[aItemIndexes.first()].target;
+    }
+    else
+    {
+        for( int i = 0; i < aItemIndexes.count(); ++i )
+        {
+            ItemParams item;
+            item.source = aParams.items[aItemIndexes.at(i)].source;
+            item.target = aParams.items[aItemIndexes.at(i)].target;
+            statusParams->items.append(item);
         }
     }
 

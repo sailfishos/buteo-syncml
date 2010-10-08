@@ -55,76 +55,7 @@ QString NB153701TARGETDEVICE( "IMEI:000000000000001" );
 QString NB153701FORCEDEVICE( "IMEI:000000000000002" );
 
 
-class DummySessionHandler: public SessionHandler
-{
-public:
-    enum FuncType {
-        FUNC_NONE,
-        FUNC_INITIATE,
-        FUNC_START,
-        FUNC_SUSPEND,
-        FUNC_RESUME,
-        FUNC_ABORT,
-        FUNC_SAN_PACKAGE_RECEIVED,
-        FUNC_MESSAGE_RECEIVED,
-        FUNC_ALERT_RECEIVED,
-        FUNC_SYNC_RECEIVED,
-        FUNC_MAP_RECEIVED,
-        FUNC_FINAL_RECEIVED,
-        FUNC_MESSAGE_PARSED,
-        FUNC_RESEND_PACKAGE,
-        FUNC_HANDLE_SYNC_ALERT,
-        FUNC_HANDLE_INFORMATIVE_ALERT
-    };
 
-    DummySessionHandler(const SyncAgentConfig* aConfig,
-                        QObject* aParent)
-    :   SessionHandler(aConfig, ROLE_CLIENT, aParent),
-        iLatestFunction(FUNC_NONE) {}
-
-    virtual void initiateSync() { iLatestFunction = FUNC_INITIATE; }
-
-    virtual void startSync() { iLatestFunction = FUNC_START; }
-
-    virtual void suspendSync() { iLatestFunction = FUNC_SUSPEND; }
-
-    virtual void resumeSync() { iLatestFunction = FUNC_RESUME; }
-    virtual void userAbort() { iLatestFunction = FUNC_ABORT; }
-
-    virtual void SANPackageReceived( QIODevice* /*aDevice*/ ) { iLatestFunction = FUNC_SAN_PACKAGE_RECEIVED; }
-
-    void clearLatestFunction() { iLatestFunction = FUNC_NONE; }
-
-    FuncType getLatestFunction() const { return iLatestFunction; }
-
-protected:
-    virtual void messageReceived( HeaderParams& ) { iLatestFunction = FUNC_MESSAGE_RECEIVED; }
-
-
-    virtual ResponseStatusCode syncAlertReceived( const SyncMode&, CommandParams& ) { iLatestFunction = FUNC_ALERT_RECEIVED; return SUCCESS; }
-
-    virtual bool syncReceived() { iLatestFunction = FUNC_SYNC_RECEIVED; return true; }
-
-    virtual bool mapReceived() { iLatestFunction = FUNC_MAP_RECEIVED; return true; }
-
-    virtual void finalReceived() { iLatestFunction = FUNC_FINAL_RECEIVED; }
-
-    virtual void messageParsed() { iLatestFunction = FUNC_FINAL_RECEIVED; }
-
-    virtual void resendPackage() { iLatestFunction = FUNC_RESEND_PACKAGE; }
-
-
-private:
-    virtual void handleSyncAlert( const SyncMode&, CommandParams& ) {
-        iLatestFunction = FUNC_HANDLE_SYNC_ALERT; }
-
-    virtual void handleInformativeAlert( const CommandParams& ) {
-        iLatestFunction = FUNC_HANDLE_INFORMATIVE_ALERT; }
-
-    FuncType iLatestFunction;
-
-    //friend class SessionHandlerTest;
-};
 
 bool SessionHandlerTest::getStorageContentFormatInfo( const QString& aURI,
                                                       StorageContentFormatInfo& aInfo )
@@ -158,100 +89,6 @@ void SessionHandlerTest::init()
 void SessionHandlerTest::cleanup()
 {
     QFile::remove( DBFILE );
-}
-
-void SessionHandlerTest::testBase()
-{
-    // Get metatypes registered.
-    SyncAgent agent(NULL);
-
-    MockTransport transport("transport");
-    const QString DB = "target";
-
-    SyncAgentConfig config;
-    config.setTransport(&transport);
-    config.setStorageProvider( this );
-    config.setDatabaseFilePath( DBFILE );
-
-    config.addSyncTarget( "storage", DB );
-
-    // Create session handler and prepare.
-    DummySessionHandler session_handler(&config, NULL);
-    QVERIFY(session_handler.prepareSync());
-    QCOMPARE(session_handler.getSyncState(), PREPARED );
-
-    // Status change emits a signal.
-    session_handler.setSyncState(NOT_PREPARED);
-    QSignalSpy status_spy(&session_handler, SIGNAL(syncStateChanged(DataSync::SyncState)));
-    session_handler.setSyncState(PREPARED);
-    QCOMPARE(status_spy.count(), 1);
-    QCOMPARE(qvariant_cast<SyncState>(status_spy.at(0).at(0)), PREPARED);
-
-    // Setting same state does not emit a signal.
-    session_handler.setSyncState(PREPARED);
-    QCOMPARE(status_spy.count(), 1);
-
-    session_handler.startSync();
-    QCOMPARE(session_handler.getLatestFunction(), DummySessionHandler::FUNC_START);
-
-    StatusParams* status_params = new StatusParams();
-    session_handler.handleStatusElement(status_params);
-    status_params = NULL;
-
-    ResultsParams* results_params = new ResultsParams();
-    session_handler.handleResultsElement(results_params);
-    results_params = NULL;
-
-}
-
-void SessionHandlerTest::testErrorStatuses()
-{
-    MockTransport transport("transport");
-    const QString DB = "target";
-
-    SyncAgentConfig config;
-    config.setTransport(&transport);
-    config.setStorageProvider( this );
-    config.setDatabaseFilePath( DBFILE );
-
-    config.addSyncTarget( "storage", "target" );
-
-    // Create session handler and prepare.
-    DummySessionHandler session_handler(&config, NULL);
-    QVERIFY(session_handler.prepareSync());
-    QCOMPARE(session_handler.getSyncState(), PREPARED);
-
-    // Parser errors.
-    session_handler.iSessionClosed = false;
-    session_handler.handleParserErrors(PARSER_ERROR_INCOMPLETE_DATA);
-    QCOMPARE(session_handler.getSyncState(), INVALID_SYNCML_MESSAGE);
-
-    session_handler.setSyncState(PREPARED);
-    session_handler.iSessionClosed = false;
-    session_handler.handleParserErrors(PARSER_ERROR_UNEXPECTED_DATA);
-    QCOMPARE(session_handler.getSyncState(), INVALID_SYNCML_MESSAGE);
-
-    session_handler.setSyncState(PREPARED);
-    session_handler.iSessionClosed = false;
-    session_handler.handleParserErrors(PARSER_ERROR_INVALID_DATA);
-    QCOMPARE(session_handler.getSyncState(), INVALID_SYNCML_MESSAGE);
-
-    // Transport errors.
-    session_handler.setSyncState(PREPARED);
-    session_handler.iSessionClosed = false;
-    session_handler.setTransportStatus(TRANSPORT_DATA_INVALID_CONTENT);
-    QCOMPARE(session_handler.getSyncState(), INVALID_SYNCML_MESSAGE);
-
-    session_handler.setSyncState(PREPARED);
-    session_handler.iSessionClosed = false;
-    session_handler.setTransportStatus(TRANSPORT_CONNECTION_FAILED);
-    QCOMPARE(session_handler.getSyncState(), CONNECTION_ERROR);
-
-    session_handler.setSyncState(PREPARED);
-    session_handler.iSessionClosed = false;
-    session_handler.setTransportStatus(TRANSPORT_CONNECTION_ABORTED);
-    QCOMPARE(session_handler.getSyncState(), CONNECTION_ERROR);
-
 }
 
 void SessionHandlerTest::testClientWithClientInitiated()
@@ -574,7 +411,7 @@ void SessionHandlerTest::testClientAuthNone()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray data = transport.iData;
@@ -604,7 +441,7 @@ void SessionHandlerTest::testClientAuthNoneFailed()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray data = transport.iData;
@@ -631,7 +468,7 @@ void SessionHandlerTest::testClientAuthNoneFailed()
     sp1->data = INVALID_CRED;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
 }
 
@@ -657,7 +494,7 @@ void SessionHandlerTest::testClientAuthNoneChal1()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray data = transport.iData;
@@ -687,7 +524,7 @@ void SessionHandlerTest::testClientAuthNoneChal1()
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
 }
 
@@ -713,7 +550,7 @@ void SessionHandlerTest::testClientAuthNoneChal2()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray data = transport.iData;
@@ -742,7 +579,7 @@ void SessionHandlerTest::testClientAuthNoneChal2()
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
 }
 
@@ -766,7 +603,7 @@ void SessionHandlerTest::testClientAuthBasicNoCreds()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
 
 }
@@ -792,7 +629,7 @@ void SessionHandlerTest::testClientAuthBasic()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
@@ -821,7 +658,7 @@ void SessionHandlerTest::testClientAuthBasic()
     sp1->data = AUTH_ACCEPTED;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
 }
 
 void SessionHandlerTest::testClientAuthBasicChalToMD5WithoutNonce()
@@ -846,7 +683,7 @@ void SessionHandlerTest::testClientAuthBasicChalToMD5WithoutNonce()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
@@ -878,7 +715,7 @@ void SessionHandlerTest::testClientAuthBasicChalToMD5WithoutNonce()
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
 }
 
@@ -904,14 +741,14 @@ void SessionHandlerTest::testClientAuthBasicChalToMD5WithNonce()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
     QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
     QVERIFY( message.contains( SYNCML_FORMAT_AUTH_BASIC ) );
     QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
-    QVERIFY( message.contains( "QnJ1Y2UyOk9oQmVoYXZl" ) ); // "Nonce" in B64
+    QVERIFY( message.contains( "QnJ1Y2UyOk9oQmVoYXZl" ) );
 
     // Fake header.
     HeaderParams* hp1 = new HeaderParams();
@@ -934,10 +771,10 @@ void SessionHandlerTest::testClientAuthBasicChalToMD5WithNonce()
     sp1->hasChal = true;
     sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
-    sp1->chal.meta.nextNonce = "Tm9uY2U=";
+    sp1->chal.meta.nextNonce = "Tm9uY2U="; // "Nonce" in B64
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
 
     session_handler.handleFinal();
     session_handler.handleEndOfMessage();
@@ -982,7 +819,7 @@ void SessionHandlerTest::testClientAuthMD5NoCreds()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
 
 }
@@ -990,8 +827,8 @@ void SessionHandlerTest::testClientAuthMD5NoCreds()
 void SessionHandlerTest::testClientAuthMD5WithoutNonce1()
 {
     // Check that if we don't have a known nonce & MD5 is to be used,
-    // that we first try to send message without auth info. If no challenge
-    // comes, continue the session
+    // that we first try to send message by using an empty nonce. If it is rejected
+    // without sending NextNonce back to us in MD5 challenge, session should abort
 
     TestTransport transport(false);
     const QString DB = "calendar";
@@ -1010,12 +847,16 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce1()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
-    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_MD5 ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
 
+    // MD5 hash of username "Bruce2", password "OhBehave", with a null nonce
+    QVERIFY( message.contains( "lEf25jyjHbCcTbj4p/1pUw==" ) );
 
     // Fake header.
     HeaderParams* hp1 = new HeaderParams();
@@ -1034,17 +875,21 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce1()
     sp1->msgRef = 1;
     sp1->cmdRef = 0;
     sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
-    sp1->data = SUCCESS;
+    sp1->data = INVALID_CRED;
+    sp1->hasChal = true;
+    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
+    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
+    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
 }
 
 void SessionHandlerTest::testClientAuthMD5WithoutNonce2()
 {
     // Check that if we don't have a known nonce & MD5 is to be used,
-    // that we first try to send message without auth info. If basic challenge
-    // comes, abort the session
+    // that we first try to send message by using an empty nonce. If basic challenge
+    // comes, session should abort
 
     TestTransport transport(false);
     const QString DB = "calendar";
@@ -1063,11 +908,16 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce2()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
-    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_MD5 ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with a null nonce
+    QVERIFY( message.contains( "lEf25jyjHbCcTbj4p/1pUw==" ) );
 
 
     // Fake header.
@@ -1093,72 +943,14 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce2()
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
 }
 
 void SessionHandlerTest::testClientAuthMD5WithoutNonce3()
 {
     // Check that if we don't have a known nonce & MD5 is to be used,
-    // that we first try to send message without auth info. If MD5 challenge
-    // comes without nonce, abort the session
-
-    TestTransport transport(false);
-    const QString DB = "calendar";
-
-    SyncAgentConfig config;
-    config.setLocalDeviceName( "testClientAuthMD5WithoutNonce3" );
-    config.setTransport(&transport);
-    config.setStorageProvider( this );
-    config.addSyncTarget( "calendar", "calendar" );
-    config.setDatabaseFilePath( DBFILE );
-
-    config.setSyncParams( "server", SYNCML_1_2, SyncMode() );
-    config.setAuthParams( AUTH_MD5, "Bruce2", "OhBehave" );
-
-    // Start.
-    ClientSessionHandler session_handler(&config, NULL);
-    session_handler.initiateSync();
-
-    QVERIFY( !session_handler.authentication().authenticated() );
-    QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
-
-    QByteArray message = transport.iData;
-    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
-
-
-    // Fake header.
-    HeaderParams* hp1 = new HeaderParams();
-    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
-    hp1->sourceDevice = "server";
-    hp1->targetDevice = "testClientAuthMD5WithoutNonce3";
-    hp1->sessionID = "1";
-    hp1->msgID = 1;
-    hp1->meta.maxMsgSize = 30000;
-    session_handler.handleHeaderElement(hp1);
-    hp1 = NULL;
-
-    // Fake status
-    StatusParams* sp1 = new StatusParams();
-    sp1->cmdId = 1;
-    sp1->msgRef = 1;
-    sp1->cmdRef = 0;
-    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
-    sp1->data = INVALID_CRED;
-    sp1->hasChal = true;
-    sp1->chal.meta.type = SYNCML_FORMAT_AUTH_MD5;
-    sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
-    session_handler.handleStatusElement( sp1 );
-
-    QVERIFY( !session_handler.authentication().authenticated() );
-    QCOMPARE(session_handler.getSyncState(), AUTHENTICATION_FAILURE);
-
-}
-
-void SessionHandlerTest::testClientAuthMD5WithoutNonce4()
-{
-    // Check that if we don't have a known nonce & MD5 is to be used,
-    // that we first try to send message without auth info. If MD5 challenge
+    // that we first try to send message by using an empty nonce. If MD5 challenge
     // comes with a nonce, continue the session
 
     TestTransport transport(false);
@@ -1178,11 +970,16 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce4()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
-    QVERIFY( !message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_ELEMENT_CRED ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_AUTH_MD5 ) );
+    QVERIFY( message.contains( SYNCML_FORMAT_ENCODING_B64 ) );
+
+    // MD5 hash of username "Bruce2", password "OhBehave", with a null nonce
+    QVERIFY( message.contains( "lEf25jyjHbCcTbj4p/1pUw==" ) );
 
 
     // Fake header.
@@ -1209,7 +1006,7 @@ void SessionHandlerTest::testClientAuthMD5WithoutNonce4()
     sp1->chal.meta.nextNonce = "Tm9uY2U=";
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
 
     session_handler.handleFinal();
     session_handler.handleEndOfMessage();
@@ -1247,7 +1044,7 @@ void SessionHandlerTest::testClientAuthMD5WithNonce()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
@@ -1276,7 +1073,7 @@ void SessionHandlerTest::testClientAuthMD5WithNonce()
     sp1->data = SUCCESS;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( session_handler.authentication().authenticated() );
+    QVERIFY( session_handler.authentication().authedToRemote() );
     QCOMPARE( session_handler.getSyncState(), LOCAL_INIT );
 }
 
@@ -1302,7 +1099,7 @@ void SessionHandlerTest::testClientAuthMD5ChalToBasic()
     ClientSessionHandler session_handler(&config, NULL);
     session_handler.initiateSync();
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE(session_handler.getSyncState(), LOCAL_INIT);
 
     QByteArray message = transport.iData;
@@ -1334,7 +1131,7 @@ void SessionHandlerTest::testClientAuthMD5ChalToBasic()
     sp1->chal.meta.format = SYNCML_FORMAT_ENCODING_B64;
     session_handler.handleStatusElement( sp1 );
 
-    QVERIFY( !session_handler.authentication().authenticated() );
+    QVERIFY( !session_handler.authentication().authedToRemote() );
     QCOMPARE( session_handler.getSyncState(), AUTHENTICATION_FAILURE );
 }
 

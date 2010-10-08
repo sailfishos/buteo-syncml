@@ -41,8 +41,6 @@ namespace DataSync {
 class ResponseGeneratorTest: public QObject {
     Q_OBJECT
 private slots:
-    void testAddStatus();
-    void testAddStatus2();
 
     void testNB182304();
 
