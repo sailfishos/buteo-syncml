@@ -467,6 +467,8 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
         int datastoreIndex = -1;
         const QList<Datastore>& datastores = getDevInfHandler().getRemoteDeviceInfo().datastores();
 
+        LOG_DEBUG("Count for remote device stores:::"  << datastores.count());
+
         for( int i = 0; i < datastores.count(); ++i )
         {
             if( datastores[i].getSourceURI() == target->getTargetDatabase() )

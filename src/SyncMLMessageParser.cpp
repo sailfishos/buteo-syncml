@@ -661,7 +661,15 @@ void SyncMLMessageParser::readPut()
         }
     }
 
-    iFragments.append(put);
+    // Ensure that the PUT fragment is kept next only to the HEADER, or RESULTS fragment.
+    if( iFragments.count() > 0 )
+    {
+        iFragments.insert( 1, put );
+    }
+    else
+    {
+        iFragments.append(put);
+    }
 }
 
 void SyncMLMessageParser::readResults()
@@ -711,7 +719,15 @@ void SyncMLMessageParser::readResults()
 
     }
 
-    iFragments.append(results);
+    // Ensure that the RESULTS fragment is kept next only to the HEADER, or PUT fragment.
+    if( iFragments.count() > 0 )
+    {
+        iFragments.insert(1, results);
+    }
+    else
+    {
+        iFragments.append(results);
+    }
 
 }
 

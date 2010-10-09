@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-38) unstable; urgency=low
+
+  * NB#197079 - Existing data in N900 is not transferred to device after
+    reflashing the device.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Sat, 09 Oct 2010 18:20:00 +0330
+
 libmeegosyncml (0.4.9-37) unstable; urgency=low
 
   * Tests deb pkg dependency changes to testrunner->testrunner-line
