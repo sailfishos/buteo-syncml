@@ -1005,6 +1005,8 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
     }
 
     HeaderParams headerParams;
+    headerParams.verDTD = verDTD;
+    headerParams.verProto = verProto;
     headerParams.sessionID = params().sessionId();
     headerParams.sourceDevice = params().localDeviceName();
     headerParams.targetDevice = params().remoteDeviceName();
