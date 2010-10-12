@@ -1083,12 +1083,14 @@ void SessionHandler::composeLocalChanges()
 
     LOG_DEBUG( "Setting number of changes to send per message to" << maxChangesPerMessage );
 
+    int largeObjectThreshold = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * getRemoteMaxMsgSize()), MINMSGOVERHEADBYTES );
+
     const QList<SyncTarget*>& targets = getSyncTargets();
     foreach( const SyncTarget* syncTarget, targets ) {
         const LocalChanges* localChanges = syncTarget->getLocalChanges();
         LocalChangesPackage* localChangesPackage = new LocalChangesPackage( *syncTarget,
                                                                             *localChanges,
-                                                                            getRemoteMaxMsgSize(),
+                                                                            largeObjectThreshold,
                                                                             iRole,
                                                                             maxChangesPerMessage );
         iResponseGenerator.addPackage(localChangesPackage);

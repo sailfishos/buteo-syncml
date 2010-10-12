@@ -143,6 +143,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
             break;
         }
     }
+    LOG_DEBUG( "MessageSize:"<<message->sizeAsXML());
     LOG_DEBUG( "Message generated with following parameters:" );
     LOG_DEBUG( "Maximum size reported by remote device:" << aMaxSize );
     LOG_DEBUG( "Maximum size after compression efficiency estimation:" << maxSize );

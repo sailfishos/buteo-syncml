@@ -335,7 +335,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
             item = iPrefetcher.getItem( aItemKey );
         }
 
-        if( item )
+        if (item)
         {
 
             aMimeType = item->getType();
@@ -345,7 +345,6 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
 
             if( !item->getParentKey()->isEmpty() )
             {
-
                 const SyncItemKey* parentKey = item->getParentKey();
 
                 if( iRole == ROLE_SERVER )
@@ -369,9 +368,72 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
 
             }
 
-            // If item is not large, or if it is large but it fits the
-            // message completely, write the item normally
-            if( size <= iLargeObjectThreshold || size <= aSizeThreshold )
+            if (size > iLargeObjectThreshold) {
+
+                if(iLargeObjectState.iItem) {
+                    // Item is large and needs to be sent using multiple messages
+                    LOG_DEBUG( "Writing item" << aItemKey << "as large object, size:" << size );
+                    QByteArray data;
+                    qint64 dataLeft = iLargeObjectState.iSize - iLargeObjectState.iOffset;
+
+                    if( dataLeft > aSizeThreshold )
+                    {
+                        LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
+                        // Need to send more chunks after this one
+                        item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
+                        aParent.addSizeMetadata( size );
+                        itemObject->insertData( data );
+                        itemObject->insertMoreData();
+                        iLargeObjectState.iOffset += aSizeThreshold;
+                    }
+                    else
+                    {
+                        LOG_DEBUG( "Writing last chunk of" << dataLeft << "bytes" );
+                        // This is the last chunk
+                        item->read( iLargeObjectState.iOffset, dataLeft, data );
+                        itemObject->insertData( data );
+
+                        iLargeObjectState.iItem = 0;
+                        iLargeObjectState.iSize = 0;
+                        iLargeObjectState.iOffset = 0;
+
+                        delete item;
+                        item = 0;
+                        processed = true;
+                    }
+                }
+                else if( size <= aSizeThreshold) {
+                    LOG_DEBUG( "Writing item" << aItemKey << "as normal object, size:" << size );
+                    QByteArray data;
+                    item->read( 0, size, data );
+                    itemObject->insertData( data );
+
+                    delete item;
+                    item = 0;
+                    processed = true;
+
+                }
+                else
+                {
+                    // If no chunks of the item has yet been sent, prepare tracking
+                    // data
+                    LOG_DEBUG( "Setting up largeObject data" );
+                    iLargeObjectState.iItem = item;
+                    iLargeObjectState.iSize = size;
+                    iLargeObjectState.iOffset = 0;
+
+                    LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
+                    // Need to send more chunks after this one
+                    QByteArray data;
+                    item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
+                    aParent.addSizeMetadata( size );
+                    itemObject->insertData( data );
+                    itemObject->insertMoreData();
+                    iLargeObjectState.iOffset += aSizeThreshold;
+                }
+
+            }
+            else //(size <= aSizeThreshold )
             {
                 LOG_DEBUG( "Writing item" << aItemKey << "as normal object, size:" << size );
                 QByteArray data;
@@ -382,56 +444,12 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                 item = 0;
                 processed = true;
             }
-            else
-            {
-
-                // Item is large and needs to be sent using multiple messages
-                LOG_DEBUG( "Writing item" << aItemKey << "as large object, size:" << size );
-
-                if( !iLargeObjectState.iItem )
-                {
-                    // If no chunks of the item has yet been sent, prepare tracking
-                    // data
-                    iLargeObjectState.iItem = item;
-                    iLargeObjectState.iSize = size;
-                    iLargeObjectState.iOffset = 0;
-                }
-
-                QByteArray data;
-                qint64 dataLeft = iLargeObjectState.iSize - iLargeObjectState.iOffset;
-
-                if( dataLeft > aSizeThreshold )
-                {
-                    LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
-                    // Need to send more chunks after this one
-                    item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
-                    aParent.addSizeMetadata( size );
-                    itemObject->insertData( data );
-                    itemObject->insertMoreData();
-                    iLargeObjectState.iOffset += aSizeThreshold;
-                }
-                else
-                {
-                    LOG_DEBUG( "Writing last chunk of" << dataLeft << "bytes" );
-                    // This is the last chunk
-                    item->read( iLargeObjectState.iOffset, dataLeft, data );
-                    itemObject->insertData( data );
-
-                    iLargeObjectState.iItem = 0;
-                    iLargeObjectState.iSize = 0;
-                    iLargeObjectState.iOffset = 0;
-
-                    delete item;
-                    item = 0;
-                    processed = true;
-                }
-            }
 
         }
         else
         {
             LOG_WARNING( "Could not retrieve item data:" << aItemKey );
-            processed = true;
+            processed = false;
         }
     }
 

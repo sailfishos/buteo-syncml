@@ -211,7 +211,7 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
                                      aMessage.getProtocolVersion(),
                                      xml, true ) )
             {
-                LOG_PROTOCOL( "\nSending message:\n=========\n" << xml << "\n=========");
+                LOG_PROTOCOL( "\nSending message:\n=========\n" << xml << "\n=========size:"<<xml.size());
             }
             else
             {
