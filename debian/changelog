@@ -1,6 +1,6 @@
 libmeegosyncml (0.4.9-39) unstable; urgency=low
 
-  * NB#194061 -  Sync always fails for calendar only data with S40 (6500).
+  * Fixes: NB#194061 -  Sync always fails for calendar only data with S40 (6500).
 
  -- Amit <amit.5.aggarwal@nokia.com>  Tue, 12 Oct 2010 18:20:00 +0330
 
