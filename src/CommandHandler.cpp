@@ -709,14 +709,14 @@ void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<I
             id.iCmdId = command.cmdId;
             id.iItemIndex = a;
 
-            responses.insert( aResponses.value( id ), i );
+            responses.insert( aResponses.value( id ), a );
         }
 
         QList<ResponseStatusCode> codes = responses.uniqueKeys();
 
-        for( int i = 0; i < codes.count(); ++i )
+        for( int b = 0; b < codes.count(); ++b )
         {
-            QList<int> itemIndexes = responses.values( codes[i] );
+            QList<int> itemIndexes = responses.values( codes[b] );
 
             // values() returns items sorted by most recently added, so we need to
             // reverse the list
@@ -727,7 +727,7 @@ void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<I
                 reverseIndexes.append( iterator.previous() );
             }
 
-            aResponseGenerator.addStatus( command, codes[i], reverseIndexes );
+            aResponseGenerator.addStatus( command, codes[b], reverseIndexes );
         }
 
     }
