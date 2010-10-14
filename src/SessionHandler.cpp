@@ -399,11 +399,6 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
 
     // Common handling for header parameters
 
-    // If remote party sent redirect URI, set it to transport
-    if( !aHeaderParams->respURI.isEmpty() ) {
-        setRemoteLocURI( aHeaderParams->respURI );
-    }
-
     // Save message id of the remote party
     getResponseGenerator().setRemoteMsgId( aHeaderParams->msgID );
 
@@ -439,6 +434,15 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
         getResponseGenerator().addStatus( *aHeaderParams, SUCCESS );
     }
     // else: SessionAuthentication::HEADER_HANDLED_OK
+
+    // If remote party sent redirect URI, set it to transport
+    // and also modify the target LocURI
+    if( !aHeaderParams->respURI.isEmpty() ) {
+        setRemoteLocURI( aHeaderParams->respURI );
+        HeaderParams headerParams = getLocalHeaderParams();
+        headerParams.targetDevice = aHeaderParams->respURI;
+        setLocalHeaderParams( headerParams );
+    }
 
     delete aHeaderParams;
     aHeaderParams = NULL;

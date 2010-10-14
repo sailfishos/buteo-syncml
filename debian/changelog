@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-41) unstable; urgency=low
+
+  * Fixed a couple of issues seen with google sync - not handling percent encoded
+    respURIs and not updating target LocURIs with the respURIs.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 14 Oct 2010 15:16:32 +0530
+
 libmeegosyncml (0.4.9-40) unstable; urgency=low
 
   * Refactoring to make handling of SyncML protocol more generic

@@ -169,8 +169,13 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
 {
     FUNCTION_CALL_TRACE;
 
-    QUrl url( getRemoteLocURI() );
-
+    QUrl url;
+    // The URL might be percent encoded
+    url = QUrl::fromEncoded( getRemoteLocURI().toAscii() );
+    if( !url.isValid() )
+    {
+        url = QUrl( getRemoteLocURI() );
+    }
     aRequest.setRawHeader( HTTP_HDRSTR_POST, url.path().toAscii());
     aRequest.setUrl( url );
     aRequest.setRawHeader( HTTP_HDRSTR_UA, HTTP_UA_VALUE);
