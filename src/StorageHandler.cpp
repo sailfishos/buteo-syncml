@@ -63,7 +63,6 @@ StorageHandler::~StorageHandler()
 
 bool StorageHandler::addItem( const ItemId& aItemId,
                               StoragePlugin& aPlugin,
-			      const SyncItemKey& aLocalKey,
                               const SyncItemKey& aParentKey,
                               const QString& aType,
                               const QString& aFormat,
@@ -85,7 +84,8 @@ bool StorageHandler::addItem( const ItemId& aItemId,
         return false;
     }
 
-    newItem->setKey( aLocalKey );
+    //Setting empty string as we dont have any local key for it.
+    newItem->setKey(QString());
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
@@ -129,7 +129,7 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 
     if( !item ) {
         LOG_DEBUG( "Could not find item, processing as Add" );
-        return addItem( aItemId, aPlugin, aLocalKey, aParentKey, aType, aFormat, aData );
+        return addItem( aItemId, aPlugin, aParentKey, aType, aFormat, aData );
     }
 
     item->setParentKey( aParentKey );
@@ -187,7 +187,8 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
         return false;
     }
 
-    newItem->setKey( aRemoteKey);
+    //Setting empty string as we dont have any local key for it.
+    newItem->setKey(QString());
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
@@ -306,7 +307,7 @@ bool StorageHandler::finishLargeObject( const ItemId& aItemId )
         return false;
     }
 
-    if( iLargeObject->getKey()->isEmpty() ) {
+    if(iLargeObject->getKey()->isEmpty()) {
         LOG_DEBUG( "Queuing large object for addition" );
         iAddList.insert( aItemId, iLargeObject );
     }
@@ -423,10 +424,10 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
         CommitResult result;
 
         result.iItemKey = *i.value()->getKey();
-	result.iStatus = COMMIT_INIT_REPLACE;	
+        result.iStatus = COMMIT_INIT_REPLACE;
 
         iId.iCmdId = i.key().iCmdId;
-	iId.iItemIndex = i.key().iItemIndex;
+        iId.iItemIndex = i.key().iItemIndex;
        	
         LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
 
@@ -443,7 +444,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
             else {
                 LOG_DEBUG( "Conflict resolved, remote side wins" );
                 result.iConflict = CONFLICT_REMOTE_WIN;
-		aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
+                aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
             }
         }
         else {

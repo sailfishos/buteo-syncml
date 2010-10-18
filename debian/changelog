@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.9-42) unstable; urgency=low
+
+  * Fixes: NB#198456 -  Modified contact with avatar in S60 (N95) is duplicated in device after resync from device.
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Thu, 18 Oct 2010 15:16:32 +0530
+
 libmeegosyncml (0.4.9-41) unstable; urgency=low
 
   * Fixed a couple of issues seen with google sync - not handling percent encoded
