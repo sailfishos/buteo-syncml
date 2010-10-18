@@ -67,6 +67,12 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
 {
     FUNCTION_CALL_TRACE
 
+    // @todo: The QXmlSchema class has a memory leak (http://bugreports.qt.nokia.com/browse/QTBUG-8948).
+    // As this function is called for every sync performed, this leads to large leaks.
+    // Since the schema validation part is already commented out,
+    // there is no need to create a QXmlSchema object here.
+
+    /*
     QByteArray schemaData;
 
     if( !readFile( aSchemaFile, schemaData ) ) {
@@ -81,6 +87,7 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
         LOG_CRITICAL( "Schema file is invalid:" << aSchemaFile );
         return false;
     }
+    */
 
     QByteArray xmlData;
 
