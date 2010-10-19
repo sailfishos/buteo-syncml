@@ -1,4 +1,5 @@
 libmeegosyncml (0.4.9-42) unstable; urgency=low
+
   * Fixes: NB#196459 - Memory leaks when one Note is synced from S60 to Dali.
   * Fixes: NB#198456 -  Modified contact with avatar in S60 (N95) is duplicated in device after resync from device.
 
