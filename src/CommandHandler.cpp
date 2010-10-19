@@ -406,7 +406,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                 }
                 // Normal object
-                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), QString(), parentKey,
+                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), parentKey,
                                                    type, format, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }

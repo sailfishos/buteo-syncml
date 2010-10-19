@@ -143,7 +143,6 @@ public:
      *
      * @param aItemId Item identification
      * @param aPlugin Local storage plugin
-     * @param aLocalKey Local key of the item or empty 
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
@@ -152,7 +151,6 @@ public:
      */
     bool addItem( const ItemId& aItemId,
                   StoragePlugin& aPlugin,
-	          const SyncItemKey& aLocalKey,
                   const SyncItemKey& aParentKey,
                   const QString& aType,
                   const QString& aFormat,

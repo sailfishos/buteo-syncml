@@ -55,7 +55,7 @@ void StorageHandlerTest::testAddItem()
     LocalChanges changes;
     ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
 
-    QVERIFY( iStorageHandler.addItem( id, storage, QString(), parent, type, format, data ) );
+    QVERIFY( iStorageHandler.addItem( id, storage, parent, type, format, data ) );
 
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
