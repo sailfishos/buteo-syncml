@@ -264,6 +264,7 @@ namespace DataSync
     #define SYNCML_ELEMENT_EXEC "Exec"
     #define SYNCML_ELEMENT_EXT "Ext"
     #define SYNCML_ELEMENT_CORRELATOR "Correlator"
+    #define SYNCML_ELEMENT_MARK "Mark"
 
     #define SYNCML_CONTENT_TYPE "Content-Type"
     #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"

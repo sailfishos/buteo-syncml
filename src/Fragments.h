@@ -62,6 +62,7 @@ struct MetaParams
     qint64          size;
     QString         type;
     QString         version;  
+    QString         mark;
 
     MetaParams() : maxMsgSize(0), maxObjSize(0),
                    size(0) {}

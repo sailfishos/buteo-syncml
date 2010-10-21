@@ -103,6 +103,12 @@ public:
      */
     void addNextNonce( const QString& aNextNonce );
 
+    /*! \brief Adds metadat element as a child about mark
+     *
+     * @param aMark aMark field
+     */
+    void addMark( const QString& aMark );
+
 protected:
 
 private:

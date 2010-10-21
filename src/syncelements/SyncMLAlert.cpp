@@ -74,7 +74,8 @@ SyncMLAlert::SyncMLAlert(CommandParams& aAlertParams)
         }
 
         if( !item.meta.anchor.last.isEmpty() || !item.meta.anchor.next.isEmpty() ||
-            !item.meta.type.isEmpty() || !item.meta.format.isEmpty() )
+            !item.meta.type.isEmpty() || !item.meta.format.isEmpty() ||
+            !item.meta.mark.isEmpty() )
         {
 
             SyncMLMeta* metaObject = new SyncMLMeta;
@@ -91,9 +92,19 @@ SyncMLAlert::SyncMLAlert(CommandParams& aAlertParams)
                 metaObject->addFormat( item.meta.format );
             }
 
+            if( !item.meta.mark.isEmpty() ) {
+                metaObject->addMark( item.meta.mark );
+            }
+
             itemObject->addChild(metaObject);
 
         }
+
+        if( !item.data.isEmpty() ) {
+            itemObject->insertData( item.data.toUtf8() );
+        }
+
+        addChild( itemObject );
     }
 
 }

@@ -121,6 +121,14 @@ void SyncMLMeta::addNextNonce( const QString& aNextNonce )
     addChild( nonceObject );
 }
 
+void SyncMLMeta::addMark( const QString& aMark )
+{
+    SyncMLCmdObject* markObject = new SyncMLCmdObject( SYNCML_ELEMENT_MARK, aMark );
+    addNamespace( *markObject );
+
+    addChild( markObject );
+}
+
 void SyncMLMeta::addNamespace( SyncMLCmdObject& aObject )
 {
     aObject.addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_METINF );

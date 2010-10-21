@@ -856,6 +856,9 @@ void SyncMLMessageParser::readMeta( MetaParams& aParams )
             else if (name == SYNCML_ELEMENT_EMI) {
                 aParams.EMI.append( readString() );
             }
+            else if (name == SYNCML_ELEMENT_MARK) {
+                aParams.mark = readString();
+            }
             else {
                 LOG_WARNING("UNKNOWN TOKEN TYPE in META:NOT HANDLED BY PARSER" << name);
             }
