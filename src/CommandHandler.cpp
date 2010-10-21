@@ -321,6 +321,9 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 format = defaultFormat;
             }
 
+            // Get the version of the item
+            QString version = item.meta.version;
+
             if( data.commandType == CommandParams::COMMAND_ADD ) {
 
                 // Resolve item key
@@ -363,7 +366,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                         }
                         if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey,
                                                                        parentKey, type, format,
-                                                                       item.meta.size ) ) {
+                                                                       version, item.meta.size ) ) {
                             aResponses.insert( id, COMMAND_FAILED );
                         }
 
@@ -407,7 +410,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // Normal object
                 else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), parentKey,
-                                                   type, format, item.data ) ) {
+                                                   type, format, version, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }
             }
@@ -460,7 +463,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                         }
                         if( !aStorageHandler.startLargeObjectReplace( *aTarget.getPlugin(), localKey,
                                                                            parentKey, type, format,
-                                                                           item.meta.size ) ) {
+                                                                           version, item.meta.size ) ) {
                             aResponses.insert( id, COMMAND_FAILED );
                         }
 
@@ -503,7 +506,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // Normal object
                 else if( !aStorageHandler.replaceItem( id, *aTarget.getPlugin(), localKey,
-                                                       parentKey, type, format, item.data ) ) {
+                                                       parentKey, type, format, version, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }
 

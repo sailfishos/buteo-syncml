@@ -84,3 +84,14 @@ void SyncItem::setFormat( const QString& aFormat )
 {
     iFormat = aFormat;
 }
+
+QString SyncItem::getVersion() const
+{
+    return iVersion;
+}
+
+void SyncItem::setVersion( const QString& aVersion )
+{
+    iVersion = aVersion;
+}
+

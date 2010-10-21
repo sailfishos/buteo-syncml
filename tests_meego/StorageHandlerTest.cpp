@@ -51,11 +51,12 @@ void StorageHandlerTest::testAddItem()
     QString parent("");
     QString type( "text/x-vcard" );
     QString format("");
+    QString version("");
     QString data( "fasdaagadtadg" );
     LocalChanges changes;
     ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
 
-    QVERIFY( iStorageHandler.addItem( id, storage, parent, type, format, data ) );
+    QVERIFY( iStorageHandler.addItem( id, storage, parent, type, format, version, data ) );
 
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
@@ -82,9 +83,10 @@ void StorageHandlerTest::testReplaceItem()
     QString parent( "" );
     QString type( "text/x-vcard" );
     QString format("");
+    QString version("");
     QString data( "fasdaagadtadg" );
 
-    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, data ) );
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
 
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitReplacedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
@@ -135,11 +137,12 @@ void StorageHandlerTest::testLargeObjectReplace()
     QString parent = "";
     QString type( "text/x-vcard" );
     QString format("");
+    QString version("");
     QString data( "ab" );
     QString key = "fookey";
     qint64 size = 4;
 
-    QVERIFY( iStorageHandler.startLargeObjectReplace( storage, key, parent, type, format, size ) );
+    QVERIFY( iStorageHandler.startLargeObjectReplace( storage, key, parent, type, format, version, size ) );
     QVERIFY( iStorageHandler.buildingLargeObject() );
     QVERIFY( iStorageHandler.matchesLargeObject( key ) );
     QVERIFY( iStorageHandler.appendLargeObjectData( data ) );
@@ -174,9 +177,10 @@ void StorageHandlerTest::regression_NB153991_01()
     QString parent = "";
     QString type( "text/x-vcard" );
     QString format("");
+    QString version("");
     QString data( "fasdaagadtadg" );
 
-    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, data ) );
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
 
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitReplacedItems( storage, &resolver );
     QVERIFY( commits.count() == 0 );

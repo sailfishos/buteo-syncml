@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-43) unstable; urgency=low
+
+  * Fixes: NB#180964 - SMS messages synced from N95 all have today's time
+    stamp
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Fri, 20 Oct 2010 20:45:32 +0530
+
 libmeegosyncml (0.4.9-42) unstable; urgency=low
 
   * Fixes: NB#196459 - Memory leaks when one Note is synced from S60 to Dali.

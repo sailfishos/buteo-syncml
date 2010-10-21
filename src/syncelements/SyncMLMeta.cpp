@@ -38,6 +38,10 @@
 
 using namespace DataSync;
 
+// @todo: The version information inside meta tag is not currently being written
+// to the ougoing SyncML messages (Although the information is put in the
+// SyncItem's for incoming messages). This may have to be changed in the future.
+
 SyncMLMeta::SyncMLMeta()
  : SyncMLCmdObject( SYNCML_ELEMENT_META)
 {

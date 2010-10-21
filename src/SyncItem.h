@@ -108,6 +108,18 @@ public:
      */
     void setFormat( const QString& aFormat );
 
+    /*! \brief Returns the version of this item
+     *
+     * @return
+     */
+    QString getVersion() const;
+
+    /*! \brief Sets the version of this item
+     *
+     * @param aFormat Version of this item
+     */
+    void setVersion( const QString& aVersion );
+
     /*! \brief Returns the total size of the item data
      *
      * @return Size of the item data
@@ -143,6 +155,7 @@ private:
     SyncItemKey iParentKey;
     QString     iType;
     QString     iFormat;
+    QString     iVersion;
 
 };
 

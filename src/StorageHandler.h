@@ -146,6 +146,7 @@ public:
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
+     * @param aVersion Version of the item
      * @param aData Data of the item
      *
      */
@@ -154,6 +155,7 @@ public:
                   const SyncItemKey& aParentKey,
                   const QString& aType,
                   const QString& aFormat,
+                  const QString& aVersion,
                   const QString& aData);
 
     /*! \brief Replaces an existing item in local database
@@ -164,6 +166,7 @@ public:
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
+     * @param aVersion Version of the item
      * @param aData Data of the item
      */
     bool replaceItem( const ItemId& aItemId,
@@ -172,6 +175,7 @@ public:
                       const SyncItemKey& aParentKey,
                       const QString& aType,
                       const QString& aFormat,
+                      const QString& aVersion,
                       const QString& aData);
 
     /*! \brief Deletes an existing item in local database
@@ -189,6 +193,7 @@ public:
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
+     * @param aVersion Version of the item
      * @param aSize Expected size of the item
      */
     bool startLargeObjectAdd( StoragePlugin& aPlugin,
@@ -196,6 +201,7 @@ public:
                               const SyncItemKey& aParentKey,
                               const QString& aType,
                               const QString& aFormat,
+                              const QString& aVersion,
                               qint64 aSize );
 
     /*! \brief Begin composing large object to replace in local database
@@ -205,6 +211,7 @@ public:
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
+     * @param aVersion Version of the item
      * @param aSize Expected size of the item
      */
     bool startLargeObjectReplace( StoragePlugin& aPlugin,
@@ -212,6 +219,7 @@ public:
                                   const SyncItemKey& aParentKey,
                                   const QString& aType,
                                   const QString& aFormat,
+                                  const QString& aVersion,
                                   qint64 aSize );
 
     /*! \brief Returns true if composing large object is in progress

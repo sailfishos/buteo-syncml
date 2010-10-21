@@ -66,6 +66,7 @@ bool StorageHandler::addItem( const ItemId& aItemId,
                               const SyncItemKey& aParentKey,
                               const QString& aType,
                               const QString& aFormat,
+                              const QString& aVersion,
                               const QString& aData )
 {
     FUNCTION_CALL_TRACE;
@@ -89,6 +90,7 @@ bool StorageHandler::addItem( const ItemId& aItemId,
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
+    newItem->setVersion( aVersion );
 
     if( !newItem->write( 0, aData.toUtf8() ) ) {
         delete newItem;
@@ -108,6 +110,7 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
                                   const SyncItemKey& aParentKey,
                                   const QString& aType,
                                   const QString& aFormat,
+                                  const QString& aVersion,
                                   const QString& aData )
 {
     FUNCTION_CALL_TRACE;
@@ -129,12 +132,13 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 
     if( !item ) {
         LOG_DEBUG( "Could not find item, processing as Add" );
-        return addItem( aItemId, aPlugin, aParentKey, aType, aFormat, aData );
+        return addItem( aItemId, aPlugin, aParentKey, aType, aFormat, aVersion, aData );
     }
 
     item->setParentKey( aParentKey );
     item->setType( aType );
     item->setFormat( aFormat );
+    item->setVersion( aVersion );
 
     if( !item->write( 0, aData.toUtf8() ) ) {
         delete item;
@@ -171,6 +175,7 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
                                           const SyncItemKey& aParentKey,
                                           const QString& aType,
                                           const QString& aFormat,
+                                          const QString& aVersion,
                                           qint64 aSize )
 {
     FUNCTION_CALL_TRACE;
@@ -192,6 +197,7 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
+    newItem->setVersion( aVersion );
 
     iLargeObject = newItem;
     iLargeObjectSize = aSize;
@@ -207,6 +213,7 @@ bool StorageHandler::startLargeObjectReplace( StoragePlugin& aPlugin,
                                               const SyncItemKey& aParentKey,
                                               const QString& aType,
                                               const QString& aFormat,
+                                              const QString& aVersion,
                                               qint64 aSize )
 {
     FUNCTION_CALL_TRACE;
@@ -226,12 +233,13 @@ bool StorageHandler::startLargeObjectReplace( StoragePlugin& aPlugin,
 
     if( !item ) {
         LOG_CRITICAL( "Could not find item, processing as Add" );
-        return startLargeObjectAdd( aPlugin, aLocalKey, aParentKey, aType, aFormat, aSize );
+        return startLargeObjectAdd( aPlugin, aLocalKey, aParentKey, aType, aFormat, aVersion, aSize );
     }
 
     item->setParentKey( aParentKey );
     item->setType( aType );
     item->setFormat( aFormat );
+    item->setVersion( aVersion );
 
     iLargeObject = item;
     iLargeObjectSize = aSize;
