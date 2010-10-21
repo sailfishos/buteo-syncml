@@ -233,6 +233,7 @@ struct CommandParams : public Fragment
     int                     cmdId;
     bool                    noResp;
     QString                 data;
+    QString                 correlator;
     MetaParams              meta;
     QList<ItemParams>       items;
     QList<CommandParams>    subCommands;

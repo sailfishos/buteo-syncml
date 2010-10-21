@@ -720,6 +720,9 @@ void SyncMLMessageParser::readLeafCommand( CommandParams& aParams, const QString
             else if (name == SYNCML_ELEMENT_DATA) {
                 aParams.data = readString();
             }
+            else if( name == SYNCML_ELEMENT_CORRELATOR ) {
+                aParams.correlator = readString();
+            }
             else if( name == SYNCML_ELEMENT_META ) {
                 readMeta( aParams.meta );
             }

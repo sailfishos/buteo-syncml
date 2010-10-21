@@ -34,6 +34,7 @@
 #include "SyncMLStatus.h"
 
 #include "SyncMLMeta.h"
+#include "SyncMLItem.h"
 #include "Fragments.h"
 #include "datatypes.h"
 
@@ -91,28 +92,21 @@ SyncMLStatus::SyncMLStatus(const StatusParams& aParams)
     for( int i = 0; i < aParams.items.count(); ++i )
     {
 
-        SyncMLCmdObject* itemObject = new SyncMLCmdObject( SYNCML_ELEMENT_ITEM );
+        SyncMLItem* itemObject = new SyncMLItem();
 
         if( !aParams.items[i].source.isEmpty() )
         {
-            SyncMLCmdObject* sourceLocURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI,
-                                                                       aParams.items[i].source );
-
-            SyncMLCmdObject* sourceObject = new SyncMLCmdObject( SYNCML_ELEMENT_SOURCE );
-            sourceObject->addChild( sourceLocURIObject );
-
-            itemObject->addChild( sourceObject );
+            itemObject->insertSource( aParams.items[i].source );
         }
 
         if( !aParams.items[i].target.isEmpty() )
         {
-            SyncMLCmdObject* targetLocURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI,
-                                                                       aParams.items[i].target );
+            itemObject->insertTarget( aParams.items[i].target );
+        }
 
-            SyncMLCmdObject* targetObject = new SyncMLCmdObject( SYNCML_ELEMENT_TARGET );
-            targetObject->addChild( targetLocURIObject );
-
-            itemObject->addChild( targetObject );
+        if( !aParams.items[i].data.isEmpty() )
+        {
+            itemObject->insertData( aParams.items[i].data.toUtf8() );
         }
 
         addChild( itemObject );

@@ -85,6 +85,15 @@ void SyncMLMessageParserTest::testResp1()
     delete header;
     header = NULL;
 
+    // Results
+    QVERIFY( !fragments.isEmpty() );
+    fragment = fragments.takeFirst();
+    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_RESULTS );
+
+    ResultsParams* results = static_cast<ResultsParams*>( fragment );
+    delete results;
+    results = NULL;
+
     // Status
     QVERIFY( !fragments.isEmpty() );
     fragment = fragments.takeFirst();
@@ -146,15 +155,6 @@ void SyncMLMessageParserTest::testResp1()
 
     delete sync;
     sync = NULL;
-
-    // Results
-    QVERIFY( !fragments.isEmpty() );
-    fragment = fragments.takeFirst();
-    QCOMPARE( fragment->fragmentType, Fragment::FRAGMENT_RESULTS );
-
-    ResultsParams* results = static_cast<ResultsParams*>( fragment );
-    delete results;
-    results = NULL;
 
     // Map
     QVERIFY( !fragments.isEmpty() );

@@ -187,8 +187,14 @@ void ResponseGenerator::addStatus( StatusParams* aParams )
 {
     FUNCTION_CALL_TRACE;
 
-    if( !iIgnoreStatuses ) {
+    if( !iIgnoreStatuses )
+    {
         iStatuses.append( aParams );
+    }
+    else
+    {
+        delete aParams;
+        aParams = 0;
     }
 }
 
