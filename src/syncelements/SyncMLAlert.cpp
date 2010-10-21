@@ -34,6 +34,7 @@
 #include "SyncMLAlert.h"
 
 #include "SyncMLMeta.h"
+#include "SyncMLItem.h"
 #include "datatypes.h"
 #include "Fragments.h"
 
@@ -50,29 +51,30 @@ SyncMLAlert::SyncMLAlert(CommandParams& aAlertParams)
     dataObject->setCDATA( true );
     addChild(dataObject);
 
-    if( !aAlertParams.items.isEmpty() )
+    if( !aAlertParams.correlator.isEmpty() )
     {
-        const ItemParams& item = aAlertParams.items.first();
-        SyncMLCmdObject* itemObject = new SyncMLCmdObject(SYNCML_ELEMENT_ITEM);
+        SyncMLCmdObject* correlatorObject = new SyncMLCmdObject( SYNCML_ELEMENT_CORRELATOR, aAlertParams.correlator );
+        addChild( correlatorObject );
+    }
+
+    for( int i = 0; i < aAlertParams.items.count(); ++i )
+    {
+        const ItemParams& item = aAlertParams.items[i];
+
+        SyncMLItem* itemObject = new SyncMLItem();
 
         if( !item.target.isEmpty() )
         {
-            SyncMLCmdObject* targetURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, item.target );
-            SyncMLCmdObject* targetObject = new SyncMLCmdObject(SYNCML_ELEMENT_TARGET);
-            targetObject->addChild(targetURIObject);
-            itemObject->addChild(targetObject);
+            itemObject->insertTarget( item.target );
         }
 
         if( !item.source.isEmpty() )
         {
-            SyncMLCmdObject* sourceURIObject = new SyncMLCmdObject( SYNCML_ELEMENT_LOCURI, item.source );
-            SyncMLCmdObject* sourceObject = new SyncMLCmdObject(SYNCML_ELEMENT_SOURCE);
-            sourceObject->addChild(sourceURIObject);
-            itemObject->addChild(sourceObject);
+            itemObject->insertSource( item.source);
         }
 
         if( !item.meta.anchor.last.isEmpty() || !item.meta.anchor.next.isEmpty() ||
-            !item.meta.type.isEmpty() )
+            !item.meta.type.isEmpty() || !item.meta.format.isEmpty() )
         {
 
             SyncMLMeta* metaObject = new SyncMLMeta;
@@ -85,11 +87,13 @@ SyncMLAlert::SyncMLAlert(CommandParams& aAlertParams)
                 metaObject->addType( item.meta.type );
             }
 
+            if( !item.meta.format.isEmpty() ) {
+                metaObject->addFormat( item.meta.format );
+            }
+
             itemObject->addChild(metaObject);
 
         }
-
-        addChild(itemObject);
     }
 
 }
