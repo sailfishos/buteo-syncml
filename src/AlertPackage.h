@@ -48,8 +48,9 @@ class SyncMode;
 /*! \brief Handles sending an Alert to remote side
  *
  */
-class AlertPackage : public Package {
-
+class AlertPackage : public Package
+{
+    Q_OBJECT;
 public:
 
     /*! \brief Constructor for Alerts that include only the alert code

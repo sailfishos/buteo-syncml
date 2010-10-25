@@ -40,8 +40,9 @@ namespace DataSync {
 /*! \brief FinalPackage handles sending a Final to remote side
  *
  */
-class FinalPackage : public Package {
-
+class FinalPackage : public Package
+{
+    Q_OBJECT;
 public:
 
     /*! \brief Constructor
