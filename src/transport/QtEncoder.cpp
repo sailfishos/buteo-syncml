@@ -76,8 +76,7 @@ void QtEncoder::generateElement( const SyncMLCmdObject& aObject,
     const QList<SyncMLCmdObject*>& children = aObject.getChildren();
 
     if( aObject.getValue().isEmpty() &&
-        aObject.getAttributes().count() == 0 &&
-        children.count() == 0 ) {
+        children.isEmpty() ) {
 
         aWriter.writeEmptyElement( aObject.getName() );
 

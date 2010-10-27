@@ -115,36 +115,43 @@ int SyncMLCmdObject::sizeAsXML()
 
     int size = 0;
 
-    // <element> + </element>
-
-    if( iName.length() > 0 ) {
-
-        size += 5 + 2* iName.length();
+    if( iValue.isEmpty() &&
+        iChildren.isEmpty() )
+    {
+        // <element/>
+        size += 3 + iName.length();
     }
+    else
+    {
 
-    // attributes ( attr="value" ), plus white space between them
+        // <element> + </element>
 
-    if( iAttributes.count() > 0 ) {
-        size += iAttributes.count() - 1;
-        QMapIterator<QString, QString> i( iAttributes );
-        while( i.hasNext() ) {
-            i.next();
-            size += i.key().length() + 2 + i.value().length() + 1;
+        if( iName.length() > 0 )
+        {
+            size += 5 + 2* iName.length();
+        }
+
+        // value
+        size += iValue.length();
+
+        // CDATA
+        if( iIsCDATA )
+        {
+            // <![CDATA[----]]>
+            size += 12;
+        }
+
+        for( int i = 0; i < iChildren.count(); ++i ) {
+            size += iChildren[i]->sizeAsXML();
         }
     }
 
-    // value
-    size += iValue.length();
-
-    // CDATA
-    if( iIsCDATA )
+    // attributes ( attr="value" )
+    QMapIterator<QString, QString> i( iAttributes );
+    while( i.hasNext() )
     {
-        // <![CDATA[----]]>
-        size += 12;
-    }
-
-    for( int i = 0; i < iChildren.count(); ++i ) {
-        size += iChildren[i]->sizeAsXML();
+        i.next();
+        size +=  1 + i.key().length() + 2 + i.value().length() + 1;
     }
 
     return size;
