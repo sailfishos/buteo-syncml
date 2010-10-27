@@ -136,7 +136,8 @@ OTHER_FILES += testfiles/transport_initrequest_nohdr.txt \
     testfiles/testconf1.xml \
     testfiles/devinf01.txt \
     testfiles/devinf02.txt \
-    testfiles/subcommands01.txt
+    testfiles/subcommands01.txt \
+    testfiles/resp2.txt
     
 QMAKE_CXXFLAGS += -Wall \
     -g

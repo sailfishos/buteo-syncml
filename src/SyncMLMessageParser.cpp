@@ -32,8 +32,11 @@
 */
 
 #include "SyncMLMessageParser.h"
-#include "LogMacros.h"
+
+#include <QXmlStreamWriter>
+
 #include "RemoteDeviceInfo.h"
+#include "LogMacros.h"
 
 using namespace DataSync;
 
@@ -87,6 +90,7 @@ void SyncMLMessageParser::parseResponse( QIODevice *aDevice, bool aIsNewPacket )
         LOG_DEBUG( "Beginning to parse incoming message..." );
 
         iReader.setDevice( aDevice );
+        iReader.setNamespaceProcessing( false );
         startParsing();
 
         LOG_DEBUG( "Incoming message parsed");
@@ -1503,7 +1507,7 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
                 aParams.sourceParent = readURI();
             }
             else if (name == SYNCML_ELEMENT_DATA) {
-                aParams.data = readString();
+                aParams.data = readMixed();
             }
             else if (name == SYNCML_ELEMENT_MOREDATA) {
                 aParams.moreData = true;
@@ -1573,6 +1577,59 @@ QString SyncMLMessageParser::readString()
     }
 
     return string;
+}
+
+QString SyncMLMessageParser::readMixed()
+{
+    FUNCTION_CALL_TRACE;
+    QString text;
+    QString xml;
+
+    while( shouldContinue() )
+    {
+
+        iReader.readNext();
+
+        if( iReader.isStartElement() )
+        {
+            QString elementName = iReader.name().toString();
+
+            QByteArray buffer;
+            QXmlStreamWriter writer( &buffer );
+            writer.setAutoFormatting( false );
+
+            while( !(iReader.isEndElement() && iReader.name() == elementName ) )
+            {
+                writer.writeCurrentToken( iReader );
+                iReader.readNext();
+            }
+
+            writer.writeCurrentToken( iReader );
+
+            xml = QString::fromUtf8( buffer.constData() );
+            break;
+
+        }
+        else if( iReader.isCharacters() )
+        {
+            text.append( iReader.text().toString() );
+        }
+        else if( iReader.isEndElement() )
+        {
+            break;
+        }
+    }
+
+    if( xml.isEmpty() )
+    {
+        LOG_DEBUG( "Text was found:" << text.size() << "bytes" );
+        return text;
+    }
+    else
+    {
+        LOG_DEBUG( "XML data was found:" << xml.size() << "bytes" );
+        return xml;
+    }
 }
 
 bool SyncMLMessageParser::shouldContinue() const

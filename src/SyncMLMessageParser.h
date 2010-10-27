@@ -166,6 +166,8 @@ private:
 
 	QString readString();
 
+    QString readMixed();
+
     bool shouldContinue() const;
 
 	void initMaps();

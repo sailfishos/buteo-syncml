@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SyncML>
+<SyncHdr>
+</SyncHdr>
+<SyncBody>
+	<Status>
+	<CmdID>1</CmdID>
+	<MsgRef>1</MsgRef>
+	<CmdRef>1</CmdRef>
+	<Cmd>Alert</Cmd>
+	<TargetRef>./contacts/james_bond</TargetRef>
+	<SourceRef>./dev-contacts</SourceRef>
+	<Data>200</Data>
+		<Item>
+			<Data><Anchor xmlns="syncml:metinf"><Next>276</Next></Anchor></Data>
+		</Item>
+	</Status>
+</SyncBody>
+</SyncML>

@@ -527,4 +527,29 @@ void SyncMLMessageParserTest::testSubcommands()
     fragments.clear();
 }
 
+void SyncMLMessageParserTest::testEmbeddedXML()
+{
+    QByteArray data;
+    QVERIFY( readFile( "testfiles/resp2.txt", data ) );
+    QBuffer buffer( &data );
+    buffer.open( QIODevice::ReadOnly );
+    buffer.seek( 0 );
+    SyncMLMessageParser parser;
+    const QString expected( "<Anchor xmlns=\"syncml:metinf\"><Next>276</Next></Anchor>" );
+
+    parser.parseResponse( &buffer, true );
+    QCOMPARE( parser.iError, PARSER_ERROR_LAST );
+
+    QList<Fragment*> fragments = parser.takeFragments();
+
+    QCOMPARE( fragments.count(), 2 );
+
+    QVERIFY( fragments[0]->fragmentType == Fragment::FRAGMENT_HEADER );
+
+    QVERIFY( fragments[1]->fragmentType == Fragment::FRAGMENT_STATUS );
+    StatusParams* status = static_cast<StatusParams*>( fragments[1] );
+    QCOMPARE( status->items.count(), 1 );
+    QCOMPARE( status->items.first().data, expected );
+}
+
 TESTLOADER_ADD_TEST(SyncMLMessageParserTest);

@@ -49,6 +49,7 @@ private slots:
     void testDevInf11();
     void testDevInf12();
     void testSubcommands();
+    void testEmbeddedXML();
 
 private:
     void verifyAdd( const DataSync::CommandParams& aData );
