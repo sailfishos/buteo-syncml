@@ -93,7 +93,7 @@ public:
      * @param aPrettyPrint If true prefer human-readable output, otherwise prefer compact size
      * @return True on success, otherwise false
      */
-    bool decodeFromWbxML( const QByteArray& aWbXMLDocument, QByteArray& aXMLDocument,
+    bool decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteArray& aXMLDocument,
                           bool aPrettyPrint ) const;
 
 protected:

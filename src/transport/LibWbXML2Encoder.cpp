@@ -167,7 +167,7 @@ bool LibWbXML2Encoder::encodeToWbXML( const SyncMLCmdObject& aRootObject,
     return success;
 }
 
-bool LibWbXML2Encoder::decodeFromWbxML( const QByteArray& aWbXMLDocument, QByteArray& aXMLDocument,
+bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteArray& aXMLDocument,
                                         bool aPrettyPrint ) const
 {
     FUNCTION_CALL_TRACE;

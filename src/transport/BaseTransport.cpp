@@ -307,7 +307,7 @@ void BaseTransport::receiveWbXMLData( const QByteArray& aData )
     LibWbXML2Encoder encoder;
     QByteArray xmlData;
 
-    if( encoder.decodeFromWbxML( aData, xmlData, prettyPrint ) ) {
+    if( encoder.decodeFromWbXML( aData, xmlData, prettyPrint ) ) {
         receiveXMLData( xmlData );
     }
     else {
