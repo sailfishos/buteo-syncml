@@ -50,7 +50,18 @@
             </xs:restriction>
         </xs:simpleType>
     </xs:element>
-        
+
+    <xs:element name="omit-data-update-status">
+        <xs:simpleType>
+            <xs:restriction base="xs:integer">
+                <!-- false -->
+                <xs:enumeration value="0"/>
+                <!-- true -->
+                <xs:enumeration value="1"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xs:element>
+
     <xs:element name="obex-mtu-bt">
         <xs:simpleType>
             <xs:restriction base="xs:integer">

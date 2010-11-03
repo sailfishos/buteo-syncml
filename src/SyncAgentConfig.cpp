@@ -469,6 +469,13 @@ bool SyncAgentConfig::parseAgentProps( QXmlStreamReader& aReader )
                 LOG_DEBUG( "Found agent property" << FASTMAPSSENDPROP <<":" << fastMapsSend );
                 setAgentProperty( FASTMAPSSENDPROP, fastMapsSend );
             }
+            else if( aReader.name() == OMITDATAUPDATESTATUSPROP )
+            {
+                aReader.readNext();
+                QString omitDataUpdateStatus = aReader.text().toString();
+                LOG_DEBUG( "Found agent property" << OMITDATAUPDATESTATUSPROP <<":" << omitDataUpdateStatus );
+                setAgentProperty( OMITDATAUPDATESTATUSPROP, omitDataUpdateStatus );
+            }
 
         }
         else if( aReader.tokenType() == QXmlStreamReader::EndElement &&

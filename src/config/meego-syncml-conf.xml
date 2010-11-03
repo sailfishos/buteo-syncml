@@ -7,6 +7,7 @@
         <max-changes-per-message>22</max-changes-per-message>
         <conflict-resolution-policy>0</conflict-resolution-policy>
         <fast-maps-send>0</fast-maps-send>
+        <omit-data-update-status>0</omit-data-update-status>
     </agent-props>
     <transport-props>
         <obex-mtu-bt>16384</obex-mtu-bt>

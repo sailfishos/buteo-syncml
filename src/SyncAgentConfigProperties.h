@@ -48,6 +48,10 @@ const QString CONFLICTRESOLUTIONPOLICYPROP( "conflict-resolution-policy" );
 // (alongside Status of the operation in Pck#4), or separately in Pck#5
 const QString FASTMAPSSENDPROP( "fast-maps-send" );
 
+// Property to control whether the data update status package is sent
+// (as client) when there are no changes on the server side
+const QString OMITDATAUPDATESTATUSPROP( "omit-data-update-status" );
+
 // Property to control the maximum transfer unit of OBEX over BT
 const QString OBEXMTUBTPROP( "obex-mtu-bt" );
 

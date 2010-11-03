@@ -452,11 +452,25 @@ void ClientSessionHandler::messageParsed()
         case REMOTE_INIT:
         case SENDING_ITEMS:
         case RECEIVING_ITEMS:
-        case SENDING_MAPPINGS:
         {
             sendNextMessage();
             getTransport().receive();
 
+            break;
+        }
+        case SENDING_MAPPINGS:
+        {
+            // Check if we need to send the next message
+            if( shouldSendDataUpdateStatus() )
+            {
+                sendNextMessage();
+                getTransport().receive();
+            }
+            else
+            {
+                LOG_DEBUG("Omiting update status package!");
+                finishSync();
+            }
             break;
         }
         case FINALIZING:
@@ -470,6 +484,28 @@ void ClientSessionHandler::messageParsed()
         }
 	}
 
+}
+
+bool ClientSessionHandler::shouldSendDataUpdateStatus()
+{
+    FUNCTION_CALL_TRACE;
+    bool shouldSend = true;
+
+    if( 0 < getConfig()->getAgentProperty( OMITDATAUPDATESTATUSPROP ).toInt() )
+    {
+        // Check if we have anything other than status for the SyncHdr
+        // to send to the server
+        const QList<StatusParams*>& responseStatuses = getResponseGenerator().getStatuses();
+
+        if( ( 1 == responseStatuses.count() ) &&
+                ( SYNCML_ELEMENT_SYNCHDR == responseStatuses.at(0)->cmd ) )
+        {
+            LOG_DEBUG("There is only one status fragment in response and it's for the sync header,\
+                    so we can omit the update status package");
+            shouldSend = false;
+        }
+    }
+    return shouldSend;
 }
 
 void ClientSessionHandler::resendPackage()
