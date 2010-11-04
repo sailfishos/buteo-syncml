@@ -98,6 +98,13 @@ void SyncMLItem::insertData( const QByteArray& aData )
     addChild( dataObject );
 }
 
+void SyncMLItem::insertData( SyncMLCmdObject* aData )
+{
+    SyncMLCmdObject* dataObject = new SyncMLCmdObject( SYNCML_ELEMENT_DATA );
+    dataObject->addChild( aData );
+    addChild( dataObject );
+}
+
 void SyncMLItem::insertMoreData()
 {
     SyncMLCmdObject* moreDataObject = new SyncMLCmdObject( SYNCML_ELEMENT_MOREDATA );

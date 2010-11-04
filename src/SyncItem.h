@@ -116,7 +116,7 @@ public:
 
     /*! \brief Sets the version of this item
      *
-     * @param aFormat Version of this item
+     * @param aVersion Version of this item
      */
     void setVersion( const QString& aVersion );
 

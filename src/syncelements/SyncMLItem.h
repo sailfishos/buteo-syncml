@@ -80,11 +80,19 @@ public:
      */
     void insertSourceParent( const SyncItemKey& aLocURI );
 
-    /*! \brief Insert Data object as a child
+    /*! \brief Insert Data object consisting of character data
+     *         as a child
      *
-     * @param aData Data buffer to use
+     * @param aData Character data to use
      */
     void insertData( const QByteArray& aData );
+
+    /*! \brief Insert Data object consisting of mark-up data
+     *         as a child
+     *
+     * @param aData Mark-up data to use
+     */
+    void insertData( SyncMLCmdObject* aData );
 
     /*! \brief Insert MoreData object as a child
      *
