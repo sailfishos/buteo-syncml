@@ -278,15 +278,15 @@ namespace DataSync
     #define SYNCML_DEVINF_PATH_12 "./devinf12"
 
     #define XML_NAMESPACE                   "xmlns"
-    #define XML_NAMESPACE_VALUE_SYNCML11    "SYNCML:SYNCML1.1"
     #define SYNCML_DTD_VERSION_1_1          "1.1"
     #define DS_VERPROTO_1_1                 "SyncML/1.1"
-    #define XML_NAMESPACE_VALUE_SYNCML12    "SYNCML:SYNCML1.2"
     #define SYNCML_DTD_VERSION_1_2          "1.2"
     #define DS_VERPROTO_1_2                 "SyncML/1.2"
+    #define XML_NAMESPACE_VALUE_SYNCML11    "SYNCML:SYNCML1.1"
+    #define XML_NAMESPACE_VALUE_SYNCML12    "SYNCML:SYNCML1.2"
     #define XML_NAMESPACE_VALUE_DEVINF      "syncml:devinf"
     #define XML_NAMESPACE_VALUE_METINF      "syncml:metinf"
-
+    #define XML_NAMESPACE_VALUE_DMDDF       "syncml:dmddf1.2"
 
     #define SYNCML_UNKNOWN_DEVICE "/"
     #define SYNCML_URI_PREFIX "./"

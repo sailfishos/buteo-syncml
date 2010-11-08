@@ -417,6 +417,14 @@ WBXMLLanguage LibWbXML2Encoder::namespaceToLanguage( const SyncMLCmdObject& aObj
         }
 
     }
+    else if( ns == XML_NAMESPACE_VALUE_DMDDF ) {
+        if( aVersion == SYNCML_1_2 ) {
+            return WBXML_LANG_SYNCML_DMDDF12;
+        }
+        else {
+            return WBXML_LANG_UNKNOWN;
+        }
+    }
     else {
         return WBXML_LANG_UNKNOWN;
     }
