@@ -67,12 +67,13 @@ bool LocalMappingsPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
 
         aSizeThreshold -= map->sizeAsXML();
 
-        while( aSizeThreshold > 0 && !iMappings.isEmpty() ) {
+        // Add at least one MapItem to the Map package
+        do {
             SyncMLMapItem* mapItem = new SyncMLMapItem( iMappings[0].iRemoteUID, iMappings[0].iLocalUID );
             aSizeThreshold -= mapItem->sizeAsXML();
             map->addChild(mapItem);
             iMappings.removeFirst();
-        }
+        } while( aSizeThreshold > 0 && !iMappings.isEmpty() );
 
         aMessage.addToBody(map);
     }
