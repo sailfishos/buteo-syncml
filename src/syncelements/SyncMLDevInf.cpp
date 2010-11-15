@@ -40,6 +40,7 @@
 #include "DeviceInfo.h"
 #include "StoragePlugin.h"
 #include "SyncMLCTCap.h"
+#include "SyncMLExt.h"
 #include "datatypes.h"
 #include "LogMacros.h"
 
@@ -122,7 +123,6 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
             devInfObject->addChild( generateDataStore( *aDataStores[i], aRole ) );
 
             QByteArray cap = aDataStores[i]->getPluginCTCaps( SYNCML_1_1 );
-
             if( !cap.isEmpty() ) {
 
                 if( !ctcap ) {
@@ -173,6 +173,40 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
         }
 
     }
+
+    //insert Ext if exist
+    QByteArray ext_data;
+
+    for( int i = 0; i < aDataStores.count(); ++i ) {
+        if (!(aDataStores[i]->getPluginExts().isEmpty())) {
+            ext_data.append(aDataStores[i]->getPluginExts());
+        }
+    }
+
+    QDomDocument doc;
+    if(!ext_data.isEmpty() && doc.setContent( ext_data ) ) {
+
+        // Make sure that Extensions elements are under one root element named Ext.
+        QDomElement root = doc.documentElement();
+        if ( root.tagName() != SYNCML_ELEMENT_EXT ) {
+            QDomElement newRoot = doc.createElement( SYNCML_ELEMENT_EXT );
+            newRoot.appendChild( root );
+            root = newRoot;
+        }
+        LOG_DEBUG(Q_FUNC_INFO << "Ext Root generated");
+
+        for ( ; !root.isNull(); root = root.nextSiblingElement( SYNCML_ELEMENT_EXT ) )
+        {
+            QTextStream extStream( &ext_data );
+            root.save( extStream, 1 );
+
+            SyncMLExt* ext_dom = new SyncMLExt();
+            ext_dom->addExt(ext_data );
+            devInfObject->addChild( ext_dom );
+            LOG_DEBUG(Q_FUNC_INFO << "Added child generated" << ext_data);
+        }
+    }
+
 
     dataObject->addChild( devInfObject );
 

@@ -89,6 +89,11 @@ QByteArray PrefetchStorage::getPluginCTCaps( ProtocolVersion aVersion ) const
     return QByteArray();
 }
 
+QByteArray PrefetchStorage::getPluginExts() const
+{
+    return QByteArray();
+}
+
 bool PrefetchStorage::getAll( QList<SyncItemKey>& aKeys )
 {
     Q_UNUSED( aKeys );

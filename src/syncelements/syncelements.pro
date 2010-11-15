@@ -19,7 +19,8 @@ SyncMLMessage.cpp \
  SyncMLDevInf.cpp \
  SyncMLResults.cpp \
  SyncMLCTCap.cpp \
- SyncMLGet.cpp
+ SyncMLGet.cpp \
+SyncMLExt.cpp
 
 
 HEADERS += SyncMLCmdObject.h \
@@ -43,4 +44,5 @@ SyncMLMessage.h \
  SyncMLDevInf.h \
  SyncMLResults.h \
  SyncMLCTCap.h \
- SyncMLGet.h
+ SyncMLGet.h \
+SyncMLExt.h

@@ -100,6 +100,13 @@ public:
      */
     virtual QByteArray getPluginCTCaps( ProtocolVersion aVersion ) const = 0;
 
+    /*! \brief Returns SyncMl extensions supported by this plugin
+      *
+      * MUST be in XML format with Ext as root element
+      *
+      */
+    virtual QByteArray getPluginExts() const = 0;
+
     /*! \brief Get the id's of all stored items
      *
      * @param aKeys Array to which store item id's

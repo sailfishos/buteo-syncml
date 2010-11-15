@@ -82,6 +82,11 @@ public:
         return "";
     }
 
+    QByteArray getPluginExts( ) const
+    {
+        return "";
+    }
+
     virtual bool getAll( QList<SyncItemKey>& /*aKeys*/ )
     {
         return true;

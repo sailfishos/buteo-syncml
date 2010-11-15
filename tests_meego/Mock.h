@@ -165,6 +165,18 @@ public:
         return ctCaps;
     }
 
+    QByteArray getPluginExts( ) const
+    {
+        QByteArray exts(
+            "<Ext>"
+            "<Xnam>SynchronizeGroup</Xnam>"
+            "<Xval>X-CT</Xval>"
+            "</Ext>"
+        );
+
+        return exts;
+    }
+
     virtual bool getAll( QList<SyncItemKey>& aKeys )
     {
         aKeys << SyncItemKey("1") << SyncItemKey("2") << SyncItemKey("3") << SyncItemKey("5");

@@ -88,6 +88,11 @@ QByteArray LocalChangesPackageStorage::getPluginCTCaps( ProtocolVersion aVersion
     return QByteArray();
 }
 
+QByteArray LocalChangesPackageStorage::getPluginExts() const
+{
+    return QByteArray();
+}
+
 bool LocalChangesPackageStorage::getAll( QList<SyncItemKey>& aKeys )
 {
     Q_UNUSED( aKeys );

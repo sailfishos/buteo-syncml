@@ -1,3 +1,12 @@
+libmeegosyncml (0.4.9-46) unstable; urgency=low
+
+  * Fixes: NB#176179 - Contacts not copied to device during sync. Added a
+    check for packages to be sent before we dtermine whether the data update
+    status package can be sent.
+  * Added Ext parameter support for Storage plugins.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Nov, 15 Nov 2010 15:15:00 +0530
+
 libmeegosyncml (0.4.9-45) unstable; urgency=low
 
   * Fixes: NB#176179 - Contacts not copied to device during sync.

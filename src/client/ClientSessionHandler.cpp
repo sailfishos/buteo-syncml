@@ -493,12 +493,15 @@ bool ClientSessionHandler::shouldSendDataUpdateStatus()
 
     if( 0 < getConfig()->getAgentProperty( OMITDATAUPDATESTATUSPROP ).toInt() )
     {
-        // Check if we have anything other than status for the SyncHdr
-        // to send to the server
+        // Check if we have anything other than status for the SyncHdr, and the
+        // Final package to send to the server
+
         const QList<StatusParams*>& responseStatuses = getResponseGenerator().getStatuses();
 
         if( ( 1 == responseStatuses.count() ) &&
-                ( SYNCML_ELEMENT_SYNCHDR == responseStatuses.at(0)->cmd ) )
+                ( SYNCML_ELEMENT_SYNCHDR == responseStatuses.at(0)->cmd ) &&
+                ( getResponseGenerator().getPackages().count() <= 1 )
+          )
         {
             LOG_DEBUG("There is only one status fragment in response and it's for the sync header,\
                     so we can omit the update status package");

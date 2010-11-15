@@ -262,6 +262,7 @@ namespace DataSync
     #define SYNCML_ELEMENT_MAXOCCUR "MaxOccur"
     #define SYNCML_ELEMENT_NOTRUNCATE "NoTruncate"
     #define SYNCML_ELEMENT_EXEC "Exec"
+    #define SYNCML_ELEMENT_EXT "Ext"
 
     #define SYNCML_CONTENT_TYPE "Content-Type"
     #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"

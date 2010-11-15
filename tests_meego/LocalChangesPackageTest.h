@@ -56,6 +56,8 @@ public:
 
     virtual QByteArray getPluginCTCaps( ProtocolVersion aVersion ) const;
 
+    virtual QByteArray getPluginExts() const;
+
     virtual bool getAll( QList<SyncItemKey>& aKeys );
 
     virtual bool getModifications( QList<SyncItemKey>& aNewKeys,
