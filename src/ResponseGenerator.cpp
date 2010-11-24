@@ -131,7 +131,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
 
     }
 
-    while( iPackages.count() > 0 ) {
+    while( ( remainingBytes > 0 ) && ( iPackages.count() > 0 ) ) {
 
         Package* package = iPackages.first();
 
@@ -189,7 +189,15 @@ void ResponseGenerator::addStatus( StatusParams* aParams )
 
     if( !iIgnoreStatuses )
     {
-        iStatuses.append( aParams );
+        if( SYNCML_ELEMENT_SYNCHDR == aParams->cmd )
+        {
+            // Status for SyncHdr is always in the beginning
+            iStatuses.prepend( aParams );
+        }
+        else
+        {
+            iStatuses.append( aParams );
+        }
     }
     else
     {
