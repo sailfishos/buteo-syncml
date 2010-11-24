@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.9-47) unstable; urgency=low
+
+  * Support DMDDF wbxml codepage 
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Nov, 24 Nov 2010 15:15:00 +0530
+
 libmeegosyncml (0.4.9-46) unstable; urgency=low
 
   * Fixes: NB#176179 - Contacts not copied to device during sync. Added a
