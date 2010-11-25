@@ -61,6 +61,27 @@ enum SANInitiator
     SANINITIATOR_SERVER = 1  /*!< Server initiated action*/
 };
 
+/*! \brief SAN header
+ *
+ */
+struct SANHeader
+{
+    ProtocolVersion         iVersion;           /*!< Protocol version*/
+    SANUIMode               iUIMode;            /*!< User interaction mode*/
+    SANInitiator            iInitiator;         /*!< Notification initiator*/
+    qint16                  iSessionId;         /*!< Session ID*/
+    QString                 iServerIdentifier;  /*!< Server identifier*/
+};
+
+/*! \brief SAN message specific to DM
+ *
+ */
+struct SANDM
+{
+    QByteArray              iDigest;            /*!< MD5 digest*/
+    SANHeader               iHeader;            /*!< Message header*/
+};
+
 /*! \brief SAN sync information
  *
  */
@@ -71,19 +92,14 @@ struct SANSyncInfo
     QString         iServerURI;     /*!< Remote database URI*/
 };
 
-/*! \brief SAN message data
+/*! \brief SAN message specific to DS
  *
  */
-struct SANData
+struct SANDS
 {
     QByteArray              iDigest;            /*!< MD5 digest*/
-    ProtocolVersion         iVersion;           /*!< Protocol version*/
-    SANUIMode               iUIMode;            /*!< User interaction mode*/
-    SANInitiator            iInitiator;         /*!< Notification initiator*/
-    qint16                  iSessionId;         /*!< Session ID*/
-    QString                 iServerIdentifier;  /*!< Server identifier*/
+    SANHeader               iHeader;            /*!< Message header*/
     QList<SANSyncInfo>      iSyncInfo;          /*!< Message sync info payload*/
-
 };
 
 /*! \brief Class for parsing and generating OMA DS 1.2 Server Alerted
@@ -117,16 +133,25 @@ public:
                       const QString& aPassword,
                       const QString& aNonce );
 
-    /*! \brief Parse SAN message
+    /*! \brief Parse SAN message specific to DM
      *
      * @param aMessage Message to parse
      * @param aData Parsed message data on success
      * @return True on success, otherwise false
      */
-    bool parseSANMessage( const QByteArray& aMessage,
-                          SANData& aData );
+    bool parseSANMessageDM( const QByteArray& aMessage,
+                            SANDM& aData );
 
-    /*! \brief Generate SAN message
+    /*! \brief Parse SAN message specific to DS
+     *
+     * @param aMessage Message to parse
+     * @param aData Parsed message data on success
+     * @return True on success, otherwise false
+     */
+    bool parseSANMessageDS( const QByteArray& aMessage,
+                            SANDS& aData );
+
+    /*! \brief Generate SAN message specific to DS
      *
      * @param aData Message data to use
      * @param aPassword Password for MD5 Digest
@@ -134,15 +159,18 @@ public:
      * @param aMessage Generated message on success
      * @return True on success, otherwise false
      */
-    bool generateSANMessage( const SANData& aData,
-                             const QString& aPassword,
-                             const QString& aNonce,
-                             QByteArray& aMessage );
+    bool generateSANMessageDS( const SANDS& aData,
+                               const QString& aPassword,
+                               const QString& aNonce,
+                               QByteArray& aMessage );
 
 
 protected:
 
 private:
+
+    bool parseCommon( const QByteArray& aMessage, QByteArray& aDigest,
+                      SANHeader& aHeader, QByteArray& aBody );
 
     QByteArray generateDigest( const QString& aServerIdentifier,
                                const QString& aPassword,

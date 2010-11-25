@@ -597,13 +597,13 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const
     FUNCTION_CALL_TRACE;
 
     SANHandler handler;
-    SANData data;
+    SANDS data;
 
-    data.iVersion = SYNCML_1_2;
-    data.iUIMode = SANUIMODE_BACKGROUND;
-    data.iInitiator = SANINITIATOR_SERVER;
-    data.iSessionId = 0;
-    data.iServerIdentifier = getConfig()->getLocalDeviceName();
+    data.iHeader.iVersion = SYNCML_1_2;
+    data.iHeader.iUIMode = SANUIMODE_BACKGROUND;
+    data.iHeader.iInitiator = SANINITIATOR_SERVER;
+    data.iHeader.iSessionId = 0;
+    data.iHeader.iServerIdentifier = getConfig()->getLocalDeviceName();
 
     int syncType = getConfig()->getSyncMode().toSyncMLCode();
     for( int i = 0; i < aStorages.count(); ++i )
@@ -618,7 +618,7 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const
     QByteArray message;
     QString user = getConfig()->getUsername();
     QString password = getConfig()->getPassword();
-    if( !handler.generateSANMessage( data, user, password, message ) )
+    if( !handler.generateSANMessageDS( data, user, password, message ) )
     {
         LOG_CRITICAL( "Could not generate SyncML 1.2 SAN package" );
         abortSync( INTERNAL_ERROR, "Error while generating 1.2 SAN package" );

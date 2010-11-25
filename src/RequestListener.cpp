@@ -260,7 +260,7 @@ void RequestListener::SANPackageReceived( QIODevice* aDevice )
     qDeleteAll( iRequestData.iFragments );
     iRequestData.iFragments.clear();
 
-    if( parser.parseSANMessage( package, iRequestData.iSANData ) )
+    if( parser.parseSANMessageDS( package, iRequestData.iSANData ) )
     {
         LOG_DEBUG( "SyncAgent: SAN package processed" );
         emit newPendingRequest();

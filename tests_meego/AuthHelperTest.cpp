@@ -37,34 +37,30 @@
 
 using namespace DataSync;
 
-void AuthHelperTest::testAuthEncodeDecodeBasic()
+void AuthHelperTest::testAuthEncodeBasic()
 {
     AuthHelper authHelper;
+
+    QString username = "foo";
+    QString password = "bar";
     
-    AuthHelper::AuthData authData;
-    authData.iUsername = "foo";
-    authData.iPassword = "bar";
-    
-    QByteArray encodedData = authHelper.encodeBasicB64Auth(authData);
-    AuthHelper::AuthData decodedData;
-    
-    authHelper.decodeBasicB64EncodedAuth(encodedData, decodedData);
-    
-    QCOMPARE(authData.iUsername, decodedData.iUsername);
-    QCOMPARE(authData.iPassword, decodedData.iPassword);
+    // @todo: check results?
+    QByteArray encodedData = authHelper.encodeBasicB64Auth(username, password);
+
 }
 
 void AuthHelperTest::testAuthEncodeMD5()
 {
     AuthHelper authHelper;
     
-    AuthHelper::AuthData authData;
-    authData.iUsername = "foo";
-    authData.iPassword = "bar";
-    
+    QString username = "foo";
+    QString password = "bar";
     QByteArray nonce;
     
-    authHelper.encodeMD5B64Auth(authData, nonce);
+    // @todo: check results?
+    QByteArray encodedData = authHelper.encodeMD5Auth(username, password, nonce);
+
+
 }
 
 

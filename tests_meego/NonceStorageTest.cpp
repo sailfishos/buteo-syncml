@@ -38,56 +38,39 @@
 
 #include "TestLoader.h"
 
-#define CONNECTIONNAME "dbhandler"
+const QString DB( "/tmp/noncestoragetest.db" );
+const QString LOCALDEVICE( "localDevice" );
+const QString REMOTEDEVICE( "remoteDevice" );
 
 using namespace DataSync;
 
-void NonceStorageTest::initTestCase()
-{
-
-    iDbHandler = new DatabaseHandler( "/tmp/noncestoragetest.db" );
-
-    iNonceStorage = new NonceStorage( iDbHandler->getDbHandle() );
-
-}
-
-void NonceStorageTest::cleanupTestCase()
-{
-    delete iNonceStorage;
-    iNonceStorage = NULL;
-
-    delete iDbHandler;
-    iDbHandler = NULL;
-
-}
-
 void NonceStorageTest::testGenerateNonce()
 {
-    QByteArray nonce = iNonceStorage->generateNonce();
-    QVERIFY(!nonce.isEmpty());
+    DatabaseHandler handler( DB );
+    NonceStorage nonces( handler.getDbHandle(), LOCALDEVICE, REMOTEDEVICE );
+    QByteArray nonce = nonces.generateNonce();
+    QVERIFY( !nonce.isEmpty() );
 }
 
-void NonceStorageTest::testAddNonce()
+void NonceStorageTest::testSetGetNonce()
 {
-    QByteArray nonce = iNonceStorage->generateNonce();
-    QString localDevice = "foo";
-    QString remoteDevice = "bar";
-    iNonceStorage->addNonce(localDevice, remoteDevice, nonce);
-}
+    DatabaseHandler handler( DB );
+    NonceStorage nonces( handler.getDbHandle(), LOCALDEVICE, REMOTEDEVICE );
 
-void NonceStorageTest::testRetrieveNonce()
-{
-    QString localDevice = "foo";
-    QString remoteDevice = "bar";
-    QByteArray nonce = iNonceStorage->retrieveNonce(localDevice, remoteDevice);
+    QByteArray nonce = nonces.generateNonce();
+    nonces.setNonce( nonce );
+    QCOMPARE( nonces.nonce(), nonce );
 
 }
-
 void NonceStorageTest::testClearNonce()
 {
-    QString localDevice = "foo";
-    QString remoteDevice = "bar";
-    iNonceStorage->clearNonce(localDevice, remoteDevice);
+    DatabaseHandler handler( DB );
+    NonceStorage nonces( handler.getDbHandle(), LOCALDEVICE, REMOTEDEVICE );
+
+    QByteArray nonce = nonces.generateNonce();
+    nonces.setNonce( nonce );
+    nonces.clearNonce();
+    QVERIFY( nonces.nonce().isEmpty() );
 }
 
 TESTLOADER_ADD_TEST(NonceStorageTest);

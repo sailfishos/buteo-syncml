@@ -45,15 +45,6 @@ class AuthHelper {
 
 public:
 
-    /*! \brief Structure for passing authentication data
-     *
-     */
-    struct AuthData
-    {
-        QString iUsername;  /*!< User name*/
-        QString iPassword;  /*!< Password*/
-    };
-
     /*! \brief Constructor
      *
      */
@@ -66,26 +57,23 @@ public:
 
     /*! \brief Encode SyncML basic base64-encoded authentication
      *
-     * @param aAuthData Authentication data
+     * @param aUsername Username
+     * @param aPassword Password
      * @return Encoded data
      */
-    QByteArray encodeBasicB64Auth( const AuthData& aAuthData ) const;
+    QByteArray encodeBasicB64Auth( const QString& aUsername, const QString& aPassword ) const;
 
-    /*! \brief Decodes SyncML basic base64-encoded authentication
+    /*! \brief Encode SyncML md5 authentication
      *
-     * @param aEncodedData Encoded data
-     * @param aAuthData Decoded data
-     * @return True if decoding was successful, false otherwise
-     */
-    bool decodeBasicB64EncodedAuth( const QByteArray& aEncodedData, AuthData& aAuthData );
-
-    /*! \brief Encode SyncML md5 base64-encoded authentication
+     * Note that this function does not automatically base64-encode the data, so it must be done
+     * separately if the information is passed through clear-text protocol like XML
      *
-     * @param aAuthData Authentication data
+     * @param aUsername Username
+     * @param aPassword Password
      * @param aNonce Nonce to use
      * @return Encoded data
      */
-    QByteArray encodeMD5B64Auth( const AuthData& aAuthData, const QByteArray& aNonce ) const;
+    QByteArray encodeMD5Auth( const QString& aUsername, const QString& aPassword, const QString& aNonce ) const;
 
 protected:
 

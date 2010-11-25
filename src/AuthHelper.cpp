@@ -49,59 +49,38 @@ AuthHelper::~AuthHelper()
     FUNCTION_CALL_TRACE;
 }
 
-QByteArray AuthHelper::encodeBasicB64Auth( const AuthData& aAuthData ) const
+QByteArray AuthHelper::encodeBasicB64Auth( const QString& aUsername, const QString& aPassword ) const
 {
     FUNCTION_CALL_TRACE;
 
     QByteArray in;
 
-    in.append( aAuthData.iUsername );
+    in.append( aUsername );
     in.append( ':' );
-    in.append( aAuthData.iPassword );
+    in.append( aPassword );
 
     return in.toBase64();
 
 }
 
-bool AuthHelper::decodeBasicB64EncodedAuth( const QByteArray& aEncodedData, AuthData& aAuthData )
-{
-    FUNCTION_CALL_TRACE;
-
-    bool successful = false;
-
-    QByteArray in = QByteArray::fromBase64( aEncodedData );
-
-    QList<QByteArray> splits = in.split( ':' );
-
-    if( splits.count() == 2 ) {
-        aAuthData.iUsername = splits[0];
-        aAuthData.iPassword = splits[1];
-        successful = true;
-    }
-
-    return successful;
-}
-
-QByteArray AuthHelper::encodeMD5B64Auth( const AuthData& aAuthData, const QByteArray& aNonce ) const
+QByteArray AuthHelper::encodeMD5Auth( const QString& aUsername, const QString& aPassword,
+                                      const QString& aNonce ) const
 {
     FUNCTION_CALL_TRACE;
 
     QByteArray in;
 
-    in.append( aAuthData.iUsername );
+    in.append( aUsername.toUtf8() );
     in.append( ':' );
-    in.append( aAuthData.iPassword );
+    in.append( aPassword.toUtf8() );
 
     QByteArray tmp = toMD5( in );
     tmp = tmp.toBase64();
 
     tmp.append( ':' );
-    tmp.append( aNonce );
+    tmp.append( aNonce.toUtf8() );
 
-    tmp = toMD5( tmp );
-
-    return tmp.toBase64();
-
+    return toMD5( tmp );
 }
 
 QByteArray AuthHelper::toMD5( const QByteArray& aString ) const

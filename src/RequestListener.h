@@ -77,7 +77,7 @@ public:
     struct RequestData
     {
         RequestType         iType;      ///< Type of the request
-        SANData             iSANData;   ///< Package fields of the request if SAN package
+        SANDS               iSANData;   ///< Package fields of the request if SAN package
         QList<Fragment*>    iFragments; ///< Protocol fragments if the request was XML
     };
 

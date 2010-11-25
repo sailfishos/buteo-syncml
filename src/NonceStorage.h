@@ -50,9 +50,14 @@ public:
 
     /*! \brief Constructor
      *
+     * The order of devices means, that whenever aLocalDevice authenticates with
+     * aRemoteDevice, it should use the specified nonce
+     *
      * @param aDbHandle Database handle to use
+     * @param aLocalDevice Local device to associate with
+     * @param aRemoteDevice Remove device to associate with
      */
-    explicit NonceStorage( QSqlDatabase& aDbHandle );
+    explicit NonceStorage( QSqlDatabase& aDbHandle, const QString& aLocalDevice, const QString& aRemoteDevice );
 
     /*! \brief Destructor
      *
@@ -65,34 +70,24 @@ public:
      */
     QByteArray generateNonce() const;
 
-    /*! \brief Adds a new nonce to storage
-     *
-     * The order of devices means, that whenever aLocalDevice authenticates with
-     * aRemoteDevice, it should use the specified nonce
-     *
-     * @param aLocalDevice Local device to associate with
-     * @param aRemoteDevice Remove device to associate with
-     * @param aNonce Nonce to store
-     */
-    void addNonce( const QString& aLocalDevice, const QString& aRemoteDevice, const QByteArray& aNonce );
-
     /*! \brief Retrieves a nonce from storage
      *
-     * The order of devices means, that whenever aLocalDevice authenticates with
-     * aRemoteDevice, it should use the specified nonce
-     *
-     * @param aLocalDevice Local device to associate with
-     * @param aRemoteDevice Remove device to associate with
      * @return Nonce if found, otherwise empty
      */
-    QByteArray retrieveNonce( const QString& aLocalDevice, const QString& aRemoteDevice );
+    QByteArray nonce();
+
+    /*! \brief Sets a new nonce to storage
+     *
+     *
+     * @param aNonce Nonce to store
+     */
+    void setNonce( const QByteArray& aNonce );
+
 
     /*! \brief Clears a nonce from storage
      *
-     * @param aLocalDevice Local device to associate with
-     * @param aRemoteDevice Remove device to associate with
      */
-    void clearNonce( const QString& aLocalDevice, const QString& aRemoteDevice );
+    void clearNonce();
 
 protected:
 
@@ -104,7 +99,9 @@ protected:
 
 private:
 
-    QSqlDatabase& iDbHandle;
+    QSqlDatabase&   iDbHandle;
+    QString         iLocalDevice;
+    QString         iRemoteDevice;
 
 };
 

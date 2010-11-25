@@ -66,19 +66,17 @@ bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold 
     SyncMLCred* cred = NULL;
     
     AuthHelper helper;
-    AuthHelper::AuthData authData;
-
-    authData.iUsername = iUsername;
-    authData.iPassword = iPassword;
 
     if( iAuthType == AUTH_BASIC )
     {
-        QByteArray data = helper.encodeBasicB64Auth( authData );
+        QByteArray data = helper.encodeBasicB64Auth( iUsername, iPassword );
         cred = new SyncMLCred( SYNCML_FORMAT_ENCODING_B64, SYNCML_FORMAT_AUTH_BASIC, data );
     }
     else if( iAuthType == AUTH_MD5 )
     {
-        QByteArray data = helper.encodeMD5B64Auth( authData, iNonce );
+        QByteArray data = helper.encodeMD5Auth( iUsername, iPassword, iNonce );
+        // @todo: wouldn't necessarily have to B64-encode over WbXML
+        data = data.toBase64();
         cred = new SyncMLCred( SYNCML_FORMAT_ENCODING_B64, SYNCML_FORMAT_AUTH_MD5, data );
     }
     else

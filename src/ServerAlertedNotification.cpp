@@ -103,60 +103,41 @@ bool SANHandler::checkDigest( const QByteArray& aMessage,
     }
 }
 
-bool SANHandler::parseSANMessage( const QByteArray& aMessage,
-                                  SANData& aData )
+bool SANHandler::parseSANMessageDM( const QByteArray& aMessage,
+                                    SANDM& aData )
 {
     FUNCTION_CALL_TRACE;
 
     LOG_DEBUG( "Parsing SAN message of" << aMessage.size() << "bytes" );
 
-    QByteArray digest = aMessage.left( DIGEST_SIZE );
-    QByteArray header = aMessage.mid( DIGEST_SIZE, HEADER_SIZE );
+    QByteArray notification;
 
-    if( digest.size() != DIGEST_SIZE ) {
-        LOG_WARNING( "Invalid digest" );
+    if( !parseCommon( aMessage, aData.iDigest, aData.iHeader, notification ) )
+    {
         return false;
     }
 
-    if( header.size() != HEADER_SIZE ) {
-        LOG_WARNING( "Invalid header" );
+    if( !notification.isEmpty() ) {
+        LOG_WARNING( "Invalid notification body" );
         return false;
     }
 
-    LOG_DEBUG( "SAN digest:" << digest.toHex() );
-    LOG_DEBUG( "SAN header:" << header.toHex() );
+    return true;
+}
 
-    int version = ( header[0] << 2 ) | ( header[1] >> 6 );
-    char uimode = ( header[1] >> 4 ) & 0x03;
-    bool initiator = ( header[1] >> 3 ) & 0x01;
-    qint16 sessionId = ( header[5] << 8 ) | header[6];
+bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
+                                    SANDS &aData )
+{
+    FUNCTION_CALL_TRACE;
 
-    if( version == SYNCMLVERSION_1_1 ) {
-        aData.iVersion = SYNCML_1_1;
-    }
-    else if( version == SYNCMLVERSION_1_2 ) {
-        aData.iVersion = SYNCML_1_2;
-    }
-    else {
-        LOG_WARNING( "Unsupported SyncML version" );
+    LOG_DEBUG( "Parsing SAN message of" << aMessage.size() << "bytes" );
+
+    QByteArray notification;
+
+    if( !parseCommon( aMessage, aData.iDigest, aData.iHeader, notification ) )
+    {
         return false;
     }
-
-    aData.iUIMode = static_cast<SANUIMode>( uimode );
-    aData.iInitiator = static_cast<SANInitiator>( initiator );
-    aData.iSessionId = sessionId;
-
-    int serverIdentifierLength = header[7];
-    QString serverIdentifier = aMessage.mid( DIGEST_SIZE + HEADER_SIZE, serverIdentifierLength );
-
-    if( serverIdentifier.length() != serverIdentifierLength ) {
-        LOG_WARNING( "Invalid server identifier" );
-        return false;
-    }
-
-    aData.iServerIdentifier = serverIdentifier;
-
-    QByteArray notification = aMessage.mid( DIGEST_SIZE + HEADER_SIZE + serverIdentifierLength );
 
     if( notification.isEmpty() ) {
         LOG_WARNING( "Invalid notification body" );
@@ -221,10 +202,8 @@ bool SANHandler::parseSANMessage( const QByteArray& aMessage,
 
 }
 
-bool SANHandler::generateSANMessage( const SANData& aData,
-                                     const QString& aPassword,
-                                     const QString& aNonce,
-                                     QByteArray& aMessage )
+bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassword,
+                                       const QString &aNonce, QByteArray &aMessage )
 {
     FUNCTION_CALL_TRACE;
 
@@ -234,55 +213,55 @@ bool SANHandler::generateSANMessage( const SANData& aData,
     unsigned char highByte = 0;
     unsigned char lowByte = 0;
 
-    if( aData.iVersion == SYNCML_1_1 )
+    if( aData.iHeader.iVersion == SYNCML_1_1 )
     {
         highByte = SYNCMLVERSION_1_1 >> 2;
         lowByte = (unsigned char)(SYNCMLVERSION_1_1 << 8);
     }
-    else if( aData.iVersion == SYNCML_1_2 )
+    else if( aData.iHeader.iVersion == SYNCML_1_2 )
     {
         highByte = SYNCMLVERSION_1_2 >> 2;
         lowByte = (unsigned char)(SYNCMLVERSION_1_2 << 8);
     }
     else
     {
-        LOG_WARNING( "Unsupported version: " << aData.iVersion );
+        LOG_WARNING( "Unsupported version: " << aData.iHeader.iVersion );
         return false;
     }
 
-    if( aData.iUIMode == SANUIMODE_NOT_SPECIFIED )
+    if( aData.iHeader.iUIMode == SANUIMODE_NOT_SPECIFIED )
     {
         lowByte |= UIMODE_NOT_SPECIFIED;
     }
-    else if( aData.iUIMode == SANUIMODE_BACKGROUND )
+    else if( aData.iHeader.iUIMode == SANUIMODE_BACKGROUND )
     {
         lowByte |= UIMODE_BACKGROUND;
     }
-    else if( aData.iUIMode == SANUIMODE_INFORMATIVE )
+    else if( aData.iHeader.iUIMode == SANUIMODE_INFORMATIVE )
     {
         lowByte |= UIMODE_INFORMATIVE;
     }
-    else if( aData.iUIMode == SANUIMODE_USER_INTERACTION )
+    else if( aData.iHeader.iUIMode == SANUIMODE_USER_INTERACTION )
     {
         lowByte |= UIMODE_USER_INTERACTION;
     }
     else
     {
-        LOG_WARNING( "Unsupported user interaction mode:" << aData.iUIMode );
+        LOG_WARNING( "Unsupported user interaction mode:" << aData.iHeader.iUIMode );
         return false;
     }
 
-    if( aData.iInitiator == SANINITIATOR_USER )
+    if( aData.iHeader.iInitiator == SANINITIATOR_USER )
     {
         lowByte |= INITIATOR_USER;
     }
-    else if( aData.iInitiator == SANINITIATOR_SERVER )
+    else if( aData.iHeader.iInitiator == SANINITIATOR_SERVER )
     {
         lowByte |= INITIATOR_SERVER;
     }
     else
     {
-        LOG_WARNING( "Unsupported initiator of the notification:" << aData.iInitiator );
+        LOG_WARNING( "Unsupported initiator of the notification:" << aData.iHeader.iInitiator );
         return false;
     }
 
@@ -290,7 +269,7 @@ bool SANHandler::generateSANMessage( const SANData& aData,
     notification[0] = highByte;
     notification[1] = lowByte;
 
-    int serverIdentifierLength = aData.iServerIdentifier.size();
+    int serverIdentifierLength = aData.iHeader.iServerIdentifier.size();
 
     if( serverIdentifierLength > MAX_SERVERURI_LENGTH )
     {
@@ -299,7 +278,7 @@ bool SANHandler::generateSANMessage( const SANData& aData,
     }
 
     notification[7] = (unsigned char)serverIdentifierLength;
-    notification.append( aData.iServerIdentifier.toAscii() );
+    notification.append( aData.iHeader.iServerIdentifier.toAscii() );
 
     // Special case for syncing all data storages if no sync infos were specified
     unsigned char numSync = 0;
@@ -345,14 +324,70 @@ bool SANHandler::generateSANMessage( const SANData& aData,
 
     }
 
-    aMessage = generateDigest( aData.iServerIdentifier, aPassword, aNonce, notification );
+    aMessage = generateDigest( aData.iHeader.iServerIdentifier, aPassword, aNonce, notification );
     aMessage.append( notification );
 
     return true;
 }
 
+bool SANHandler::parseCommon( const QByteArray& aMessage, QByteArray& aDigest,
+                              SANHeader& aHeader, QByteArray& aBody )
+{
+    FUNCTION_CALL_TRACE;
+
+    aDigest = aMessage.left( DIGEST_SIZE );
+    QByteArray header = aMessage.mid( DIGEST_SIZE, HEADER_SIZE );
+
+    if( aDigest.size() != DIGEST_SIZE ) {
+        LOG_WARNING( "Invalid digest" );
+        return false;
+    }
+
+    if( header.size() != HEADER_SIZE ) {
+        LOG_WARNING( "Invalid header" );
+        return false;
+    }
+
+    LOG_DEBUG( "SAN digest:" << aDigest.toHex() );
+    LOG_DEBUG( "SAN header:" << header.toHex() );
+
+    int version = ( header[0] << 2 ) | ( header[1] >> 6 );
+    char uimode = ( header[1] >> 4 ) & 0x03;
+    bool initiator = ( header[1] >> 3 ) & 0x01;
+    qint16 sessionId = ( header[5] << 8 ) | header[6];
+
+    if( version == SYNCMLVERSION_1_1 ) {
+        aHeader.iVersion = SYNCML_1_1;
+    }
+    else if( version == SYNCMLVERSION_1_2 ) {
+        aHeader.iVersion = SYNCML_1_2;
+    }
+    else {
+        LOG_WARNING( "Unsupported SyncML version" );
+        return false;
+    }
+
+    aHeader.iUIMode = static_cast<SANUIMode>( uimode );
+    aHeader.iInitiator = static_cast<SANInitiator>( initiator );
+    aHeader.iSessionId = sessionId;
+
+    int serverIdentifierLength = header[7];
+    QString serverIdentifier = aMessage.mid( DIGEST_SIZE + HEADER_SIZE, serverIdentifierLength );
+
+    if( serverIdentifier.length() != serverIdentifierLength ) {
+        LOG_WARNING( "Invalid server identifier" );
+        return false;
+    }
+
+    aHeader.iServerIdentifier = serverIdentifier;
+
+    aBody = aMessage.mid( DIGEST_SIZE + HEADER_SIZE + serverIdentifierLength );
+
+    return true;
+}
+
 // Digest = H(B64(H(server-identifier:password)):nonce:B64(H(notification)))
-// See SyncML Server Alarted Notification and DS Protocol specifications for more information
+// See SyncML Server Alerted Notification and DS Protocol specifications for more information
 QByteArray SANHandler::generateDigest( const QString& aServerIdentifier, const QString& aPassword,
                                        const QString& aNonce, const QByteArray& aNotification )
 {

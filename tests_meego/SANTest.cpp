@@ -52,18 +52,18 @@ void SANTest::testParser01()
     SANHandler parser;
 
     QByteArray message;
-    SANData data;
+    SANDS data;
 
     QVERIFY( readFile( "testfiles/SAN01.bin", message ) );
 
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
-    QVERIFY( parser.parseSANMessage( message, data ) );
+    QVERIFY( parser.parseSANMessageDS( message, data ) );
 
-    QVERIFY( data.iVersion == SYNCML_1_2 );
-    QVERIFY( data.iUIMode == SANUIMODE_BACKGROUND );
-    QVERIFY( data.iInitiator == SANINITIATOR_SERVER );
-    QVERIFY( data.iSessionId == 0 );
-    QVERIFY( data.iServerIdentifier == serverIdentifier );
+    QVERIFY( data.iHeader.iVersion == SYNCML_1_2 );
+    QVERIFY( data.iHeader.iUIMode == SANUIMODE_BACKGROUND );
+    QVERIFY( data.iHeader.iInitiator == SANINITIATOR_SERVER );
+    QVERIFY( data.iHeader.iSessionId == 0 );
+    QVERIFY( data.iHeader.iServerIdentifier == serverIdentifier );
 
     QVERIFY( data.iSyncInfo.count() == 1 );
     QVERIFY( data.iSyncInfo[0].iSyncType == 206 );
@@ -83,18 +83,18 @@ void SANTest::testParser02()
     SANHandler parser;
 
     QByteArray message;
-    SANData data;
+    SANDS data;
 
     QVERIFY( readFile( "testfiles/SAN02.bin", message ) );
 
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
-    QVERIFY( parser.parseSANMessage( message, data ) );
+    QVERIFY( parser.parseSANMessageDS( message, data ) );
 
-    QVERIFY( data.iVersion == SYNCML_1_2 );
-    QVERIFY( data.iUIMode == SANUIMODE_BACKGROUND );
-    QVERIFY( data.iInitiator == SANINITIATOR_SERVER );
-    QVERIFY( data.iSessionId == 0 );
-    QVERIFY( data.iServerIdentifier == serverIdentifier );
+    QVERIFY( data.iHeader.iVersion == SYNCML_1_2 );
+    QVERIFY( data.iHeader.iUIMode == SANUIMODE_BACKGROUND );
+    QVERIFY( data.iHeader.iInitiator == SANINITIATOR_SERVER );
+    QVERIFY( data.iHeader.iSessionId == 0 );
+    QVERIFY( data.iHeader.iServerIdentifier == serverIdentifier );
 
     QVERIFY( data.iSyncInfo.count() == 1 );
 
@@ -111,12 +111,12 @@ void SANTest::testGenerator01()
     SANHandler generator;
     QByteArray message;
 
-    SANData data;
-    data.iVersion = SYNCML_1_2;
-    data.iUIMode = SANUIMODE_BACKGROUND;
-    data.iInitiator = SANINITIATOR_SERVER;
-    data.iSessionId = 0;
-    data.iServerIdentifier = "PC Suite Data Sync";
+    SANDS data;
+    data.iHeader.iVersion = SYNCML_1_2;
+    data.iHeader.iUIMode = SANUIMODE_BACKGROUND;
+    data.iHeader.iInitiator = SANINITIATOR_SERVER;
+    data.iHeader.iSessionId = 0;
+    data.iHeader.iServerIdentifier = "PC Suite Data Sync";
 
     SANSyncInfo syncInfo;
     syncInfo.iSyncType = 206;
@@ -124,7 +124,7 @@ void SANTest::testGenerator01()
     syncInfo.iServerURI = "Contacts";
     data.iSyncInfo.append( syncInfo );
 
-    QVERIFY( generator.generateSANMessage( data, "", "", message ) );
+    QVERIFY( generator.generateSANMessageDS( data, "", "", message ) );
 
     QByteArray expected;
     QVERIFY( readFile( "testfiles/SAN01.bin", expected ) );

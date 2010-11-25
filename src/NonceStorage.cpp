@@ -39,8 +39,9 @@
 
 using namespace DataSync;
 
-NonceStorage::NonceStorage( QSqlDatabase& aDbHandle )
- : iDbHandle( aDbHandle )
+NonceStorage::NonceStorage( QSqlDatabase& aDbHandle, const QString& aLocalDevice,
+                            const QString& aRemoteDevice )
+ : iDbHandle( aDbHandle ), iLocalDevice( aLocalDevice ), iRemoteDevice( aRemoteDevice )
 {
 
 }
@@ -52,37 +53,13 @@ NonceStorage::~NonceStorage()
 
 QByteArray NonceStorage::generateNonce() const
 {
-    return QByteArray::number( QDateTime::currentDateTime().toTime_t() );
+    // @todo:
+    QByteArray nonce = QByteArray::number( QDateTime::currentDateTime().toTime_t() );
+    LOG_DEBUG( "Generated nonce:" << nonce );
+    return nonce;
 }
 
-void NonceStorage::addNonce( const QString& aLocalDevice, const QString& aRemoteDevice, const QByteArray& aNonce )
-{
-    FUNCTION_CALL_TRACE;
-
-    if( !createNonceTable() )
-    {
-        return;
-    }
-
-    clearNonce( aLocalDevice, aRemoteDevice );
-
-    const QString insertQuery( "INSERT INTO nonces(local_device, remote_device, nonce) values(:local_device, :remove_device, :nonce)" );
-
-    QSqlQuery query( iDbHandle );
-
-    query.prepare( insertQuery );
-    query.bindValue( ":local_device", aLocalDevice );
-    query.bindValue( ":remote_device", aRemoteDevice );
-    query.bindValue( ":nonce", aNonce );
-    query.exec();
-
-    if( query.lastError().isValid() ) {
-        LOG_WARNING("Query failed: " << query.lastError());
-    }
-
-}
-
-QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QString& aRemoteDevice )
+QByteArray NonceStorage::nonce()
 {
     FUNCTION_CALL_TRACE;
 
@@ -95,16 +72,19 @@ QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QStri
         QSqlQuery query( iDbHandle );
 
         query.prepare( queryString );
-        query.bindValue( ":local_device", aLocalDevice );
-        query.bindValue( ":remote_device", aRemoteDevice );
+        query.bindValue( ":local_device", iLocalDevice );
+        query.bindValue( ":remote_device", iRemoteDevice );
         query.exec();
 
 
-        if (query.lastError().isValid()) {
-            LOG_WARNING("Query Error" << query.lastError());
+        if( query.lastError().isValid() )
+        {
+            LOG_WARNING("Query failed:" << query.lastError() );
         }
-        else {
-            if (query.next()) {
+        else
+        {
+            if( query.next() )
+            {
                 nonce = query.value(0).toByteArray();
             }
 
@@ -115,7 +95,35 @@ QByteArray NonceStorage::retrieveNonce( const QString& aLocalDevice, const QStri
     return nonce;
 }
 
-void NonceStorage::clearNonce( const QString& aLocalDevice, const QString& aRemoteDevice )
+void NonceStorage::setNonce( const QByteArray& aNonce )
+{
+    FUNCTION_CALL_TRACE;
+
+    if( !createNonceTable() )
+    {
+        return;
+    }
+
+    clearNonce();
+
+    const QString insertQuery( "INSERT INTO nonces(local_device, remote_device, nonce) values(:local_device, :remove_device, :nonce)" );
+
+    QSqlQuery query( iDbHandle );
+
+    query.prepare( insertQuery );
+    query.bindValue( ":local_device", iLocalDevice );
+    query.bindValue( ":remote_device", iRemoteDevice );
+    query.bindValue( ":nonce", aNonce );
+    query.exec();
+
+    if( query.lastError().isValid() )
+    {
+        LOG_WARNING("Query failed: " << query.lastError());
+    }
+
+}
+
+void NonceStorage::clearNonce()
 {
     FUNCTION_CALL_TRACE;
 
@@ -130,11 +138,12 @@ void NonceStorage::clearNonce( const QString& aLocalDevice, const QString& aRemo
     QSqlQuery query( iDbHandle );
 
     query.prepare( deleteQuery );
-    query.bindValue( ":local_device", aLocalDevice );
-    query.bindValue( ":remote_device", aRemoteDevice );
+    query.bindValue( ":local_device", iLocalDevice );
+    query.bindValue( ":remote_device", iRemoteDevice );
     query.exec();
 
-    if( query.lastError().isValid() ) {
+    if( query.lastError().isValid() )
+    {
         LOG_WARNING("Query failed: " << query.lastError());
     }
 }

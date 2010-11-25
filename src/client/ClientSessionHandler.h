@@ -41,7 +41,7 @@ class ClientSessionHandlerTest;
 
 namespace DataSync {
 
-struct SANData;
+struct SANDS;
 
 /*! \brief Handles SyncML client related session management
  *
@@ -83,7 +83,7 @@ public slots:
 	 *
 	 * @param aData Data of the notification
 	 */
-	void handleNotificationPackage( const SANData& aData );
+    void handleNotificationPackage( const SANDS& aData );
 
 protected:
 

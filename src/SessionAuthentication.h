@@ -40,6 +40,7 @@ namespace DataSync {
 
 class ResponseGenerator;
 class DatabaseHandler;
+class NonceStorage;
 
 /*! \brief Manages session authentication happening over SyncML protocol
  *
@@ -79,19 +80,27 @@ public:
      */
     ~SessionAuthentication();
 
-    /*! \brief Sets parameters for this session
+    /*! \brief Sets parameters to use for this session
+     *
+     * If remote authentication is not required, aAuthType of AUTH_NONE should be used,
+     * and empty QStrings should be passed. If remote device is not required to authenticate
+     * with local device, empty QStrings should be passed to aLocalUsername and aLocalPassword.
      *
      * @param aAuthType Authentication type to use when authenticating
-     * @param aUsername Username to use when authenticating
-     * @param aPassword Password to use when authenticating
-     * @param aNonce Explicitly defined nonce that should be used when authenticating with remote device
-     * @param aRequireLocalAuth True if also remote device should authenticate with local device
+     * @param aRemoteUsername Username to use when authenticating with remote device
+     * @param aRemotePassword Password to use when authenticating with remote device
+     * @param aRemoteNonce Explicitly defined nonce that should be used when authenticating with remote device
+     * @param aLocalUsername Username that remote device should use when authenticating
+     * @param aLocalPassword Password that remote device should use when authenticating
+     * @param aLocalNonce Explicitly defined nonce that remote device should use when authenticating
      */
     void setSessionParams( AuthType aAuthType,
-                           const QString& aUsername,
-                           const QString& aPassword,
-                           const QString& aNonce,
-                           bool aRequireLocalAuth );
+                           const QString& aRemoteUsername,
+                           const QString& aRemotePassword,
+                           const QString& aRemoteNonce,
+                           const QString& aLocalUsername,
+                           const QString& aLocalPassword,
+                           const QString& aLocalNonce );
 
     /*! \brief Returns whether remote device has been authenticated to us
      *
@@ -107,9 +116,16 @@ public:
     /*! \brief Analyze SyncML header sent by remote device
      *
      * @param aHeader Header to analyze
+     * @param aDbHandler DatabaseHandler to utilize
+     * @param aLocalDeviceName Local device name
+     * @param aRemoteDeviceName Remote device name
      * @param aResponseGenerator Response generator to utilize
      */
-    HeaderStatus analyzeHeader( const HeaderParams& aHeader, ResponseGenerator& aResponseGenerator );
+    HeaderStatus analyzeHeader( const HeaderParams& aHeader,
+                                DatabaseHandler& aDbHandler,
+                                const QString& aLocalDeviceName,
+                                const QString& aRemoteDeviceName,
+                                ResponseGenerator& aResponseGenerator );
 
     /*! \brief Analyze Status sent by remote device in response to SyncML header sent by us
      *
@@ -145,6 +161,12 @@ protected:
 
 private:
 
+    HeaderStatus handleAuthentication( const HeaderParams& aHeader,
+                                       DatabaseHandler& aDbHandler,
+                                       const QString& aLocalDeviceName,
+                                       const QString& aRemoteDeviceName,
+                                       ResponseGenerator& aResponseGenerator );
+
     StatusStatus handleChallenge( const ChalParams& aChallenge,
                                   DatabaseHandler& aDbHandler,
                                   const QString& aLocalDeviceName,
@@ -152,15 +174,23 @@ private:
 
     QByteArray decodeNonce( const ChalParams& aChallenge ) const;
 
+    ChalParams generateChallenge();
+
+    ChalParams generateChallenge( NonceStorage& aNonces );
+
     bool                iAuthedToRemote;
     bool                iRemoteAuthPending;
     bool                iRemoteAuthed;
     bool                iLocalAuthPending;
 
     AuthType            iAuthType;
-    QString             iUsername;
-    QString             iPassword;
-    QString             iNonce;
+    QString             iRemoteUsername;
+    QString             iRemotePassword;
+    QString             iRemoteNonce;
+    QString             iLocalUsername;
+    QString             iLocalPassword;
+    QString             iLocalNonce;
+
     QString             iLastError;
 
 };

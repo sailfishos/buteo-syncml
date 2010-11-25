@@ -116,7 +116,7 @@ void ClientSessionHandler::handleNotificationXML( QList<Fragment*>& aFragments )
     processMessage( aFragments, true );
 }
 
-void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
+void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 {
     FUNCTION_CALL_TRACE;
 
@@ -127,11 +127,11 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
 
     // Set up session
 
-    if( aData.iSessionId == 0 ) {
+    if( aData.iHeader.iSessionId == 0 ) {
         params().setSessionId( generateSessionID() );
     }
     else {
-        params().setSessionId( QString::number( aData.iSessionId ) );
+        params().setSessionId( QString::number( aData.iHeader.iSessionId ) );
     }
 
     if( !getConfig()->getLocalDeviceName().isEmpty() ) {
@@ -141,18 +141,18 @@ void ClientSessionHandler::handleNotificationPackage( const SANData& aData )
         params().setLocalDeviceName( getConfig()->getDeviceInfo().getDeviceID() );
     }
 
-    params().setRemoteDeviceName( aData.iServerIdentifier );
+    params().setRemoteDeviceName( aData.iHeader.iServerIdentifier );
 
     QString verDTD;
     QString verProto;
 
-    if( aData.iVersion == SYNCML_1_1 ) {
+    if( aData.iHeader.iVersion == SYNCML_1_1 ) {
         LOG_DEBUG("Setting SyncML 1.1 protocol version");
         setProtocolVersion( SYNCML_1_1 );
         verDTD = SYNCML_DTD_VERSION_1_1;
         verProto = DS_VERPROTO_1_1;
     }
-    else if( aData.iVersion == SYNCML_1_2 ) {
+    else if( aData.iHeader.iVersion == SYNCML_1_2 ) {
         LOG_DEBUG("Setting SyncML 1.2 protocol version");
         setProtocolVersion( SYNCML_1_2 );
         verDTD = SYNCML_DTD_VERSION_1_2;

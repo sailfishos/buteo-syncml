@@ -111,11 +111,19 @@ bool SessionHandler::prepareSync()
         return false;
     }
 
-    authentication().setSessionParams( getConfig()->getAuthType(),
-                                       getConfig()->getUsername(),
-                                       getConfig()->getPassword(),
-                                       getConfig()->getNonce(),
-                                       false );
+    // Compose session authentication information. Currently there is no use-cases in DS
+    // where remote device should authenticate to us
+    AuthType authType = getConfig()->getAuthType();
+    const QString& remoteUsername = getConfig()->getUsername();
+    const QString& remotePassword = getConfig()->getPassword();
+    const QString& remoteNonce = getConfig()->getNonce();
+    QString localUsername;
+    QString localPassword;
+    QString localNonce;
+
+    authentication().setSessionParams( authType,
+                                       remoteUsername, remotePassword, remoteNonce,
+                                       localUsername, localPassword, localNonce );
 
 
     int localMaxMsgSize = DEFAULT_MAX_MESSAGESIZE;
@@ -422,6 +430,9 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
     messageReceived( *aHeaderParams );
 
     SessionAuthentication::HeaderStatus status = authentication().analyzeHeader( *aHeaderParams,
+                                                                                 getDatabaseHandler(),
+                                                                                 params().localDeviceName(),
+                                                                                 params().remoteDeviceName(),
                                                                                  getResponseGenerator() );
 
     if( status == SessionAuthentication::HEADER_HANDLED_ABORT )

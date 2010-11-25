@@ -342,9 +342,9 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     // Fake SAN
 
     SANHandler parser;
-    SANData SANdata;
+    SANDS SANdata;
 
-    QVERIFY( parser.parseSANMessage( message, SANdata ) );
+    QVERIFY( parser.parseSANMessageDS( message, SANdata ) );
 
     session_handler.handleNotificationPackage( SANdata );
 

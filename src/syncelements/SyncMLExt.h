@@ -33,6 +33,7 @@
 
 #ifndef SYNCMLEXT_H
 #define SYNCMLEXT_H
+
 #include "SyncMLCmdObject.h"
 
 class QXmlStreamReader;
@@ -45,8 +46,21 @@ namespace DataSync {
 class SyncMLExt : public SyncMLCmdObject
 {
 public:
+    /*! \brief Constructor
+     *
+     */
     SyncMLExt();
+
+    /*! \brief Destructor
+     *
+     */
     virtual ~SyncMLExt();
+
+    /*! \brief Add a new Ext
+     *
+     * @param aDescription Document containing Ext information
+     *
+     */
     void addExt( const QByteArray& aDescription );
 
 private:

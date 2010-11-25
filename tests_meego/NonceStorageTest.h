@@ -38,23 +38,14 @@
 
 namespace DataSync {
 
-class NonceStorage;
-class DatabaseHandler;
+class NonceStorageTest: public QObject
+{
+    Q_OBJECT;
+private slots:
+    void testGenerateNonce();
+    void testSetGetNonce();
+    void testClearNonce();
 
-class NonceStorageTest: public QObject {
-    Q_OBJECT
-    private slots:
-        void initTestCase();
-        void cleanupTestCase();
-
-        void testGenerateNonce();
-        void testAddNonce();
-        void testRetrieveNonce();
-        void testClearNonce();
-
-    private:
-        DatabaseHandler* iDbHandler;
-        NonceStorage* iNonceStorage;
 };
 
 }
