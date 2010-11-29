@@ -49,8 +49,9 @@
 using namespace DataSync;
 
 OBEXTransport::OBEXTransport( OBEXConnection& aConnection, Mode aOpMode,
-                              ConnectionTypeHint aTypeHint, QObject* aParent )
-: BaseTransport( aParent ), iConnection( aConnection ), iMode( aOpMode ),
+                              ConnectionTypeHint aTypeHint,
+                              const ProtocolContext& aContext, QObject* aParent )
+: BaseTransport( aContext, aParent ), iConnection( aConnection ), iMode( aOpMode ),
   iTimeOut( DEFAULT_TIMEOUT ), iTypeHint( aTypeHint ), iWorkerThread( 0 ),
   iWorker( 0 ), iMTU( DEFAULT_MTU ), iMessage( 0 )
 {
@@ -254,13 +255,15 @@ bool OBEXTransport::getData( const QString& aContentType, QByteArray& aData )
 
     bool success = false;
 
-    if( aContentType == SYNCML_CONTTYPE_WBXML )
+    if( aContentType == SYNCML_CONTTYPE_DS_WBXML ||
+        aContentType == SYNCML_CONTTYPE_DM_WBXML )
     {
         setWbXml(true);
         encodeMessage(*iMessage, aData );
         success = true;
     }
-    else if( aContentType == SYNCML_CONTTYPE_XML )
+    else if( aContentType == SYNCML_CONTTYPE_DS_XML ||
+             aContentType == SYNCML_CONTTYPE_DM_XML )
     {
         setWbXml(false);
         encodeMessage(*iMessage, aData );

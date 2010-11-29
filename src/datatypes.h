@@ -266,11 +266,13 @@ namespace DataSync
     #define SYNCML_ELEMENT_CORRELATOR "Correlator"
     #define SYNCML_ELEMENT_MARK "Mark"
 
-    #define SYNCML_CONTENT_TYPE "Content-Type"
-    #define SYNCML_CONTTYPE_DEVINF_XML "application/vnd.syncml-devinf+xml"
-    #define SYNCML_CONTTYPE_XML "application/vnd.syncml+xml"
-    #define SYNCML_CONTTYPE_WBXML "application/vnd.syncml+wbxml"
-    #define SYNCML_CONTTYPE_SAN "application/vnd.syncml.ds.notification"
+    #define SYNCML_CONTTYPE_DS_XML          "application/vnd.syncml+xml"
+    #define SYNCML_CONTTYPE_DS_WBXML        "application/vnd.syncml+wbxml"
+    #define SYNCML_CONTTYPE_DM_XML          "application/vnd.syncml.dm+xml"
+    #define SYNCML_CONTTYPE_DM_WBXML        "application/vnd.syncml.dm+wbxml"
+    #define SYNCML_CONTTYPE_DEVINF_XML      "application/vnd.syncml-devinf+xml"
+    #define SYNCML_CONTTYPE_DEVINF_WBXML    "application/vnd.syncml-devinf+wbxml"
+    #define SYNCML_CONTTYPE_SAN_DS          "application/vnd.syncml.ds.notification"
 
     #define SYNCML_DEVINFO_DEVTYPE "phone"
     #define SYNCML_DSINFO_MAXGUIDSIZE "32"
@@ -301,6 +303,7 @@ namespace DataSync
 
     #define HTTP_HDRSTR_POST "POST"
     #define HTTP_HDRSTR_UA "User-Agent"
+    #define HTTP_HDRSTR_CONTENT_TYPE "Content-Type"
     #define HTTP_UA_VALUE "libmeegosyncml"
     #define HTTP_HDRSTR_ACCEPT "Accept"
     #define HTTP_ACCEPT_VALUE  "*/*"

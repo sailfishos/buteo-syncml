@@ -34,6 +34,7 @@
 #define BASETRANSPORT_H
 
 #include "Transport.h"
+#include "SyncAgentConsts.h"
 
 #include <QBuffer>
 
@@ -51,9 +52,10 @@ public:
 
     /*! \brief Constructor
      *
+     * @param aContext Protocol context
      * @param aParent Parent of this object
      */
-    BaseTransport( QObject* aParent );
+    BaseTransport( const ProtocolContext& aContext, QObject* aParent );
 
     /*! \brief Destructor
      *
@@ -148,6 +150,7 @@ private:
     void receiveXMLData( const QByteArray& aData );
     void receiveSANData( const QByteArray& aData );
 
+    ProtocolContext     iContext;
     QString             iRemoteLocURI;
     QString             iContentType;
     QByteArray          iIncomingData;

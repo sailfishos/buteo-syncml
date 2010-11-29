@@ -45,8 +45,9 @@
 
 using namespace DataSync;
 
-BaseTransport::BaseTransport( QObject* aParent )
- : Transport( aParent ), iHandleIncomingData( false ), iWbXml( false )
+BaseTransport::BaseTransport( const ProtocolContext& aContext, QObject* aParent )
+ : Transport( aParent ), iContext( aContext ), iHandleIncomingData( false ),
+   iWbXml( false )
 {
     FUNCTION_CALL_TRACE;
 }
@@ -93,11 +94,25 @@ bool BaseTransport::sendSyncML( SyncMLMessage* aMessage )
     QString contentType;
     if( useWbXml() )
     {
-        contentType = SYNCML_CONTTYPE_WBXML;
+        if( iContext== CONTEXT_DM )
+        {
+            contentType = SYNCML_CONTTYPE_DM_WBXML;
+        }
+        else
+        {
+            contentType = SYNCML_CONTTYPE_DS_WBXML;
+        }
     }
     else
     {
-        contentType = SYNCML_CONTTYPE_XML;
+        if( iContext == CONTEXT_DM )
+        {
+            contentType = SYNCML_CONTTYPE_DM_XML;
+        }
+        else
+        {
+            contentType = SYNCML_CONTTYPE_DS_XML;
+        }
     }
 
     return doSend( data, contentType );
@@ -112,7 +127,7 @@ bool BaseTransport::sendSAN( const QByteArray& aMessage )
     LOG_PROTOCOL( "\nSending SAN message:\n=========\n" << aMessage.toHex() << "\n=========");
 #endif  //  QT_NO_DEBUG
 
-    return doSend( aMessage, SYNCML_CONTTYPE_SAN );
+    return doSend( aMessage, SYNCML_CONTTYPE_SAN_DS );
 }
 
 bool BaseTransport::receive()
@@ -130,11 +145,25 @@ bool BaseTransport::receive()
         QString contentType;
         if( useWbXml() )
         {
-            contentType = SYNCML_CONTTYPE_WBXML;
+            if( iContext == CONTEXT_DM )
+            {
+                contentType = SYNCML_CONTTYPE_DM_WBXML;
+            }
+            else
+            {
+                contentType = SYNCML_CONTTYPE_DS_WBXML;
+            }
         }
         else
         {
-            contentType = SYNCML_CONTTYPE_XML;
+            if( iContext == CONTEXT_DM )
+            {
+                contentType = SYNCML_CONTTYPE_DM_XML;
+            }
+            else
+            {
+                contentType = SYNCML_CONTTYPE_DS_XML;
+            }
         }
 
         if( doReceive(contentType) ) {
@@ -159,13 +188,15 @@ void BaseTransport::receive( const QByteArray& aData, const QString& aContentTyp
         return;
     }
 
-    if( aContentType.contains( SYNCML_CONTTYPE_WBXML ) ) {
+    if( aContentType.contains( SYNCML_CONTTYPE_DS_WBXML ) ||
+        aContentType.contains( SYNCML_CONTTYPE_DM_WBXML ) ) {
         receiveWbXMLData( aData );
     }
-    else if( aContentType.contains( SYNCML_CONTTYPE_XML ) ) {
+    else if( aContentType.contains( SYNCML_CONTTYPE_DS_XML ) ||
+             aContentType.contains( SYNCML_CONTTYPE_DM_XML)) {
         receiveXMLData( aData );
     }
-    else if( aContentType.contains( SYNCML_CONTTYPE_SAN ) ) {
+    else if( aContentType.contains( SYNCML_CONTTYPE_SAN_DS ) ) {
         receiveSANData( aData );
     }
     else {
@@ -270,10 +301,11 @@ void BaseTransport::emitReadSignal()
     iIODevice.setBuffer( &iIODeviceData );
     iIODevice.open( QIODevice::ReadOnly );
 
-    if( iContentType == SYNCML_CONTTYPE_SAN ) {
+    if( iContentType == SYNCML_CONTTYPE_SAN_DS ) {
         emit readSANData( &iIODevice );
     }
-    else if( iContentType == SYNCML_CONTTYPE_XML ) {
+    else if( iContentType == SYNCML_CONTTYPE_DM_XML ||
+             iContentType == SYNCML_CONTTYPE_DS_XML ) {
         emit readXMLData( &iIODevice, true );
     }
     else {
@@ -323,7 +355,14 @@ void BaseTransport::receiveXMLData( const QByteArray& aData )
 {
     FUNCTION_CALL_TRACE;
 
-    iContentType = SYNCML_CONTTYPE_XML;
+    if( iContext == CONTEXT_DM )
+    {
+        iContentType = SYNCML_CONTTYPE_DM_XML;
+    }
+    else
+    {
+        iContentType = SYNCML_CONTTYPE_DS_XML;
+    }
     iIncomingData = aData;
 
 #ifndef QT_NO_DEBUG
@@ -337,7 +376,7 @@ void BaseTransport::receiveSANData( const QByteArray& aData )
 
     setWbXml( true );
 
-    iContentType = SYNCML_CONTTYPE_SAN;
+    iContentType = SYNCML_CONTTYPE_SAN_DS;
     iIncomingData = aData;
 
 #ifndef QT_NO_DEBUG

@@ -46,6 +46,14 @@ enum ProtocolVersion {
     SYNCML_UNKNOWN      /*!<Protocol is unknown (can be used as initialization value)*/
 };
 
+/*! \brief Contexts in which the protocol is used
+ *
+ */
+enum ProtocolContext {
+    CONTEXT_DS,         /*!<Protocol is used in the context of OMA Data Synchronization*/
+    CONTEXT_DM          /*!<Protocol is used in the context of OMA Device Management*/
+};
+
 /*! \brief Direction of sync
  *
  */

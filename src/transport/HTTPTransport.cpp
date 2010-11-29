@@ -42,8 +42,8 @@
 
 using namespace DataSync;
 
-HTTPTransport::HTTPTransport( QObject* aParent )
-: BaseTransport( aParent), iManager( 0 ), iFirstMessageSent( false ),
+HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent )
+: BaseTransport( aContext, aParent), iManager( 0 ), iFirstMessageSent( false ),
   iMaxNumberOfResendAttempts( 0 ), iNumberOfResendAttempts( 0 )
 {
     FUNCTION_CALL_TRACE;
@@ -179,7 +179,7 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
     aRequest.setRawHeader( HTTP_HDRSTR_POST, url.path().toAscii());
     aRequest.setUrl( url );
     aRequest.setRawHeader( HTTP_HDRSTR_UA, HTTP_UA_VALUE);
-    aRequest.setRawHeader( SYNCML_CONTENT_TYPE, aContentType );
+    aRequest.setRawHeader( HTTP_HDRSTR_CONTENT_TYPE, aContentType );
     aRequest.setRawHeader( HTTP_HDRSTR_ACCEPT,HTTP_ACCEPT_VALUE );
     aRequest.setHeader( QNetworkRequest::ContentLengthHeader, QVariant( aContentLength ) );
     QMap<QString, QString>::const_iterator i;

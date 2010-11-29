@@ -324,7 +324,7 @@ class TestTransport : public BaseTransport
 
 public:
 
-    TestTransport( bool aDoReceive, QObject* aParent = NULL ) : BaseTransport( aParent ), iDoReceive( aDoReceive )
+    TestTransport( bool aDoReceive, QObject* aParent = NULL ) : BaseTransport( CONTEXT_DS, aParent ), iDoReceive( aDoReceive )
     {
     }
 

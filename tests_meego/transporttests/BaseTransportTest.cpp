@@ -202,7 +202,7 @@ void BaseTransportTest::testSANReceive01()
     QSignalSpy readXMLData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
     QSignalSpy readSANData( &transport, SIGNAL( readSANData( QIODevice* ) ) );
 
-    QByteArray contentType = SYNCML_CONTTYPE_SAN;
+    QByteArray contentType = SYNCML_CONTTYPE_SAN_DS;
     QByteArray originalData;
 
     QVERIFY( readFile( "testfiles/SAN01.bin", originalData ) );
@@ -226,7 +226,7 @@ void BaseTransportTest::testSANReceive01()
 
 void BaseTransportTest::testSANReceive02()
 {
-    // testSANReceive01: test SAN receive with bad content type. Nokia SW seems to
+    // testSANReceive01: test SAN receive with bad content type. Nokia S60 seems to
     // use wbxml content type with SAN, even though standard specifies a distinct
     // content type for it
     TestTransport transport( true );
@@ -235,7 +235,7 @@ void BaseTransportTest::testSANReceive02()
     QSignalSpy readXMLData( &transport, SIGNAL( readXMLData( QIODevice* ) ) );
     QSignalSpy readSANData( &transport, SIGNAL( readSANData( QIODevice* ) ) );
 
-    QByteArray contentType = SYNCML_CONTTYPE_WBXML;
+    QByteArray contentType = SYNCML_CONTTYPE_DS_WBXML;
     QByteArray originalData;
 
     QVERIFY( readFile( "testfiles/SAN01.bin", originalData ) );

@@ -57,9 +57,10 @@ public:
 
     /*! \brief Constructor
      *
+     * @param aContext Protocol context
      * @param aParent Parent of this object
      */
-    HTTPTransport( QObject* aParent = 0 );
+    HTTPTransport( const ProtocolContext& aContext = CONTEXT_DS, QObject* aParent = 0 );
 
     /*! \brief Destructor
      *

@@ -79,10 +79,12 @@ public:
      * @param aConnection OBEX connection to use
      * @param aOpMode Operation mode for transport
      * @param aTypeHint Connection type hint
+     * @param aContext Protocol context
      * @param aParent Parent of this QObject
      */
     OBEXTransport( OBEXConnection& aConnection, Mode aOpMode,
                    ConnectionTypeHint aTypeHint = TYPEHINT_OTHER,
+                   const ProtocolContext& aContext = CONTEXT_DS,
                    QObject* aParent = NULL );
 
     /*! \brief Destructor
@@ -90,22 +92,43 @@ public:
      */
     virtual ~OBEXTransport();
 
+    /*! \see Transport::setProperty()
+     *
+     */
     virtual void setProperty( const QString& aProperty, const QString& aValue );
 
+    /*! \see Transport::init()
+     *
+     */
     virtual bool init();
 
+    /*! \see Transport::close()
+     *
+     */
     virtual void close();
 
+    /*! \see Transport::sendSyncML()
+     *
+     */
     virtual bool sendSyncML( SyncMLMessage* aMessage );
 
     virtual bool getData( const QString& aContentType, QByteArray& aData );
 
 protected:
 
+    /*! \see BaseTransport::prepareSend()
+     *
+     */
     virtual bool prepareSend();
 
+    /*! \see BaseTransport::doSend()
+     *
+     */
     virtual bool doSend( const QByteArray& aData, const QString& aContentType );
 
+    /*! \see BaseTransport::doReceive()
+     *
+     */
     virtual bool doReceive( const QString& aContentType );
 
 private slots:
