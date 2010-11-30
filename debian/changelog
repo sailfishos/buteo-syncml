@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.9-49) unstable; urgency=low
+
+  * Support both DS and DM content types in transports.
+
+ -- Duggirala Karthik <karthik.2.duggirala@nokia.com>  Tue, 30 Nov 2010 18:30:00 +0530
+
 libmeegosyncml (0.4.9-48) unstable; urgency=low
 
   * Fixes: NB#206970 - After synchronising contacts, incorrect number of
