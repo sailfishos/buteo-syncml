@@ -53,6 +53,11 @@ private slots:
     void testLargeObjectReplace();
 
     void regression_NB153991_01();
+    void regression_NB203771_01();
+    void regression_NB203771_02();
+    void regression_NB203771_03();
+    void regression_NB203771_04();
+    void regression_NB203771_05();
 
 private:
 

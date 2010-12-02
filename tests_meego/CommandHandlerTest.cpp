@@ -439,4 +439,154 @@ void CommandHandlerTest::testSyncDelete()
 
 }
 
+void CommandHandlerTest::testSyncReplaceConflict()
+{
+
+    QString localDb( "localdb" );
+    QString remoteDb( "remotedb" );
+
+    StorageHandler storageHandler;
+    MockStorage storage( localDb );
+    SyncMode mode;
+    QString anchor;
+    SyncTarget target( NULL, &storage, mode, anchor );
+
+    LocalChanges changes;
+    changes.modified.append(QString("key1"));
+    changes.removed.append(QString("key2"));
+    changes.removed.append(QString("secretkey"));
+    ConflictResolver conflictResolver( changes, PREFER_REMOTE_CHANGES );
+    CommandHandler handler( ROLE_SERVER );
+    ResponseGenerator generator;
+    generator.setRemoteMsgId( 1 );
+
+    SyncParams syncParams;
+
+    int cmdId = 1;
+
+    syncParams.cmdId = cmdId++;
+    syncParams.source = localDb;
+    syncParams.target = remoteDb;
+
+    CommandParams replace( CommandParams::COMMAND_REPLACE );
+    replace.cmdId = cmdId++;
+
+    ItemParams replaceItem1;
+    replaceItem1.source = "key1";
+    replaceItem1.data = "foodata";
+    replaceItem1.meta.type = "mime/foo1";
+    replace.items.append( replaceItem1 );
+
+    ItemParams replaceItem2;
+    replaceItem2.source = "key2";
+    replaceItem2.data = "foodata";
+    replaceItem2.meta.type = "mime/foo2";
+    replace.items.append( replaceItem2 );
+
+    ItemParams replaceItem3;
+    replaceItem3.source = "secretkey";
+    replaceItem3.data = "foodata";
+    replaceItem3.meta.type = "mime/foo3";
+    replace.items.append( replaceItem3 );
+
+    syncParams.commands.append( replace );
+
+    UIDMapping mapping;
+    mapping.iRemoteUID= "key1";
+    mapping.iLocalUID= "key1";
+    target.addUIDMapping( mapping );
+
+    mapping.iRemoteUID = "key2";
+    mapping.iLocalUID = "key2";
+    target.addUIDMapping( mapping );
+
+    qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
+    qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
+
+    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
+
+    QCOMPARE( processed_spy.count(), 3 );
+
+    QCOMPARE( qvariant_cast<DataSync::ModificationType>(processed_spy.at(0).at(0)), MOD_ITEM_ADDED );
+    QCOMPARE( qvariant_cast<DataSync::ModifiedDatabase>(processed_spy.at(0).at(1)), MOD_LOCAL_DATABASE );
+    QCOMPARE( processed_spy.at(0).at(2).toString(), localDb );
+    QCOMPARE( processed_spy.at(0).at(3).toString(), QString( "mime/foo3" ) );
+
+    QCOMPARE( qvariant_cast<DataSync::ModificationType>(processed_spy.at(1).at(0)), MOD_ITEM_MODIFIED );
+    QCOMPARE( qvariant_cast<DataSync::ModifiedDatabase>(processed_spy.at(1).at(1)), MOD_LOCAL_DATABASE );
+    QCOMPARE( processed_spy.at(1).at(2).toString(), localDb );
+    QCOMPARE( processed_spy.at(1).at(3).toString(), QString( "mime/foo1" ) );
+
+    QCOMPARE( qvariant_cast<DataSync::ModificationType>(processed_spy.at(2).at(0)), MOD_ITEM_MODIFIED );
+    QCOMPARE( qvariant_cast<DataSync::ModifiedDatabase>(processed_spy.at(2).at(1)), MOD_LOCAL_DATABASE );
+    QCOMPARE( processed_spy.at(2).at(2).toString(), localDb );
+    QCOMPARE( processed_spy.at(2).at(3).toString(), QString( "mime/foo2" ) );
+
+}
+
+void CommandHandlerTest::testSyncReplaceConflict_01()
+{
+
+    QString localDb( "localdb" );
+    QString remoteDb( "remotedb" );
+
+    StorageHandler storageHandler;
+    MockStorage storage( localDb );
+    SyncMode mode;
+    QString anchor;
+    SyncTarget target( NULL, &storage, mode, anchor );
+
+    LocalChanges changes;
+    changes.modified.append(QString("key1"));
+    changes.removed.append(QString("key2"));
+    ConflictResolver conflictResolver( changes, PREFER_LOCAL_CHANGES );
+    CommandHandler handler( ROLE_SERVER );
+    ResponseGenerator generator;
+    generator.setRemoteMsgId( 1 );
+
+    SyncParams syncParams;
+
+    int cmdId = 1;
+
+    syncParams.cmdId = cmdId++;
+    syncParams.source = localDb;
+    syncParams.target = remoteDb;
+
+    CommandParams replace( CommandParams::COMMAND_REPLACE );
+    replace.cmdId = cmdId++;
+
+    ItemParams replaceItem1;
+    replaceItem1.source = "key1";
+    replaceItem1.data = "foodata";
+    replaceItem1.meta.type = "mime/foo1";
+    replace.items.append( replaceItem1 );
+
+    ItemParams replaceItem2;
+    replaceItem2.source = "key2";
+    replaceItem2.data = "foodata";
+    replaceItem2.meta.type = "mime/foo2";
+    replace.items.append( replaceItem2 );
+
+    syncParams.commands.append( replace );
+
+    UIDMapping mapping;
+    mapping.iRemoteUID= "key1";
+    mapping.iLocalUID= "key1";
+    target.addUIDMapping( mapping );
+
+    mapping.iRemoteUID = "key2";
+    mapping.iLocalUID = "key2";
+    target.addUIDMapping( mapping );
+
+    qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
+    qRegisterMetaType<DataSync::ModifiedDatabase>("DataSync::ModifiedDatabase");
+    QSignalSpy processed_spy( &storageHandler, SIGNAL( itemProcessed( DataSync::ModificationType, DataSync::ModifiedDatabase, QString ,QString, int ) ));
+
+    handler.handleSync( syncParams, target, storageHandler, generator, conflictResolver, false );
+
+    QCOMPARE( processed_spy.count(), 0 );
+
+}
+
 TESTLOADER_ADD_TEST(CommandHandlerTest);

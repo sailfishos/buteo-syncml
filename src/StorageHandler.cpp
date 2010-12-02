@@ -63,6 +63,7 @@ StorageHandler::~StorageHandler()
 
 bool StorageHandler::addItem( const ItemId& aItemId,
                               StoragePlugin& aPlugin,
+                              const SyncItemKey& aLocalKey,
                               const SyncItemKey& aParentKey,
                               const QString& aType,
                               const QString& aFormat,
@@ -86,7 +87,7 @@ bool StorageHandler::addItem( const ItemId& aItemId,
     }
 
     //Setting empty string as we dont have any local key for it.
-    newItem->setKey(QString());
+    newItem->setKey( aLocalKey );
     newItem->setParentKey( aParentKey );
     newItem->setType( aType );
     newItem->setFormat( aFormat );
@@ -132,7 +133,7 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 
     if( !item ) {
         LOG_DEBUG( "Could not find item, processing as Add" );
-        return addItem( aItemId, aPlugin, aParentKey, aType, aFormat, aVersion, aData );
+        return addItem( aItemId, aPlugin, aLocalKey, aParentKey, aType, aFormat, aVersion, aData );
     }
 
     item->setParentKey( aParentKey );
@@ -317,10 +318,12 @@ bool StorageHandler::finishLargeObject( const ItemId& aItemId )
 
     if(iLargeObject->getKey()->isEmpty()) {
         LOG_DEBUG( "Queuing large object for addition" );
+	iLargeObject->setKey(iLargeObjectKey);
         iAddList.insert( aItemId, iLargeObject );
     }
     else {
         LOG_DEBUG( "Queuing large object for replace" );
+	iLargeObject->setKey(iLargeObjectKey);
         iReplaceList.insert( aItemId, iLargeObject );
     }
 
@@ -332,28 +335,114 @@ bool StorageHandler::finishLargeObject( const ItemId& aItemId )
 
 }
 
+QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* aConflictResolver,
+                                                             QMap<ItemId, SyncItemKey> &aMap,
+                                                             CommitStatus aStatus )
+{
+    FUNCTION_CALL_TRACE;
+    QMutableMapIterator<ItemId, SyncItemKey> i(aMap);
+
+    QMap<ItemId, CommitResult> results;
+    ItemId iId;
+    while( i.hasNext() ) {
+
+        i.next();
+
+        CommitResult result;
+
+        result.iItemKey = i.value();
+
+        result.iStatus = aStatus;
+
+        iId.iCmdId = i.key().iCmdId;
+        iId.iItemIndex = i.key().iItemIndex;
+
+        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
+
+        if( aConflictResolver && aConflictResolver->isConflict( result.iItemKey, false ) ) {
+
+            LOG_DEBUG( "Conflict detected" );
+
+            if( aConflictResolver->localSideWins() ) {
+                LOG_DEBUG( "Conflict resolved, local side wins" );
+                result.iConflict = CONFLICT_LOCAL_WIN;
+                aConflictResolver->revertLocalChange ( result.iItemKey, CR_MODIFY_TO_ADD );
+                i.remove();
+            }
+            else {
+                LOG_DEBUG( "Conflict resolved, remote side wins" );
+                result.iConflict = CONFLICT_REMOTE_WIN;
+                aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
+            }
+        }
+        else {
+            LOG_DEBUG( "No conflict detected" );
+            result.iConflict = CONFLICT_NO_CONFLICT;
+        }
+
+        results.insert( iId, result );
+
+    }
+    return results;
+}
+
+QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* aConflictResolver,
+                                                             QMap<ItemId, SyncItem*> &aMap,
+                                                             CommitStatus aStatus )
+{
+    FUNCTION_CALL_TRACE;
+    QMap<ItemId, CommitResult> results;
+    ItemId iId;
+
+    QMutableMapIterator<ItemId, SyncItem*> i(aMap);
+    while( i.hasNext() ) {
+
+        i.next();
+
+        CommitResult result;
+
+        result.iItemKey = *i.value()->getKey();
+
+        result.iStatus = aStatus;
+
+        iId.iCmdId = i.key().iCmdId;
+        iId.iItemIndex = i.key().iItemIndex;
+
+        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
+
+        if( aConflictResolver && aConflictResolver->isConflict( result.iItemKey, false ) ) {
+
+            LOG_DEBUG( "Conflict detected" );
+
+            if( aConflictResolver->localSideWins() ) {
+                LOG_DEBUG( "Conflict resolved, local side wins" );
+                result.iConflict = CONFLICT_LOCAL_WIN;
+                delete i.value();
+                i.remove();
+            }
+            else {
+                LOG_DEBUG( "Conflict resolved, remote side wins" );
+                result.iConflict = CONFLICT_REMOTE_WIN;
+                aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
+            }
+        }
+        else {
+            LOG_DEBUG( "No conflict detected" );
+            result.iConflict = CONFLICT_NO_CONFLICT;
+        }
+
+        results.insert( iId, result );
+
+    }
+    return results;
+}
+
 QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlugin, 
 		                               ConflictResolver* aConflictResolver )
 {
     FUNCTION_CALL_TRACE;
 
-    
-    QMutableMapIterator<ItemId, SyncItem*> i( iAddList );
-    
-    while( i.hasNext() ) {
-	i.next();
-	// If we fail to find a sync item with local key  for replace we add it as 
-	// a new item ; one reason is that the item has been deleted locally if so
-	// its a conflict  
-	if ( aConflictResolver &&  aConflictResolver->isConflict(*i.value()->getKey(), false) ) {
-	     LOG_DEBUG ("Move to Replace List :" << *i.value()->getKey());	
-    	     iReplaceList.insert( i.key(), i.value() );
-             i.remove();
-	}
-    }
-    
-    QMap<ItemId, CommitResult> results;
-
+    QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iAddList, COMMIT_INIT_ADD);    
     QList<ItemId> addIds = iAddList.keys();
     QList<SyncItem*> addItems = iAddList.values();
 
@@ -363,11 +452,10 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
 
     for( int i = 0; i < addStatus.count(); ++i ) {
 
-        CommitResult result;
+        CommitResult& result = results[addIds[i]];
         result.iItemKey = *addItems[i]->getKey();
-        result.iConflict = CONFLICT_NO_CONFLICT;
-
-        LOG_DEBUG( "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed" );
+        
+	LOG_DEBUG( "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed" );
 
         switch( addStatus[i] )
         {
@@ -376,8 +464,8 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
             {
                 LOG_DEBUG( "Commit result: COMMIT_ADDED" );
                 result.iStatus = COMMIT_ADDED;
-
-                emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
+                
+		emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
                                     aPlugin.getSourceURI() , addItems[i]->getType(), addItems.count() );
 
                 break;
@@ -419,50 +507,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
 {
     FUNCTION_CALL_TRACE;
 
-    QMap<ItemId, CommitResult> results;
-
-    QMutableMapIterator<ItemId, SyncItem*> i( iReplaceList );
-
-    ItemId iId;
-    
-    while( i.hasNext() ) {
-
-        i.next();
-
-        CommitResult result;
-
-        result.iItemKey = *i.value()->getKey();
-        result.iStatus = COMMIT_INIT_REPLACE;
-
-        iId.iCmdId = i.key().iCmdId;
-        iId.iItemIndex = i.key().iItemIndex;
-       	
-        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
-
-        if( aConflictResolver && aConflictResolver->isConflict( *i.value()->getKey(), false ) ) {
-
-            LOG_DEBUG( "Conflict detected" );
-	    	
-            if( aConflictResolver->localSideWins() ) {
-                LOG_DEBUG( "Conflict resolved, local side wins" );
-                result.iConflict = CONFLICT_LOCAL_WIN;
-                delete i.value();
-                i.remove();
-            }
-            else {
-                LOG_DEBUG( "Conflict resolved, remote side wins" );
-                result.iConflict = CONFLICT_REMOTE_WIN;
-                aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
-            }
-        }
-        else {
-            LOG_DEBUG( "No conflict detected" );
-            result.iConflict = CONFLICT_NO_CONFLICT;
-        }
-
-        results.insert( iId, result );
-	
-    }
+    QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iReplaceList, COMMIT_INIT_REPLACE);
 
     QList<ItemId> replaceIds = iReplaceList.keys();
     QList<SyncItem*> replaceItems = iReplaceList.values();
@@ -474,7 +519,6 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
     for( int i = 0; i < replaceStatus.count(); ++i ) {
 
         CommitResult& result = results[replaceIds[i]];
-
         LOG_DEBUG( "Item" << replaceIds[i].iCmdId << "/" << replaceIds[i].iItemIndex << "committed" );
 
         switch( replaceStatus[i] )
@@ -526,51 +570,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
 {
     FUNCTION_CALL_TRACE;
 
-    QMap<ItemId, CommitResult> results;
-
-    QMutableMapIterator<ItemId, SyncItemKey> i( iDeleteList );
-
-    ItemId iId;
-    
-    while( i.hasNext() ) {
-
-        i.next();
-
-        CommitResult result;
-
-        result.iItemKey = i.value();
-	result.iStatus = COMMIT_INIT_DELETE;
-	
-	iId.iCmdId = i.key().iCmdId;
-        iId.iItemIndex = i.key().iItemIndex;
-
-        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
-
-        if( aConflictResolver && aConflictResolver->isConflict( i.value(), true ) ) {
-
-            LOG_DEBUG( "Conflict detected" );
-
-            if( aConflictResolver->localSideWins() ) {
-                LOG_DEBUG( "Conflict resolved, local side wins" );
-                result.iConflict = CONFLICT_LOCAL_WIN;
-		aConflictResolver->revertLocalChange ( result.iItemKey, CR_MODIFY_TO_ADD );
-                i.remove();
-            }
-            else {
-                LOG_DEBUG( "Conflict resolved, remote side wins" );
-                result.iConflict = CONFLICT_REMOTE_WIN;
-		aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
-            }
-        }
-        else {
-            LOG_DEBUG( "No conflict detected" );
-            result.iConflict = CONFLICT_NO_CONFLICT;
-        }
-
-        results.insert( iId, result );
-
-    }
-
+    QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iDeleteList, COMMIT_INIT_DELETE);
     QList<ItemId> deleteIds = iDeleteList.keys();
     QList<SyncItemKey> deleteItems = iDeleteList.values();
 

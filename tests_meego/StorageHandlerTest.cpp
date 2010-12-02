@@ -34,6 +34,7 @@
 #include "StorageHandlerTest.h"
 #include "Mock.h"
 #include "ConflictResolver.h"
+#include "LogMacros.h"
 
 #include "TestLoader.h"
 
@@ -56,7 +57,7 @@ void StorageHandlerTest::testAddItem()
     LocalChanges changes;
     ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
 
-    QVERIFY( iStorageHandler.addItem( id, storage, parent, type, format, version, data ) );
+    QVERIFY( iStorageHandler.addItem( id, storage, QString(), parent, type, format, version, data ) );
 
     QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
     QList<CommitResult> results = commits.values();
@@ -191,6 +192,177 @@ void StorageHandlerTest::regression_NB153991_01()
     QVERIFY( results.count() == 1 );
     QVERIFY( results[0].iStatus == COMMIT_ADDED );
     QVERIFY( results[0].iConflict == CONFLICT_NO_CONFLICT );
+}
+
+void StorageHandlerTest::regression_NB203771_01()
+{
+    MockStorage storage( "id" );
+
+    LocalChanges changes;
+    changes.modified.append("key1");
+    ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
+
+    ItemId id;
+    id.iCmdId = 1;
+    id.iItemIndex = 0;
+
+    QString key = "key1";
+    QString parent = "";
+    QString type( "text/x-vcard" );
+    QString format("");
+    QString version("");
+    QString data( "fasdaagadtadg" );
+
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
+
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitReplacedItems( storage, &resolver );
+    QVERIFY( commits.count() == 1 );
+    QList<CommitResult> results = commits.values();
+
+    QVERIFY( results.count() == 1 );
+    QVERIFY( results[0].iStatus == COMMIT_INIT_REPLACE );
+    QVERIFY( results[0].iConflict == CONFLICT_LOCAL_WIN );
+}
+
+void StorageHandlerTest::regression_NB203771_02()
+{
+    MockStorage storage( "id" );
+
+    LocalChanges changes;
+    changes.modified.append("key1");
+    ConflictResolver resolver( changes, PREFER_REMOTE_CHANGES );
+
+    ItemId id;
+    id.iCmdId = 1;
+    id.iItemIndex = 0;
+
+    QString key = "key1";
+    QString parent = "";
+    QString type( "text/x-vcard" );
+    QString format("");
+    QString version("");
+    QString data( "fasdaagadtadg" );
+
+    QVERIFY( iStorageHandler.addItem( id, storage, key, parent, type, format, version, data ) );
+
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
+    QVERIFY( commits.count() == 1 );
+
+    QList<CommitResult> results = commits.values();
+    QVERIFY( results.count() == 1 );
+    qDebug() << results[0].iStatus;
+    QVERIFY( results[0].iConflict == CONFLICT_REMOTE_WIN );
+    QVERIFY( results[0].iStatus == COMMIT_ADDED );
+    QVERIFY( changes.modified.size() == 0 ); //local change removed
+}
+
+void StorageHandlerTest::regression_NB203771_03()
+{
+    MockStorage storage( "id" );
+
+    LocalChanges changes;
+    changes.removed.append("key1");
+    ConflictResolver resolver( changes, PREFER_REMOTE_CHANGES );
+
+    ItemId id;
+    id.iCmdId = 1;
+    id.iItemIndex = 0;
+
+    QString key = "";
+    QString parent = "";
+    QString type( "text/x-vcard" );
+    QString format("");
+    QString version("");
+    QString data( "fasdaagadtadg" );
+
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
+
+    // should be in add list
+    SyncItem *item = iStorageHandler.iAddList.value(id);
+    QVERIFY(item);
+    item->setKey("key1");
+    
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
+    QVERIFY( commits.count() == 1 );
+
+    QList<CommitResult> results = commits.values();
+    QVERIFY( results.count() == 1 );
+    qDebug() << results[0].iStatus;
+    QVERIFY( results[0].iConflict == CONFLICT_REMOTE_WIN );
+    QVERIFY( results[0].iStatus == COMMIT_ADDED );
+    QVERIFY( changes.removed.size() == 0 ); //local change removed
+}
+
+void StorageHandlerTest::regression_NB203771_04()
+{
+    MockStorage storage( "id" );
+
+    LocalChanges changes;
+    changes.removed.append("key1");
+    ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
+
+    ItemId id;
+    id.iCmdId = 1;
+    id.iItemIndex = 0;
+
+    QString key = "";
+    QString parent = "";
+    QString type( "text/x-vcard" );
+    QString format("");
+    QString version("");
+    QString data( "fasdaagadtadg" );
+
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
+
+    // should be in add list
+    SyncItem *item = iStorageHandler.iAddList.value(id);
+    QVERIFY(item);
+    item->setKey("key1");
+    
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
+    QVERIFY( commits.count() == 1 );
+
+    QList<CommitResult> results = commits.values();
+    QVERIFY( results.count() == 1 );
+    QVERIFY( results[0].iConflict == CONFLICT_LOCAL_WIN );
+    QVERIFY( results[0].iStatus == COMMIT_INIT_ADD );
+    QVERIFY( changes.removed.size() == 1 ); 
+}
+
+void StorageHandlerTest::regression_NB203771_05()
+{
+    MockStorage storage( "id" );
+
+    LocalChanges changes;
+    changes.removed.append("key11");
+    ConflictResolver resolver( changes, PREFER_LOCAL_CHANGES );
+
+    ItemId id;
+    id.iCmdId = 1;
+    id.iItemIndex = 0;
+
+    QString key = "";
+    QString parent = "";
+    QString type( "text/x-vcard" );
+    QString format("");
+    QString version("");
+    QString data( "fasdaagadtadg" );
+
+    QVERIFY( iStorageHandler.replaceItem( id, storage, key, parent, type, format, version, data ) );
+
+    // should be in add list
+    SyncItem *item = iStorageHandler.iAddList.value(id);
+    QVERIFY(item);
+    item->setKey("key1");
+    
+    QMap<ItemId, CommitResult> commits = iStorageHandler.commitAddedItems( storage, &resolver );
+    QVERIFY( commits.count() == 1 );
+
+    QList<CommitResult> results = commits.values();
+    QVERIFY( results.count() == 1 );
+    QVERIFY( results[0].iConflict == CONFLICT_NO_CONFLICT );
+    QVERIFY( results[0].iStatus == COMMIT_ADDED );
+    QVERIFY( changes.removed.size() == 1 ); 
 }
 
 TESTLOADER_ADD_TEST(StorageHandlerTest);

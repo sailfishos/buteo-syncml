@@ -1,8 +1,15 @@
+libmeegosyncml (0.4.9-51) unstable; urgency=low
+
+  * Fixes: NB#203771 Conflict set to N95:Calendar entry is deleted in N95 
+    when modified a calendar entry in N95 and deleted     the same in DUT
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Thu, 02 Dec 2010 15:14:00 +0530
+
 libmeegosyncml (0.4.9-50) unstable; urgency=low
 
   * Fix tests.xml
 
- -- Santoh Puranik <santosh.puranik@nokia.com>  Wed, 01 Dec 2010 15:14:00 +0530
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Wed, 01 Dec 2010 15:14:00 +0530
 
 libmeegosyncml (0.4.9-49) unstable; urgency=low
 

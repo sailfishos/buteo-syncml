@@ -62,6 +62,7 @@ enum CommitStatus
     COMMIT_ITEM_TOO_BIG,       /*!<Failed, item too big*/
     COMMIT_NOT_ENOUGH_SPACE,   /*!<Failed, not enough space*/
     COMMIT_GENERAL_ERROR,      /*!<Failed, unspecified error*/
+    COMMIT_INIT_ADD,            /*!<Successful, Initial state before add*/
     COMMIT_INIT_REPLACE,       /*!<Successful, Initial state before modifications*/
     COMMIT_INIT_DELETE         /*!<Successful, Initial state before deletions*/
 };
@@ -143,6 +144,7 @@ public:
      *
      * @param aItemId Item identification
      * @param aPlugin Local storage plugin
+     * @param aLocalKey Local key of the item or empty 
      * @param aParentKey Key of the parent of this item (local id)
      * @param aType MIME type of the item
      * @param aFormat Format of the item
@@ -152,6 +154,7 @@ public:
      */
     bool addItem( const ItemId& aItemId,
                   StoragePlugin& aPlugin,
+		  const SyncItemKey& aLocalKey,
                   const SyncItemKey& aParentKey,
                   const QString& aType,
                   const QString& aFormat,
@@ -255,6 +258,23 @@ public:
      * @return True on success, otherwise false
      */
     bool finishLargeObject( const ItemId& aItemId );
+    
+    /*! \brief Checks for conflicts in changes in local db with remote
+     *
+     * @param aConflictResolver conflict resolver.
+     * @param aList Map of itemid-sync items to check
+     * @param aStatus Status of o/p add/modify/delete
+     * @return Commit results
+     */
+    QMap<ItemId, CommitResult> resolveConflicts( ConflictResolver* aConflictResolver,
+                                                 QMap<ItemId, SyncItem*> &aList,
+                                                 CommitStatus aStatus);
+    /*! \brief Same as above but takes QMap with SyncItemKey as input
+      *  called in case of delete o/p when we have only the item key.
+      */
+    QMap<ItemId, CommitResult> resolveConflicts( ConflictResolver* aConflictResolver,
+                                                 QMap<ItemId, SyncItemKey> &aList,
+                                                 CommitStatus aStatus);
 
     /*! \brief Commits added items to local database
      *
@@ -311,6 +331,7 @@ private:
     qint64                     iLargeObjectSize;
     QString                    iLargeObjectKey;
 
+    friend class StorageHandlerTest;
 };
 
 }

@@ -364,7 +364,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                             LOG_WARNING( "No size found for large object:" << id.iCmdId
                                           <<"/" << id.iItemIndex );
                         }
-                        if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey,
+                        if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey, 
                                                                        parentKey, type, format,
                                                                        version, item.meta.size ) ) {
                             aResponses.insert( id, COMMAND_FAILED );
@@ -409,7 +409,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                 }
                 // Normal object
-                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), parentKey,
+                else if( !aStorageHandler.addItem( id, *aTarget.getPlugin(), QString(), parentKey,
                                                    type, format, version, item.data ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
                 }
@@ -591,10 +591,29 @@ void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictRes
 
                     const CommitResult& result = results.value( id );
 
-                    if( result.iStatus == COMMIT_ADDED ) {
+                    if( result.iStatus == COMMIT_ADDED || result.iStatus == COMMIT_INIT_ADD) {
 
-                        statusCode = ITEM_ADDED;
+                        if( result.iConflict == CONFLICT_LOCAL_WIN ) {
 
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                            else {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                        }
+                        else if( result.iConflict == CONFLICT_REMOTE_WIN ) {
+
+                            if( iRole == ROLE_CLIENT ) {
+                                statusCode = RESOLVED_WITH_SERVER_DATA;
+                            }
+                            else {
+                                statusCode = RESOLVED_CLIENT_WINNING;
+                            }
+                        }
+                        else {
+                            statusCode = ITEM_ADDED;
+                        }
                         UIDMapping map;
                         map.iRemoteUID = item.source;
                         map.iLocalUID = result.iItemKey;

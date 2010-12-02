@@ -193,6 +193,8 @@ private slots:
     void testSyncAdd();
     void testSyncReplace();
     void testSyncDelete();
+    void testSyncReplaceConflict();
+    void testSyncReplaceConflict_01();
 
 private:
 
