@@ -79,7 +79,7 @@ DevInfPackage::~DevInfPackage()
     FUNCTION_CALL_TRACE;
 }
 
-bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE;
 
@@ -93,10 +93,10 @@ bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
         SyncMLGet* get = new SyncMLGet( aMessage.getNextCmdId(), SYNCML_CONTTYPE_DEVINF_XML,
                                         iVersion == SYNCML_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
 
-        aSizeThreshold -= put->sizeAsXML();
+        aSizeThreshold -= put->calculateSize(aWBXML, aVersion);
         aMessage.addToBody( put );
 
-        aSizeThreshold -= get->sizeAsXML();
+        aSizeThreshold -= get->calculateSize(aWBXML, aVersion);
         aMessage.addToBody( get );
     }
     else if( iType == RESULTS )
@@ -105,7 +105,7 @@ bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
         SyncMLResults* results = new SyncMLResults( aMessage.getNextCmdId(), iMsgRef, iCmdRef,
                                                     iDataStores, iDeviceInfo, iVersion,
                                                     iRole );
-        aSizeThreshold -= results->sizeAsXML();
+        aSizeThreshold -= results->calculateSize(aWBXML, aVersion);
         aMessage.addToBody( results );
     }
     else if( iType == RESULTSGET )
@@ -118,10 +118,10 @@ bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
         SyncMLGet* get = new SyncMLGet( aMessage.getNextCmdId(), SYNCML_CONTTYPE_DEVINF_XML,
                                         iVersion == SYNCML_1_1 ? SYNCML_DEVINF_PATH_11 : SYNCML_DEVINF_PATH_12 );
 
-        aSizeThreshold -= results->sizeAsXML();
+        aSizeThreshold -= results->calculateSize(aWBXML, aVersion);
         aMessage.addToBody( results );
 
-        aSizeThreshold -= get->sizeAsXML();
+        aSizeThreshold -= get->calculateSize(aWBXML, aVersion);
         aMessage.addToBody( get );
     }
     else

@@ -31,6 +31,9 @@
 * 
 */
 
+#include <QDebug>
+#include <LogMacros.h>
+
 #include "ResponseGeneratorTest.h"
 
 #include "ResponseGenerator.h"
@@ -205,6 +208,252 @@ void ResponseGeneratorTest::testNB182304()
     status17->sourceRef = "1323";
     status17->data = ITEM_ADDED;
     respGen.addStatus( status17 );
+
+    QList<UIDMapping> mappings;
+    UIDMapping m1;
+    m1.iLocalUID = "16";
+    m1.iRemoteUID = "1310";
+    mappings.append( m1 );
+
+    UIDMapping m2;
+    m2.iLocalUID = "17";
+    m2.iRemoteUID = "1312";
+    mappings.append( m2 );
+
+    UIDMapping m3;
+    m3.iLocalUID = "18";
+    m3.iRemoteUID = "1304";
+    mappings.append( m3 );
+
+    LocalMappingsPackage* map = new LocalMappingsPackage( "/calendar",
+                                                          "/telecom/cal.vcs",
+                                                          mappings );
+
+    respGen.addPackage( map );
+
+    SyncMLMessage* msg = respGen.generateNextMessage( maxMsgSize, SYNCML_1_1 );
+
+    QVERIFY( msg );
+
+    QtEncoder encoder;
+    QByteArray result_xml;
+    QVERIFY( encoder.encodeToXML( *msg, result_xml, false ) );
+    delete msg;
+    msg = 0;
+
+    // Add 157 bytes to account for XML header and DOCTYPE
+    QVERIFY( result_xml.size() + 157 < maxMsgSize );
+
+}
+
+void ResponseGeneratorTest::test208762()
+{
+    FUNCTION_CALL_TRACE;
+
+    const int maxMsgSize = 8000;
+    ResponseGenerator respGen;
+
+    HeaderParams hdr;
+    hdr.sessionID = 1;
+    hdr.msgID = 8;
+    hdr.targetDevice = "IMEI:356407011863641";
+    hdr.sourceDevice = "IMEI:004402130345691";
+    hdr.meta.maxMsgSize = 56225;
+    respGen.setHeaderParams( hdr );
+    respGen.setRemoteMsgId(8);
+
+    StatusParams* status1 = new StatusParams;
+    status1->msgRef = 8;
+    status1->cmdRef = 0;
+    status1->cmd = "SyncHdr";
+    status1->targetRef = "IMEI:004402130345691";
+    status1->sourceRef = "IMEI:356407011863641";
+    status1->data = SUCCESS;
+    respGen.addStatus( status1 );
+
+    StatusParams* status2 = new StatusParams;
+    status2->msgRef = 8;
+    status2->cmdRef = 7;
+    status2->cmd = "Sync";
+    status2->targetRef = "./contacts";
+    status2->sourceRef = "/telecom/pb.vcf";
+    status2->data = SUCCESS;
+    respGen.addStatus( status2 );
+
+    StatusParams* status3 = new StatusParams;
+    status3->msgRef = 8;
+    status3->cmdRef = 8;
+    status3->cmd = "Sync";
+    status3->targetRef = "./calendar";
+    status3->sourceRef = "/telecom/cal.vcs";
+    status3->data = SUCCESS;
+    respGen.addStatus( status3 );
+
+    StatusParams* status4 = new StatusParams;
+    status4->msgRef = 8;
+    status4->cmdRef = 9;
+    status4->cmd = "Replace";
+    status4->targetRef = "13";
+    status4->sourceRef = "1317";
+    status4->data = SUCCESS;
+    respGen.addStatus( status4 );
+
+    StatusParams* status5 = new StatusParams;
+    status5->msgRef = 8;
+    status5->cmdRef = 10;
+    status5->cmd = "Replace";
+    status5->targetRef = "12";
+    status5->sourceRef = "1316";
+    status5->data = SUCCESS;
+    respGen.addStatus( status5 );
+
+    StatusParams* status6 = new StatusParams;
+    status6->msgRef = 8;
+    status6->cmdRef = 11;
+    status6->cmd = "Replace";
+    status6->targetRef = "11";
+    status6->sourceRef = "1315";
+    status6->data = SUCCESS;
+    respGen.addStatus( status6 );
+
+    StatusParams* status7 = new StatusParams;
+    status7->msgRef = 8;
+    status7->cmdRef = 12;
+    status7->cmd = "Replace";
+    status7->targetRef = "10";
+    status7->sourceRef = "1314";
+    status7->data = SUCCESS;
+    respGen.addStatus( status7 );
+
+    StatusParams* status8 = new StatusParams;
+    status8->msgRef = 8;
+    status8->cmdRef = 13;
+    status8->cmd = "Replace";
+    status8->targetRef = "2";
+    status8->sourceRef = "1306";
+    status8->data = SUCCESS;
+    respGen.addStatus( status8 );
+
+    StatusParams* status9 = new StatusParams;
+    status9->msgRef = 8;
+    status9->cmdRef = 14;
+    status9->cmd = "Add";
+    status9->sourceRef = "1310";
+    status9->data = ITEM_ADDED;
+    respGen.addStatus( status9 );
+
+    StatusParams* status10 = new StatusParams;
+    status10->msgRef = 8;
+    status10->cmdRef = 15;
+    status10->cmd = "Add";
+    status10->sourceRef = "1312";
+    status10->data = ITEM_ADDED;
+    respGen.addStatus( status10 );
+
+    StatusParams* status11 = new StatusParams;
+    status11->msgRef = 8;
+    status11->cmdRef = 16;
+    status11->cmd = "Add";
+    status11->sourceRef = "1304";
+    status11->data = ITEM_ADDED;
+    respGen.addStatus( status11 );
+
+    StatusParams* status12 = new StatusParams;
+    status12->msgRef = 8;
+    status12->cmdRef = 17;
+    status12->cmd = "Add";
+    status12->sourceRef = "1322";
+    status12->data = ITEM_ADDED;
+    respGen.addStatus( status12 );
+
+    StatusParams* status13 = new StatusParams;
+    status13->msgRef = 8;
+    status13->cmdRef = 18;
+    status13->cmd = "Add";
+    status13->sourceRef = "1313";
+    status13->data = ITEM_ADDED;
+    respGen.addStatus( status13 );
+
+    StatusParams* status14 = new StatusParams;
+    status14->msgRef = 8;
+    status14->cmdRef = 19;
+    status14->cmd = "Add";
+    status14->sourceRef = "1302";
+    status14->data = ITEM_ADDED;
+    respGen.addStatus( status14 );
+
+    StatusParams* status15 = new StatusParams;
+    status15->msgRef = 8;
+    status15->cmdRef = 20;
+    status15->cmd = "Add";
+    status15->sourceRef = "1321";
+    status15->data = ITEM_ADDED;
+    respGen.addStatus( status15 );
+
+    StatusParams* status16 = new StatusParams;
+    status16->msgRef = 8;
+    status16->cmdRef = 21;
+    status16->cmd = "Sync";
+    status16->targetRef = "./Notepad";
+    status16->sourceRef = "/telecom/note.txt";
+    status16->data = SUCCESS;
+    respGen.addStatus( status16 );
+
+    StatusParams* status17 = new StatusParams;
+    status17->msgRef = 8;
+    status17->cmdRef = 22;
+    status17->cmd = "Add";
+    status17->sourceRef = "1323";
+    status17->data = ITEM_ADDED;
+    respGen.addStatus( status17 );
+
+    StatusParams* status18 = new StatusParams;
+    status18->msgRef = 8;
+    status18->cmdRef = 23;
+    status18->cmd = "Add";
+    status18->sourceRef = "1324";
+    status18->data = ITEM_ADDED;
+    respGen.addStatus( status18 );
+
+    StatusParams* status19 = new StatusParams;
+    status19->msgRef = 8;
+    status19->cmdRef = 24;
+    status19->cmd = "Add";
+    status19->sourceRef = "1325";
+    status19->data = ITEM_ADDED;
+    respGen.addStatus( status19 );
+
+    StatusParams* status20 = new StatusParams;
+    status20->msgRef = 8;
+    status20->cmdRef = 25;
+    status20->cmd = "Add";
+    status20->sourceRef = "1326";
+    status20->data = ITEM_ADDED;
+    respGen.addStatus( status20 );
+
+    StatusParams* status21 = new StatusParams;
+    status21->msgRef = 8;
+    status21->cmdRef = 26;
+    status21->cmd = "Add";
+    status21->sourceRef = "1327";
+    status21->data = ITEM_ADDED;
+    respGen.addStatus( status21 );
+
+    StatusParams* status22 = new StatusParams;
+    status22->msgRef = 8;
+    status22->cmdRef = 27;
+    status22->cmd = "Add";
+    status22->sourceRef = "1328";
+    status22->data = ITEM_ADDED;
+    respGen.addStatus( status22 );
+
+    StatusParams* status23 = new StatusParams;
+    status23->msgRef = 8;
+    status23->cmdRef = 28;
+    status23->cmd = "Add";
+    status23->sourceRef = "1329";
+    status23->data = ITEM_ADDED;
+    respGen.addStatus( status23 );
 
     QList<UIDMapping> mappings;
     UIDMapping m1;

@@ -62,7 +62,7 @@ void AuthenticationPackageTest::testWrite()
     const int SIZE_TRESHOLD = 10000;
     int remaining = SIZE_TRESHOLD;
 
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
     QByteArray result_xml;
     QVERIFY( encoder.encodeToXML( msg, result_xml, true ) );
@@ -92,7 +92,7 @@ void AuthenticationPackageTest::testWrite2()
     const int SIZE_TRESHOLD = 10000;
     int remaining = SIZE_TRESHOLD;
 
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
     QByteArray result_xml;
     QVERIFY( encoder.encodeToXML( msg, result_xml, true ) );

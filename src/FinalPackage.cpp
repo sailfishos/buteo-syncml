@@ -48,12 +48,12 @@ FinalPackage::~FinalPackage()
 
 }
 
-bool FinalPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool FinalPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
 
     SyncMLCmdObject* finalObj = new SyncMLCmdObject("Final");
     aMessage.addToBody( finalObj );
-    aSizeThreshold -= finalObj->sizeAsXML();
+    aSizeThreshold -= finalObj->calculateSize(aWBXML, aVersion);
 
     return true;
 }

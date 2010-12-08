@@ -32,6 +32,10 @@
 */
 
 #include "SyncMLCmdObject.h"
+#include "LogMacros.h"
+#include "LibWbXML2Encoder.h"
+#include "QtEncoder.h"
+#include "datatypes.h"
 
 // As this base class is extensively used in SyncML generation, please do not
 // enable function tracing unless you have a very good reason to do that.
@@ -105,13 +109,34 @@ const QList<SyncMLCmdObject*>& SyncMLCmdObject::getChildren() const
     return iChildren;
 }
 
-int SyncMLCmdObject::sizeAsXML()
+int SyncMLCmdObject::calculateSize(bool aWBXML, const ProtocolVersion& aVersion)
 {
 
     // It should be noted that this is just coarse estimation! Document size limit
     // is always set to 90% of the maximum available transport size, so this does
     // not need to be byte-accurate. We gain lots of performance when we don't have
     // to serialize to XML to check the current size
+
+    if (aWBXML) {
+        LibWbXML2Encoder encoder;
+
+        QByteArray aData;
+
+        if( aVersion == SYNCML_1_1 ) {
+            addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML11 );
+        }
+        else if( aVersion == SYNCML_1_2 ) {
+            addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_SYNCML12 );
+        }
+
+
+        if( encoder.encodeToWbXML( *this,
+                                   aVersion,
+                                   aData ) )
+        {
+            return aData.size();
+        }
+    }
 
     int size = 0;
 
@@ -142,7 +167,7 @@ int SyncMLCmdObject::sizeAsXML()
         }
 
         for( int i = 0; i < iChildren.count(); ++i ) {
-            size += iChildren[i]->sizeAsXML();
+            size += iChildren[i]->calculateSize(aWBXML, aVersion);
         }
     }
 

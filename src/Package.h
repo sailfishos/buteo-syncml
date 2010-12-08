@@ -34,6 +34,7 @@
 #define PACKAGE_H
 
 #include <QObject>
+#include "SyncAgentConsts.h"
 
 namespace DataSync {
 
@@ -69,7 +70,7 @@ public:
      * @return
      *
      */
-    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold ) = 0;
+    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion ) = 0;
 
 protected:
 

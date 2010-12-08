@@ -70,7 +70,7 @@ void LocalMappingsPackageTest::testPackage()
     SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     const int SIZE_THRESHOLD = 160;
     int remaining = SIZE_THRESHOLD;
-    QCOMPARE(pkg.write(msg, remaining), false);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), false);
     QVERIFY(remaining < SIZE_THRESHOLD);
 
     QtEncoder encoder;
@@ -82,7 +82,7 @@ void LocalMappingsPackageTest::testPackage()
 
     // Write again, should complete.
     remaining += 200;
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
 
 }
 

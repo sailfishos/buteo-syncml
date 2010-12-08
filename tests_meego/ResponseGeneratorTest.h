@@ -44,6 +44,8 @@ private slots:
 
     void testNB182304();
 
+    void test208762();
+
 };
 }
 #endif

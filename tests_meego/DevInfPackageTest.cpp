@@ -54,7 +54,7 @@ void DevInfPackageTest::testPutGet()
 
     SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
 
     QtEncoder encoder;
@@ -89,7 +89,7 @@ void DevInfPackageTest::testResults()
 
     SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
 
     QtEncoder encoder;
@@ -130,7 +130,7 @@ void DevInfPackageTest::testResultsGet()
 
     SyncMLMessage msg(HeaderParams(), SYNCML_1_2);
     int remaining = SIZE_TRESHOLD;
-    QCOMPARE(pkg.write(msg, remaining), true);
+    QCOMPARE(pkg.write(msg, remaining, false, SYNCML_1_2), true);
     QVERIFY(remaining < SIZE_TRESHOLD);
 
     QtEncoder encoder;

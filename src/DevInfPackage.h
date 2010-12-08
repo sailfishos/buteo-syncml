@@ -92,7 +92,7 @@ public:
 
     virtual ~DevInfPackage();
 
-    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold );
+    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion );
 
 protected:
 

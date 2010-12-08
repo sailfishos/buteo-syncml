@@ -37,6 +37,8 @@
 #include <QString>
 #include <QMap>
 
+#include "SyncAgentConsts.h"
+
 namespace DataSync {
 
 /*! \brief SyncMLCmdObject is the base class for generating
@@ -124,7 +126,7 @@ public:
 	 *
 	 * @return Estimated size of the object, including all child objects
 	 */
-	int sizeAsXML();
+    int calculateSize(bool aWbXML, const ProtocolVersion& aVersion);
 
 protected:
 

@@ -55,7 +55,7 @@ LocalMappingsPackage::~LocalMappingsPackage()
     FUNCTION_CALL_TRACE;
 }
 
-bool LocalMappingsPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool LocalMappingsPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE;
 
@@ -65,12 +65,12 @@ bool LocalMappingsPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
                                         iTargetDatabase,
                                         iSourceDatabase );
 
-        aSizeThreshold -= map->sizeAsXML();
+        aSizeThreshold -= map->calculateSize(aWBXML, aVersion);
 
         // Add at least one MapItem to the Map package
         do {
             SyncMLMapItem* mapItem = new SyncMLMapItem( iMappings[0].iRemoteUID, iMappings[0].iLocalUID );
-            aSizeThreshold -= mapItem->sizeAsXML();
+            aSizeThreshold -= mapItem->calculateSize(aWBXML, aVersion);
             map->addChild(mapItem);
             iMappings.removeFirst();
         } while( aSizeThreshold > 0 && !iMappings.isEmpty() );

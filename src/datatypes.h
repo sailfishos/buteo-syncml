@@ -313,7 +313,7 @@ namespace DataSync
 
     #define MAXMSGOVERHEADRATIO         0.1f
     #define MINMSGOVERHEADBYTES         256
-    #define WBXMLCOMPRESSIONRATE        1.0f
+    #define MSGSIZETHRESHOLD        9000
 
 } // end namespace DataSync
 

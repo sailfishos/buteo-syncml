@@ -233,7 +233,7 @@ void LocalChangesPackageTest::testSimpleClient()
     SyncMLMessage msg( HeaderParams(), SYNCML_1_2 );
 
     int remaining = msgSize;
-    QVERIFY( package.write( msg, remaining ) );
+    QVERIFY( package.write( msg, remaining , false, SYNCML_1_2) );
     QVERIFY( remaining < msgSize );
 
     QtEncoder encoder;
@@ -306,7 +306,7 @@ void LocalChangesPackageTest::testSimpleServer()
     SyncMLMessage msg( HeaderParams(), SYNCML_1_2 );
 
     int remaining = msgSize;
-    QVERIFY( package.write( msg, remaining ) );
+    QVERIFY( package.write( msg, remaining , false, SYNCML_1_2) );
     QVERIFY( remaining < msgSize );
 
     QtEncoder encoder;
@@ -358,7 +358,7 @@ void LocalChangesPackageTest::testLargeObjects()
 
     int remaining = msgSize;
     SyncMLMessage msg1( HeaderParams(), SYNCML_1_2 );
-    QVERIFY( !package.write( msg1, remaining ) );
+    QVERIFY( !package.write( msg1, remaining, false, SYNCML_1_2 ) );
     QVERIFY( remaining < msgSize );
 
     QtEncoder encoder;
@@ -372,7 +372,7 @@ void LocalChangesPackageTest::testLargeObjects()
 
     remaining = msgSize;
     SyncMLMessage msg2( HeaderParams(), SYNCML_1_2 );
-    QVERIFY( package.write( msg2, remaining ) );
+    QVERIFY( package.write( msg2, remaining, false, SYNCML_1_2 ) );
     QVERIFY( remaining < msgSize );
 
     QByteArray result_xml2;

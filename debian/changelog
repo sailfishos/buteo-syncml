@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.9-52) unstable; urgency=low
+
+  * Fixes: NB#208762 - All data sync from S40 fails. As problem with size for xml.
+    Now using size calculation based on wbxml for ms size threshold. 
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Wed, 08 Dec 2010 15:14:00 +0530
+
 libmeegosyncml (0.4.9-51) unstable; urgency=low
 
   * Fixes: NB#203771 Conflict set to N95:Calendar entry is deleted in N95 

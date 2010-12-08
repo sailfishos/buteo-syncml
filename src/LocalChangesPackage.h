@@ -81,7 +81,7 @@ public:
      */
     virtual ~LocalChangesPackage();
 
-    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold );
+    virtual bool write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion );
 
 signals:
 
@@ -117,17 +117,23 @@ private:
     bool processAddedItems( SyncMLMessage& aMessage,
                             SyncMLSync& aSyncElement,
                             int& aSizeThreshold,
-                            int& aItemsThatCanBeSent);
+                            int& aItemsThatCanBeSent,
+                            bool aWBXML,
+                            const ProtocolVersion& aVersion);
 
     bool processModifiedItems( SyncMLMessage& aMessage,
                                SyncMLSync& aSyncElement,
                                int& aSizeThreshold,
-                               int& aItemsThatCanBeSent);
+                               int& aItemsThatCanBeSent,
+                               bool aWBXML,
+                               const ProtocolVersion& aVersion);
 
     bool processRemovedItems( SyncMLMessage& aMessage,
                               SyncMLSync& aSyncElement,
                               int& aSizeThreshold,
-                              int& aItemsThatCanBeSent);
+                              int& aItemsThatCanBeSent,
+                              bool aWBXML,
+                              const ProtocolVersion& aVersion);
 
     bool processItem( const SyncItemKey& aItemKey,
                       SyncMLLocalChange& aParent,

@@ -81,7 +81,7 @@ LocalChangesPackage::~LocalChangesPackage()
     iLargeObjectState.iItem = 0;
 }
 
-bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE
     bool allWritten = false;
@@ -94,15 +94,15 @@ bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
 
 
     sync->addNumberOfChanges( iNumberOfChanges );
-    remainingBytes -= sync->sizeAsXML();
+    remainingBytes -= sync->calculateSize(aWBXML, aVersion);
 
     int itemsThatCanBeSent = iMaxChangesPerMessage;
 
     if( iNumberOfChanges > 0 ) {
 
-        if( processAddedItems(aMessage, *sync, remainingBytes,itemsThatCanBeSent) &&
-            processModifiedItems(aMessage, *sync, remainingBytes, itemsThatCanBeSent) &&
-            processRemovedItems(aMessage, *sync, remainingBytes, itemsThatCanBeSent) ) {
+        if( processAddedItems(aMessage, *sync, remainingBytes,itemsThatCanBeSent, aWBXML, aVersion) &&
+            processModifiedItems(aMessage, *sync, remainingBytes, itemsThatCanBeSent, aWBXML, aVersion) &&
+            processRemovedItems(aMessage, *sync, remainingBytes, itemsThatCanBeSent, aWBXML, aVersion) ) {
             allWritten = true;
         }
 
@@ -128,7 +128,9 @@ bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
 bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
                                              SyncMLSync& aSyncElement,
                                              int& aSizeThreshold ,
-                                             int& aItemsThatCanBeSent)
+                                             int& aItemsThatCanBeSent,
+                                             bool aWBXML,
+                                             const ProtocolVersion& aVersion)
 {
     FUNCTION_CALL_TRACE;
 
@@ -146,7 +148,7 @@ bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
         QString mimeType;
         bool processed = processItem( key, *add, remainingBytes, SYNCML_ADD, mimeType );
 
-        remainingBytes -= add->sizeAsXML();
+        remainingBytes -= add->calculateSize(aWBXML, aVersion);
         aSyncElement.addChild( add );
 
         if (processed)
@@ -181,7 +183,9 @@ bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
 bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
                                                 SyncMLSync& aSyncElement,
                                                 int& aSizeThreshold,
-                                                int& aItemsThatCanBeSent)
+                                                int& aItemsThatCanBeSent,
+                                                bool aWBXML,
+                                                const ProtocolVersion& aVersion)
 {
     FUNCTION_CALL_TRACE;
 
@@ -198,7 +202,7 @@ bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
         QString mimeType;
         bool processed = processItem( key, *replace, remainingBytes, SYNCML_REPLACE, mimeType );
 
-        remainingBytes -= replace->sizeAsXML();
+        remainingBytes -= replace->calculateSize(aWBXML, aVersion);
         aSyncElement.addChild( replace );
 
         if (processed)
@@ -232,7 +236,9 @@ bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
 bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
                                                SyncMLSync& aSyncElement,
                                                int& aSizeThreshold,
-                                               int& aItemsThatCanBeSent)
+                                               int& aItemsThatCanBeSent,
+                                               bool aWBXML,
+                                               const ProtocolVersion& aVersion)
 {
     FUNCTION_CALL_TRACE;
 
@@ -252,7 +258,7 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
         QString mimeType;
         bool processed = processItem( key, *del, remainingBytes, SYNCML_DELETE, mimeType );
 
-        remainingBytes -= del->sizeAsXML();
+        remainingBytes -= del->calculateSize(aWBXML, aVersion);
         aSyncElement.addChild( del );
 
         if (processed) {

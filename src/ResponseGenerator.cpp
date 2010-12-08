@@ -86,29 +86,22 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
                                                        bool aWbXML )
 {
     FUNCTION_CALL_TRACE
+    bool useWbXml = false;
+
+    LOG_DEBUG("MaxMsg size"<<aMaxSize);
+    if( aMaxSize <= MSGSIZETHRESHOLD)
+    {
+        useWbXml = aWbXML;
+    }
 
     iHeaderParams.msgID = getNextMsgId();
     SyncMLMessage* message = new SyncMLMessage( iHeaderParams, aVersion );
-    int messageSize = message->sizeAsXML();
+    int messageSize = message->calculateSize(useWbXml, aVersion);
 
-    // Make sure we don't go over the maximum message size. Threshold-based solution is employed
-    // with fast XML size estimator, so we don't need to serialize XML to find out how big the
-    // message is every time we need to check it. Message size threshold is maximum message size
-    // minus overhead. Overhead whatever's not included in the estimation, like XML header, DOCTYPE
-    // and buffer for errors in estimator. Overhead is MAXMSGOVERHEADRATIO times max message size
-    // (now at 10%), but always at least MINMSGOVERHEADBYTES (now at 256) bytes.
-    // If wbXML is used, compression rate is taken into account to ensure best performance.
-    // Safe estimate of XML->wbXML compression rate of 66% is currently presumed
+    LOG_DEBUG("useWbxml"<<useWbXml);
 
-    int maxSize = aMaxSize;
-
-    if( aWbXML )
-    {
-        maxSize /= WBXMLCOMPRESSIONRATE;
-    }
-
-    int overhead = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * maxSize), MINMSGOVERHEADBYTES );
-    int messageSizeThreshold = maxSize - overhead;
+    int overhead = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * aMaxSize), MINMSGOVERHEADBYTES );
+    int messageSizeThreshold = aMaxSize - overhead;
 
     int remainingBytes = messageSizeThreshold - messageSize;
 
@@ -123,7 +116,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
 
         message->addToBody( statusObject );
 
-        remainingBytes -= statusObject->sizeAsXML();
+        remainingBytes -= statusObject->calculateSize(useWbXml, aVersion);
 
         if( remainingBytes < 0 ) {
             break;
@@ -135,7 +128,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
 
         Package* package = iPackages.first();
 
-        if( package->write( *message, remainingBytes ) ) {
+        if( package->write( *message, remainingBytes, useWbXml, aVersion ) ) {
             delete package;
             iPackages.removeFirst();
         }
@@ -143,10 +136,9 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
             break;
         }
     }
-    LOG_DEBUG( "MessageSize:"<<message->sizeAsXML());
+    LOG_DEBUG( "MessageSize:"<<message->calculateSize(useWbXml, aVersion));
     LOG_DEBUG( "Message generated with following parameters:" );
     LOG_DEBUG( "Maximum size reported by remote device:" << aMaxSize );
-    LOG_DEBUG( "Maximum size after compression efficiency estimation:" << maxSize );
     LOG_DEBUG( "Estimated overhead:" << overhead );
     LOG_DEBUG( "Message size threshold value was:" << messageSizeThreshold );
     LOG_DEBUG( "Remaining bytes was:" << remainingBytes );

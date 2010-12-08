@@ -101,14 +101,14 @@ AlertPackage::~AlertPackage()
 {
 }
 
-bool AlertPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool AlertPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE
 
     iParams.cmdId = aMessage.getNextCmdId();
     SyncMLAlert* alertObject = new SyncMLAlert( iParams );
     aMessage.addToBody( alertObject );
-    aSizeThreshold -= alertObject->sizeAsXML();
+    aSizeThreshold -= alertObject->calculateSize(aWBXML, aVersion);
 
     return true;
 

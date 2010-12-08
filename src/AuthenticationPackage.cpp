@@ -59,7 +59,7 @@ AuthenticationPackage::~AuthenticationPackage()
 
 }
 
-bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold )
+bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
     FUNCTION_CALL_TRACE;
 
@@ -85,7 +85,7 @@ bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold 
     }
 
     aMessage.addToHeader( cred );
-    aSizeThreshold -= cred->sizeAsXML();
+    aSizeThreshold -= cred->calculateSize(aWBXML, aVersion);
 
     return true;
 }
