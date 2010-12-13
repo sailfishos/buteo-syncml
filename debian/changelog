@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.10-0) stable; urgency=low
+
+  * Mark package as stable
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Mon, 13 Dec 2010 16:25:00 +0530
+
 libmeegosyncml (0.4.9-52) unstable; urgency=low
 
   * Fixes: NB#208762 - All data sync from S40 fails. As problem with size for xml.
