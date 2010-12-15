@@ -461,7 +461,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
         else
         {
             LOG_WARNING( "Could not retrieve item data:" << aItemKey );
-            processed = false;
+            processed = true;
         }
     }
 
