@@ -202,10 +202,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, ResponseStatusCo
 {
     FUNCTION_CALL_TRACE;
 
-    if( iIgnoreStatuses )
-    {
-        return;
-    }
+    // Bypass iIgnoreStatuses flag: Status for SyncHdr should always be written
 
     StatusParams* statusParams = new StatusParams;
     statusParams->msgRef = aParams.msgID;
@@ -215,7 +212,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, ResponseStatusCo
     statusParams->sourceRef = aParams.sourceDevice;
     statusParams->data = aStatusCode;
 
-    addStatus( statusParams );
+    iStatuses.append( statusParams );
 
 }
 
@@ -236,7 +233,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
     statusParams->data = aStatusCode;
     statusParams->chal = aChalParams;
 
-    addStatus( statusParams );
+    iStatuses.append( statusParams );
 
 }
 
