@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.10-1) stable; urgency=low
+
+  * Fixes: NB#212083 - Consecutive sync (after a successful sync) with ovi.com always fails.
+  * Fixes: NB#212465 - Synchronization is stuck in the progress indicator screen when the internet is interrupted while sync.
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Fri, 17 Dec 2010 16:25:00 +0530
+
 libmeegosyncml (0.4.10-0) stable; urgency=low
 
   * Mark package as stable

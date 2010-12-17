@@ -90,11 +90,16 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
 bool HTTPTransport::init()
 {
     FUNCTION_CALL_TRACE;
+    qRegisterMetaType<QNetworkAccessManager::NetworkAccessibility>("QNetworkAccessManager::NetworkAccessibility");
 
     connect( iManager, SIGNAL(finished(QNetworkReply *)),
               this, SLOT(httpRequestFinished(QNetworkReply *)), Qt::QueuedConnection);
     connect( iManager,SIGNAL(authenticationRequired(QNetworkReply *,QAuthenticator *)),
               this,SLOT(authRequired(QNetworkReply *,QAuthenticator * )), Qt::QueuedConnection);
+
+    connect( iManager, SIGNAL(networkAccessibleChanged (QNetworkAccessManager::NetworkAccessibility)),
+             this, SLOT(slotNetworkStateChanged(QNetworkAccessManager::NetworkAccessibility)));
+
 
 #ifndef QT_NO_OPENSSL
     connect( iManager, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError>& )),
@@ -263,7 +268,18 @@ bool HTTPTransport::resend()
 
 }
 
-void HTTPTransport::httpRequestFinished( QNetworkReply *aReply ) {
+void HTTPTransport::slotNetworkStateChanged(QNetworkAccessManager::NetworkAccessibility aState)
+{
+    FUNCTION_CALL_TRACE;
+
+    if (aState != QNetworkAccessManager::Accessible) {
+        LOG_DEBUG("Network accessible state:"<<aState);
+        emit sendEvent(TRANSPORT_CONNECTION_FAILED, "Network error");
+    }
+}
+
+void HTTPTransport::httpRequestFinished( QNetworkReply *aReply )
+{
     FUNCTION_CALL_TRACE;
 
     Q_ASSERT( aReply );

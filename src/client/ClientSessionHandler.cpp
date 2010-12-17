@@ -752,14 +752,18 @@ void ClientSessionHandler::composeDataUpdateStatusPackage()
         foreach( const SyncTarget* target, targets )
         {
 
-            LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( target->getSourceDatabase(),
-                            target->getTargetDatabase(),
-                            target->getUIDMappings() );
+            QList<UIDMapping> mappings = target->getUIDMappings();
 
-            connect( localMappingsPackage, SIGNAL( newMapWritten( int, int, const QString&, const QString& ) ),
-                     this, SLOT( newMapReference( int, int, const QString&, const QString& ) ) );
+            if (mappings.size() > 0 ) {
+                LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( target->getSourceDatabase(),
+                                target->getTargetDatabase(),
+                                mappings);
 
-            getResponseGenerator().addPackage( localMappingsPackage );
+                connect( localMappingsPackage, SIGNAL( newMapWritten( int, int, const QString&, const QString& ) ),
+                         this, SLOT( newMapReference( int, int, const QString&, const QString& ) ) );
+
+                getResponseGenerator().addPackage( localMappingsPackage );
+            }
         }
     }
 

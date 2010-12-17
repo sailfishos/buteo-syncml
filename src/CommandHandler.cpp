@@ -770,7 +770,7 @@ void CommandHandler::manageNewMappings( SyncTarget& aTarget, const QList<UIDMapp
     }
 
 
-    if( iRole == ROLE_CLIENT && aFastMapsSend )
+    if ( (iRole == ROLE_CLIENT) && (aFastMapsSend) && (aNewMappings.size() > 0) )
     {
         LocalMappingsPackage* localMappingsPackage = new LocalMappingsPackage( aTarget.getSourceDatabase(),
                                                                                aTarget.getTargetDatabase(),

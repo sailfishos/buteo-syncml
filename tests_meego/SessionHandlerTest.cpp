@@ -172,6 +172,87 @@ void SessionHandlerTest::testClientWithClientInitiated()
     QCOMPARE(session_handler.getSyncState(), SYNC_FINISHED);
 }
 
+
+void SessionHandlerTest::testNoRespSyncElement()
+{
+    TestTransport transport( false );
+    const QString DB = "calendar";
+
+    SyncAgentConfig config;
+    config.setTransport(&transport);
+    config.setStorageProvider( this );
+    config.addSyncTarget( "calendar", "calendar" );
+    config.setDatabaseFilePath( DBFILE );
+
+    config.setAuthParams( AUTH_BASIC, "user", "password" );
+
+    // Start.
+    ClientSessionHandler session_handler(&config, NULL);
+    session_handler.initiateSync();
+
+    // Fake header.
+    HeaderParams* hp1 = new HeaderParams();
+    hp1->verDTD = SYNCML_DTD_VERSION_1_2;
+    hp1->sourceDevice = "Source device";
+    hp1->sessionID = "1";
+    hp1->msgID = 1;
+    hp1->targetDevice = SYNCML_UNKNOWN_DEVICE;
+    hp1->respURI = "redirect URI";
+    hp1->meta.maxMsgSize = 30000;
+    session_handler.handleHeaderElement(hp1);
+    hp1 = NULL;
+
+    // Fake status
+    StatusParams* sp1 = new StatusParams();
+    sp1->cmdId = 1;
+    sp1->msgRef = 1;
+    sp1->cmdRef = 0;
+    sp1->cmd = SYNCML_ELEMENT_SYNCHDR;
+    sp1->data = AUTH_ACCEPTED;
+    session_handler.handleStatusElement( sp1 );
+
+    // Fake alert.
+    CommandParams* ap1 = new CommandParams( CommandParams::COMMAND_ALERT );
+    ap1->cmdId = 2;
+    ap1->data = QString::number( SLOW_SYNC );
+    ItemParams item;
+    item.source = DB;
+    item.target = DB;
+    item.meta.anchor.next = "something";
+    ap1->items.append(item);
+    session_handler.handleAlertElement(ap1);
+    ap1 = NULL;
+
+    session_handler.handleFinal();
+    QCOMPARE(session_handler.getSyncState(), SENDING_ITEMS);
+
+    // Step through different states.
+    session_handler.handleEndOfMessage();
+    SyncParams* sync = new SyncParams();
+    sync->cmdId = 1;
+    sync->source = DB;
+    sync->target = DB;
+    sync->noResp = true;
+    session_handler.handleSyncElement( sync );
+    QCOMPARE(session_handler.getSyncState(), RECEIVING_ITEMS);
+
+    CommandParams* get = new CommandParams( CommandParams::COMMAND_GET );
+    get->cmdId = 1;
+    session_handler.handleGetElement(get);
+    get = NULL;
+
+    session_handler.handleFinal();
+    QCOMPARE(session_handler.getSyncState(), SENDING_MAPPINGS);
+    session_handler.handleEndOfMessage();
+
+    session_handler.handleFinal();
+    QCOMPARE(session_handler.getSyncState(), FINALIZING);
+
+    session_handler.handleEndOfMessage();
+    QCOMPARE(session_handler.getSyncState(), SYNC_FINISHED);
+
+}
+
 void SessionHandlerTest::testClientWithServerInitiated()
 {
     MockTransport transport("transport");

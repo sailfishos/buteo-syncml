@@ -38,8 +38,8 @@
 #include <QMap>
 
 #include "BaseTransport.h"
+#include <QNetworkAccessManager>
 
-class QNetworkAccessManager;
 class QNetworkProxy;
 class QNetworkReply;
 class QNetworkRequest;
@@ -103,6 +103,8 @@ protected:
 private slots:
 
     void httpRequestFinished( QNetworkReply* aReply );
+
+    void slotNetworkStateChanged(QNetworkAccessManager::NetworkAccessibility aState);
 
     void handleProxyAuthentication( QNetworkProxy& aProxy, QAuthenticator* aAuth );
 
