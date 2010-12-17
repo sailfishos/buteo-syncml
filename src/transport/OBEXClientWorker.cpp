@@ -39,6 +39,7 @@
 #include "LogMacros.h"
 
 #define SYNCMLTARGET "SYNCML-SYNC"
+#define LINKERRORRESULT -2
 
 using namespace DataSync;
 
@@ -222,6 +223,13 @@ int OBEXClientWorker::process()
             iProcessing = false;
             break;
         }
+        else if( isLinkError() )
+        {
+            iProcessing = false;
+            linkError();
+            result = LINKERRORRESULT;
+            break;
+        }
 
     }
 
@@ -250,7 +258,7 @@ void OBEXClientWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
         case OBEX_EV_PARSEERR:
         case OBEX_EV_ABORT:
         {
-            worker->linkError();
+            worker->setLinkError( true );
             break;
         }
         default:
@@ -265,14 +273,10 @@ void OBEXClientWorker::linkError()
 {
     FUNCTION_CALL_TRACE;
 
-    iProcessing = false;
+    LOG_CRITICAL( "Link error occurred" );
 
-    if( isConnected() )
-    {
-        setConnected( false );
-        closeOpenOBEX();
-        emit connectionError();
-    }
+    closeOpenOBEX();
+    setConnected( false );
 
 }
 

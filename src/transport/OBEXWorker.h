@@ -91,11 +91,24 @@ protected:
      */
     void setConnected( bool aConnected );
 
+    /*! \brief Returns link error status
+     *
+     * @return True if link error occurred, otherwise false
+     */
+    bool isLinkError() const;
+
+    /*! \brief Sets link error status
+     *
+     * @param aLinkError Link error status to set
+     */
+    void setLinkError( bool aLinkError );
+
 private:
 
     obex_t* iTransportHandle;
 
     bool    iConnected;
+    bool    iLinkError;
 };
 
 }

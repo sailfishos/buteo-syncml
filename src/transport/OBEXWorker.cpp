@@ -38,7 +38,8 @@
 using namespace DataSync;
 
 OBEXWorker::OBEXWorker( QObject* aParent )
- : QObject( aParent ), iTransportHandle( 0 ), iConnected( false )
+ : QObject( aParent ), iTransportHandle( 0 ), iConnected( false ),
+   iLinkError( false )
 {
 
 }
@@ -113,4 +114,14 @@ bool OBEXWorker::isConnected() const
 void OBEXWorker::setConnected( bool aConnected )
 {
     iConnected = aConnected;
+}
+
+bool OBEXWorker::isLinkError() const
+{
+    return iLinkError;
+}
+
+void OBEXWorker::setLinkError( bool aLinkError )
+{
+    iLinkError = aLinkError;
 }
