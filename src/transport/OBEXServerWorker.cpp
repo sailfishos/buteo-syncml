@@ -128,7 +128,7 @@ void OBEXServerWorker::waitForGet()
 
 }
 
-int OBEXServerWorker::process( State aNextState )
+void OBEXServerWorker::process( State aNextState )
 {
     FUNCTION_CALL_TRACE;
 
@@ -141,16 +141,30 @@ int OBEXServerWorker::process( State aNextState )
     {
         result = OBEX_HandleInput( getHandle(), iTimeOut );
 
-        if( result <= 0 )
+        if( isLinkError() )
         {
             iState = STATE_IDLE;
             iProcessing = false;
+            linkError();
+            emit connectionError();
             break;
+        }
+        else if( result < 0 )
+        {
+            LOG_WARNING( "OBEX operation failed" );
+            iState = STATE_IDLE;
+            iProcessing = false;
+            emit connectionError();
+        }
+        else if( result == 0 )
+        {
+            LOG_WARNING( "OBEX timeout" );
+            iState = STATE_IDLE;
+            iProcessing = false;
+            emit connectionTimeout();
         }
 
     }
-
-    return result;
 
 }
 
@@ -167,8 +181,17 @@ void OBEXServerWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
 
         case OBEX_EV_REQHINT:
         {
-            // @todo: we should immediately reject commands that we don't support
-            OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_CONTINUE );
+            if( aObexCmd == OBEX_CMD_CONNECT || aObexCmd == OBEX_CMD_DISCONNECT ||
+                aObexCmd == OBEX_CMD_PUT || aObexCmd == OBEX_CMD_GET )
+            {
+                OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_CONTINUE );
+            }
+            else
+            {
+                LOG_WARNING( "Ignoring command related to unimplemented service" );
+                OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_IMPLEMENTED,
+                                            OBEX_RSP_NOT_IMPLEMENTED );
+            }
             break;
         }
         case OBEX_EV_REQ:
@@ -180,7 +203,7 @@ void OBEXServerWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
         case OBEX_EV_PARSEERR:
         case OBEX_EV_ABORT:
         {
-            worker->linkError();
+            worker->setLinkError( true );
             break;
         }
         default:
@@ -204,6 +227,12 @@ void OBEXServerWorker::linkError()
         closeOpenOBEX();
         emit connectionError();
     }
+
+    LOG_CRITICAL( "Link error occurred" );
+
+    closeOpenOBEX();
+    setConnected( false );
+
 }
 
 void OBEXServerWorker::requestReceived( obex_object_t *aObject, int aMode, int aObexCmd )

@@ -140,7 +140,7 @@ private:
         STATE_GET
     };
 
-    int process( State aNextState );
+    void process( State aNextState );
 
     static void handleEvent( obex_t *aHandle, obex_object_t *aObject, int aMode,
                              int aEvent, int aObexCmd, int aObexRsp );

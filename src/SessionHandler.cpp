@@ -840,7 +840,12 @@ void SessionHandler::exitSync()
             saveSession();
         }
 
-        // Release everything
+        // Clear package queue in case we have active packages. For example
+        // LocalChangesPackage might attempt to do item prefetching after storages are cleared
+        // and before event about sync exiting reaches user.
+        getResponseGenerator().clearPackageQueue();
+
+        // Release storages
     	releaseStoragesAndTargets();
 
         emit syncFinished( params().remoteDeviceName(), iSyncState, iSyncError);

@@ -123,5 +123,6 @@ bool OBEXWorker::isLinkError() const
 
 void OBEXWorker::setLinkError( bool aLinkError )
 {
+    FUNCTION_CALL_TRACE;
     iLinkError = aLinkError;
 }

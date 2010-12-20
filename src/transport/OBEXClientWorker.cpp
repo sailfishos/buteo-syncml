@@ -86,6 +86,8 @@ void OBEXClientWorker::connect()
         return;
     }
 
+    // Ignore return value; connect() should not emit errors, consecutive
+    // calls to send() / receive() will emit them as connection is not up
     process();
 
 }
@@ -111,6 +113,8 @@ void OBEXClientWorker::disconnect()
         }
         else
         {
+            // Ignore return value; we're disconnecting so even if something goes wrong,
+            // there's nothing else to do but to close openobex
             process();
         }
 
@@ -218,16 +222,16 @@ int OBEXClientWorker::process()
     {
         result = OBEX_HandleInput( getHandle(), iTimeOut );
 
-        if( result <= 0 )
-        {
-            iProcessing = false;
-            break;
-        }
-        else if( isLinkError() )
+        if( isLinkError() )
         {
             iProcessing = false;
             linkError();
             result = LINKERRORRESULT;
+            break;
+        }
+        else if( result <= 0 )
+        {
+            iProcessing = false;
             break;
         }
 
@@ -277,7 +281,6 @@ void OBEXClientWorker::linkError()
 
     closeOpenOBEX();
     setConnected( false );
-
 }
 
 void OBEXClientWorker::RequestCompleted( obex_object_t *aObject, int aMode, int aObexCmd, int aObexRsp )

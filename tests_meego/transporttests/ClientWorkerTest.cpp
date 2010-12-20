@@ -215,7 +215,8 @@ void ClientWorkerTest::testDisconnectLinkFailure()
 {
 
     // Case to test unsuccessful OBEX DISCONNECT due to link failure.
-    // As connection is up, stack should send error signal about the failure
+    // As connection is being broken down, stack should not send error signal
+    // about the failure
 
     QByteArray rsp1;
     QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
@@ -241,7 +242,7 @@ void ClientWorkerTest::testDisconnectLinkFailure()
     QCOMPARE( dataSpy.count(), 0 );
     QCOMPARE( connFailureSpy.count(), 0 );
     QCOMPARE( connTimeoutSpy.count(), 0 );
-    QCOMPARE( connErrorSpy.count(), 1 );
+    QCOMPARE( connErrorSpy.count(), 0 );
 
 }
 
