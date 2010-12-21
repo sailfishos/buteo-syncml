@@ -80,7 +80,7 @@ void OBEXClientWorker::connect()
 
     obex_object_t* object = handler.createConnectCmd( getHandle(), data );
 
-    if( !object || !OBEX_Request( getHandle(), object ) < 0 )
+    if( !object || OBEX_Request( getHandle(), object ) < 0 )
     {
         LOG_CRITICAL( "Failed in OBEX_Request while doing CONNECT" );
         return;
@@ -104,7 +104,7 @@ void OBEXClientWorker::disconnect()
 
         obex_object_t* object = handler.createDisconnectCmd( getHandle(), data );
 
-        if( !object || !OBEX_Request( getHandle(), object ) < 0 )
+        if( !object || OBEX_Request( getHandle(), object ) < 0 )
         {
             // Cannot send disconnect, then we have no choice but to force transport
             // disconnection
