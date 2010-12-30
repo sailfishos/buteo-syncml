@@ -83,3 +83,9 @@ void SyncMLLocalChange::ensureMetaElement()
         addChild( iMetaObject );
     }
 }
+
+void SyncMLLocalChange::addVersionMetadata(const QString& aVersion)
+{
+    ensureMetaElement();
+    iMetaObject->addVersion(aVersion);
+}

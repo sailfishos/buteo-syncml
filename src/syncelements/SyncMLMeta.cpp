@@ -134,3 +134,9 @@ void SyncMLMeta::addNamespace( SyncMLCmdObject& aObject )
     aObject.addAttribute( XML_NAMESPACE, XML_NAMESPACE_VALUE_METINF );
 }
 
+void SyncMLMeta::addVersion( const QString& aVersion )
+{
+    SyncMLCmdObject* versionObject = new SyncMLCmdObject( SYNCML_ELEMENT_VERSION, aVersion );
+    addNamespace( *versionObject );
+    addChild( versionObject );
+}

@@ -349,6 +349,12 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
             aParent.addMimeMetadata( item->getType() );
             qint64 size = item->getSize();
 
+            QString version = item->getVersion();
+
+            if ( !version.isEmpty()) {
+                aParent.addVersionMetadata(version);
+            }
+
             if( !item->getParentKey()->isEmpty() )
             {
                 const SyncItemKey* parentKey = item->getParentKey();

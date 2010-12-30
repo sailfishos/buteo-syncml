@@ -109,6 +109,12 @@ public:
      */
     void addMark( const QString& aMark );
 
+    /*! \brief Adds version element as a child.
+     *
+     * @param aVersion field
+     */
+    void addVersion( const QString& aVersion );
+
 protected:
 
 private:

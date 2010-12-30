@@ -77,6 +77,12 @@ public:
      */
     void addFormatMetadata( const QString& aFormat );
 
+    /*! \brief Adds version meta element as child about content format
+     *
+     * @param aVersion of the content
+     */
+    void addVersionMetadata(const QString& aVersion);
+
 protected:
 
 private:
