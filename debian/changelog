@@ -1,7 +1,7 @@
-libmeegosyncml (0.4.10-2) stable; urgency=low
-
-  * Fixes: NB#213138 - Messages syncd from device shows the date details as 01/01/0000 in 5630.
-
+libmeegosyncml (0.4.10-3) stable; urgency=low
+ 
+  * Deleting the waiting bug.
+ 
  -- Amit <amit.5.aggarwal@nokia.com>  Thu, 30 Dec 2010 16:25:00 +0530
 
 libmeegosyncml (0.4.10-1) stable; urgency=low
