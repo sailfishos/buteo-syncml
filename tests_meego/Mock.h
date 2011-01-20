@@ -131,6 +131,7 @@ public:
 
     virtual QByteArray getPluginCTCaps( ProtocolVersion aVersion ) const
     {
+        //TODO: check this needs to be removed for bookmark sync harmattan 1.0
         QByteArray ctCaps(
             "<CTCap>"
             "<CTType>text/x-vBookmark</CTType>"

@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.10-5) stable; urgency=low
+
+  * Fixes - Bookmark sync support removed
+
+ -- Mallikarjun Hunalli <mallikarjun.hunalli@nokia.com>  Thu, 20 Jan 2011 18:00:00 +0530
+
 libmeegosyncml (0.4.10-4) stable; urgency=low
 
   * Fixes: NB#204328 - msyncd crashed while resyncing SMS after sync
