@@ -455,7 +455,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
         CommitResult& result = results[addIds[i]];
         result.iItemKey = *addItems[i]->getKey();
         
-	LOG_DEBUG( "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed" );
+        LOG_DEBUG( "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed" );
 
         switch( addStatus[i] )
         {

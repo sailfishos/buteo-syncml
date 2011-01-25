@@ -49,9 +49,13 @@ HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent 
     FUNCTION_CALL_TRACE;
 
     iManager = new QNetworkAccessManager;
-    // Workaround for NB #176070 -- QNetworkAccessManager cannot be used within
-    // QThreads. @todo: Remove this when the bug is completely fixed.
-    iManager->setConfiguration(QNetworkConfiguration());
+
+    QNetworkConfigurationManager confmanager;
+    iManager->setConfiguration(confmanager.defaultConfiguration());
+
+    connect( &confmanager, SIGNAL(onlineStateChanged(bool)),
+             this, SLOT(slotNetworkStateChanged(bool)));
+
     iManager->proxy().setType( QNetworkProxy::NoProxy );
 }
 
@@ -90,15 +94,11 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
 bool HTTPTransport::init()
 {
     FUNCTION_CALL_TRACE;
-    qRegisterMetaType<QNetworkAccessManager::NetworkAccessibility>("QNetworkAccessManager::NetworkAccessibility");
 
     connect( iManager, SIGNAL(finished(QNetworkReply *)),
               this, SLOT(httpRequestFinished(QNetworkReply *)), Qt::QueuedConnection);
     connect( iManager,SIGNAL(authenticationRequired(QNetworkReply *,QAuthenticator *)),
               this,SLOT(authRequired(QNetworkReply *,QAuthenticator * )), Qt::QueuedConnection);
-
-    connect( iManager, SIGNAL(networkAccessibleChanged (QNetworkAccessManager::NetworkAccessibility)),
-             this, SLOT(slotNetworkStateChanged(QNetworkAccessManager::NetworkAccessibility)));
 
 
 #ifndef QT_NO_OPENSSL
@@ -268,11 +268,11 @@ bool HTTPTransport::resend()
 
 }
 
-void HTTPTransport::slotNetworkStateChanged(QNetworkAccessManager::NetworkAccessibility aState)
+void HTTPTransport::slotNetworkStateChanged(bool aState)
 {
     FUNCTION_CALL_TRACE;
 
-    if (aState != QNetworkAccessManager::Accessible) {
+    if (aState == false) {
         LOG_DEBUG("Network accessible state:"<<aState);
         emit sendEvent(TRANSPORT_CONNECTION_FAILED, "Network error");
     }
