@@ -1,6 +1,6 @@
 libmeegosyncml (0.4.10-6) stable; urgency=low
 
-  * Fixed an issue with sync stuck in the progress indicator screen when the internet is interrupted while sync.
+  * Fixes: NB#201619 - Synchronization is stuck in the progress indicator screen when the internet is interrupted while sync.
 
  -- Amit <amit.5.aggarwal@nokia.com>  Tue, 25 Jan 2011 18:00:00 +0530
 
