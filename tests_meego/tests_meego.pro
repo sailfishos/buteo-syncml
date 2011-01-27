@@ -25,7 +25,6 @@ DEPENDPATH += . \
 CONFIG += qtestlib \
     link_prl \
     debug \
-    silent
 
 # DEFINES += QT_NO_DEBUG_OUTPUT
 # use the meegosyncml library objects directly to get better debugging data

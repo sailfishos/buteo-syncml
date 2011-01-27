@@ -12,7 +12,6 @@ VER_PAT = 6
 
 CONFIG += dll \ 
     debug \
-    silent \
     create_pc \
     create_prl
 

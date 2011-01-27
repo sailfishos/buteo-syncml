@@ -10,8 +10,7 @@ VER_MIN = 4
 VER_PAT = 6
 
 CONFIG += dll \ 
-    debug \
-    silent
+    debug
 
 
 INCLUDEPATH += . \
