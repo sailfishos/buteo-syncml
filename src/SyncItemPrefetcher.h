@@ -101,6 +101,7 @@ private:
 
     StoragePlugin&                  iStoragePlugin;
     int                             iBatchSizeHint;
+    int                             iDefaultBatchSizeHint;
     QList<SyncItemKey>              iItemIdList;
     QHash<SyncItemKey, SyncItem*>   iFetchedItems;
 

@@ -46,6 +46,7 @@ SyncItemPrefetcher::SyncItemPrefetcher( const QList<SyncItemKey>& aItemIds,
  : iStoragePlugin( aStoragePlugin ), iItemIdList( aItemIds )
 {
     FUNCTION_CALL_TRACE;
+    iDefaultBatchSizeHint = aInitialBatchSizeHint;
     setBatchSizeHint( aInitialBatchSizeHint );
 }
 
@@ -67,6 +68,11 @@ SyncItem* SyncItemPrefetcher::getItem( const SyncItemKey& aItemId )
 {
     FUNCTION_CALL_TRACE;
 
+    if(!iBatchSizeHint)
+    {
+        iBatchSizeHint = iDefaultBatchSizeHint - iFetchedItems.count();
+    }
+
     if( iFetchedItems.contains( aItemId ) )
     {
         // Prefetch hit: return item immediately
@@ -78,10 +84,8 @@ SyncItem* SyncItemPrefetcher::getItem( const SyncItemKey& aItemId )
         // Prefetch miss: fetch more items
         LOG_DEBUG( "Item" << aItemId << "not found from prefetched items" );
         prefetch();
-
         return iFetchedItems.take( aItemId );
     }
-
 }
 
 void SyncItemPrefetcher::prefetch()

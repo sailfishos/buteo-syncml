@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.12) stable; urgency=low
+
+  * Fixes: NB#223952 - Not all the contacts are syncd from DUT to S60
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 03 Feb 2011 14:40:03 +0530
+
 libmeegosyncml (0.4.11) stable; urgency=low
 
   * 1. Please try to use 3 digits for the version x.y.z - 0.0.1
