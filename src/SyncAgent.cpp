@@ -160,12 +160,12 @@ bool SyncAgent::resumeSync()
 
 }
 
-bool SyncAgent::abort()
+bool SyncAgent::abort(DataSync::SyncState aState)
 {
     FUNCTION_CALL_TRACE
 
     if( iHandler ) {
-        abortSession();
+        abortSession(aState);
         return true;
     }
     else if( iListener ) {
@@ -407,13 +407,13 @@ bool SyncAgent::startServerInitiatedSession( const SyncAgentConfig& aConfig )
     return true;
 }
 
-void SyncAgent::abortSession()
+void SyncAgent::abortSession(DataSync::SyncState aState)
 {
     FUNCTION_CALL_TRACE
 
     Q_ASSERT( iHandler );
 
-    QMetaObject::invokeMethod( iHandler, "abortSync", Q_ARG( DataSync::SyncState, ABORTED ),
+    QMetaObject::invokeMethod( iHandler, "abortSync", Q_ARG( DataSync::SyncState, aState ),
                                Q_ARG( QString, "User aborted synchronization" ) );
 }
 

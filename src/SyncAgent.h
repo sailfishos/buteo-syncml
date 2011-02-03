@@ -636,11 +636,11 @@ public:
     bool isListening() const;
 
     /*! \ brief Aborts listening for requests or an ongoing synchronization
-     *
+     *  \param abort state
      *
      * @return True if there was some operation ongoing which was aborted, otherwise false
      */
-    bool abort();
+    bool abort(DataSync::SyncState aState = DataSync::ABORTED);
 
     /*! \brief Pause synchronization
     *
@@ -738,7 +738,7 @@ private:
     bool startClientInitiatedSession( const SyncAgentConfig& aConfig );
     bool startServerInitiatedSession( const SyncAgentConfig& aConfig );
 
-    void abortSession();
+    void abortSession(DataSync::SyncState aState);
     void cleanSession();
 
     bool initiateListen( const SyncAgentConfig& aConfig );

@@ -50,12 +50,7 @@ HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent 
 
     iManager = new QNetworkAccessManager;
 
-    QNetworkConfigurationManager confmanager;
-    iManager->setConfiguration(confmanager.defaultConfiguration());
-
-    connect( &confmanager, SIGNAL(onlineStateChanged(bool)),
-             this, SLOT(slotNetworkStateChanged(bool)));
-
+    iManager->setConfiguration(QNetworkConfiguration());
     iManager->proxy().setType( QNetworkProxy::NoProxy );
 }
 

@@ -1,8 +1,9 @@
 libmeegosyncml (0.4.12) stable; urgency=low
 
   * Fixes: NB#223952 - Not all the contacts are syncd from DUT to S60
+  * Adding changes to remove default configuration and abort sync to take parameter.
 
- -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 03 Feb 2011 14:40:03 +0530
+ -- Amit <amit.5.aggarwal@nokia.com>  Thu, 03 Feb 2011 14:40:03 +0530
 
 libmeegosyncml (0.4.11) stable; urgency=low
 
