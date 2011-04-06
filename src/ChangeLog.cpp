@@ -356,21 +356,28 @@ bool ChangeLog::removeAnchors( QSqlDatabase& aDbHandle )
 
     bool success = false;
 
-    const QString queryString( "DELETE FROM change_logs WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
+    QStringList tables = aDbHandle.tables();
 
-    QSqlQuery query( queryString, aDbHandle );
-    query.bindValue( ":remote_device", iRemoteDevice );
-    query.bindValue( ":source_db_uri", iSourceDbURI );
-    query.bindValue( ":sync_direction", iSyncDirection );
-
-
-    if( query.exec() ) {
+    if( !tables.contains("change_logs") ) {
+        LOG_DEBUG("Change logs table not present. Considering anchors as removed");
         success = true;
     }
     else {
-        LOG_WARNING( "Could not remove anchors:" << query.lastError() );
-    }
+        const QString queryString( "DELETE FROM change_logs WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
 
+        QSqlQuery query( queryString, aDbHandle );
+        query.bindValue( ":remote_device", iRemoteDevice );
+        query.bindValue( ":source_db_uri", iSourceDbURI );
+        query.bindValue( ":sync_direction", iSyncDirection );
+
+
+        if( query.exec() ) {
+            success = true;
+        }
+        else {
+            LOG_WARNING( "Could not remove anchors:" << query.lastError() );
+        }
+    }
     return success;
 }
 
@@ -464,18 +471,26 @@ bool ChangeLog::removeMaps( QSqlDatabase& aDbHandle )
 
     bool success = false;
 
-    const QString queryString( "DELETE FROM id_maps WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
+    QStringList tables = aDbHandle.tables();
 
-    QSqlQuery query( queryString, aDbHandle );
-    query.bindValue( ":remote_device", iRemoteDevice );
-    query.bindValue( ":source_db_uri", iSourceDbURI );
-    query.bindValue( ":sync_direction", iSyncDirection );
-
-    if( query.exec() ) {
+    if( !tables.contains("id_maps") ) {
+        LOG_DEBUG("id maps table not present");
         success = true;
     }
     else {
-        LOG_WARNING( "Could not remove ID maps:" << query.lastError() );
+        const QString queryString( "DELETE FROM id_maps WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
+
+        QSqlQuery query( queryString, aDbHandle );
+        query.bindValue( ":remote_device", iRemoteDevice );
+        query.bindValue( ":source_db_uri", iSourceDbURI );
+        query.bindValue( ":sync_direction", iSyncDirection );
+
+        if( query.exec() ) {
+            success = true;
+        }
+        else {
+            LOG_WARNING( "Could not remove ID maps:" << query.lastError() );
+        }
     }
 
     return success;

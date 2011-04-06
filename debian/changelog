@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.13) stable; urgency=low
+
+  * Check if tables exist before removing change logs and anchors.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Wed, 06 Apr 2011 20:00:00 +0530
+
 libmeegosyncml (0.4.12) stable; urgency=low
 
   * Fixes: NB#223952 - Not all the contacts are syncd from DUT to S60
