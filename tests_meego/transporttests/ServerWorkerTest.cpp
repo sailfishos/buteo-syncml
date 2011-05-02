@@ -41,6 +41,7 @@
 #include "TestLoader.h"
 
 #include "OBEXServerWorker.h"
+#include "Mock.h"
 
 #include "LogMacros.h"
 

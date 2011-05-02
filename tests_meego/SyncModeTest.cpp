@@ -78,9 +78,134 @@ void SyncModeTest::testSyncType()
 {
     SyncType type = TYPE_SLOW;
     SyncMode mode(DIRECTION_TWO_WAY, INIT_CLIENT, type );
-
     QCOMPARE( mode.syncType(), type );
 
+    mode.setRefresh();
+    QCOMPARE( mode.syncType(), TYPE_REFRESH );
+}
+
+void SyncModeTest::testSyncAlertCode()
+{
+    SyncMode mode(INVALID_ALERT);
+    QVERIFY(mode.isValid() == false);
+    mode = SyncMode(RESULT_ALERT);
+    QVERIFY(mode.isValid() == false);
+
+    mode = SyncMode(TWO_WAY_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_TWO_WAY);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(SLOW_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_TWO_WAY);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_SLOW);
+
+    mode = SyncMode(ONE_WAY_FROM_CLIENT_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_CLIENT);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(REFRESH_FROM_CLIENT_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_CLIENT);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_REFRESH);
+
+    mode = SyncMode(ONE_WAY_FROM_SERVER_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_SERVER);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(REFRESH_FROM_SERVER_SYNC);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_SERVER);
+    QCOMPARE(mode.syncInitiator(), INIT_CLIENT);
+    QCOMPARE(mode.syncType(), TYPE_REFRESH);
+
+    mode = SyncMode(TWO_WAY_BY_SERVER);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_TWO_WAY);
+    QCOMPARE(mode.syncInitiator(), INIT_SERVER);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(ONE_WAY_FROM_CLIENT_BY_SERVER);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_CLIENT);
+    QCOMPARE(mode.syncInitiator(), INIT_SERVER);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(REFRESH_FROM_CLIENT_BY_SERVER);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_CLIENT);
+    QCOMPARE(mode.syncInitiator(), INIT_SERVER);
+    QCOMPARE(mode.syncType(), TYPE_REFRESH);
+
+    mode = SyncMode(ONE_WAY_FROM_SERVER_BY_SERVER);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_SERVER);
+    QCOMPARE(mode.syncInitiator(), INIT_SERVER);
+    QCOMPARE(mode.syncType(), TYPE_FAST);
+
+    mode = SyncMode(REFRESH_FROM_SERVER_BY_SERVER);
+    QVERIFY(mode.isValid());
+    QCOMPARE(mode.syncDirection(), DIRECTION_FROM_SERVER);
+    QCOMPARE(mode.syncInitiator(), INIT_SERVER);
+    QCOMPARE(mode.syncType(), TYPE_REFRESH);
+}
+
+void SyncModeTest::testToSyncML()
+{
+    qint32 syncMLCode = TWO_WAY_SYNC;
+    SyncMode mode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = SLOW_SYNC;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = ONE_WAY_FROM_CLIENT_SYNC;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = REFRESH_FROM_CLIENT_SYNC;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = ONE_WAY_FROM_SERVER_SYNC;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = REFRESH_FROM_SERVER_SYNC;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = TWO_WAY_BY_SERVER;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = ONE_WAY_FROM_CLIENT_BY_SERVER;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = REFRESH_FROM_CLIENT_BY_SERVER;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = ONE_WAY_FROM_SERVER_BY_SERVER;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    syncMLCode = REFRESH_FROM_SERVER_BY_SERVER;
+    mode = SyncMode(syncMLCode);
+    QCOMPARE(mode.toSyncMLCode(), syncMLCode);
+
+    mode = SyncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_REFRESH);
+    QCOMPARE(mode.toSyncMLCode(), -1);
 }
 
 TESTLOADER_ADD_TEST(SyncModeTest);

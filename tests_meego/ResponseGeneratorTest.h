@@ -42,6 +42,14 @@ class ResponseGeneratorTest: public QObject {
     Q_OBJECT
 private slots:
 
+    void testAddStatusStatus();
+    void testAddStatusHeader();
+    void testAddStatusCommand1();
+    void testAddStatusCommand2();
+    void testAddStatusSync();
+    void testAddStatusMap();
+    void testAddStatusResults();
+    void testAddStatusPut();
     void testNB182304();
 
     void test208762();

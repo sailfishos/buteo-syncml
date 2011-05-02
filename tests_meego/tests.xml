@@ -11,14 +11,15 @@
 
       <case name="libmeegosyncml-all" type="Functional" description="Running Tests for Syncml Stack" timeout="1000" subfeature="">
         <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
-        <step expected_result="0">/usr/share/libmeegosyncml-tests/./runstarget.sh  /usr/bin/libmeegosyncml-tests  > /tmp/libmeegosyncml-tests_results.txt </step>
+        <step expected_result="0">/usr/share/libmeegosyncml-tests/runstarget.sh /usr/bin/libmeegosyncml-tests</step>
       </case>
 
       <!-- Get optional - fetches additional result files -->
       <get>
-        <file>/tmp/libmeegosyncml-tests.out</file>     
-        <file>/tmp/libmeegosyncml-tests.cmp</file> 
-      </get>         
+        <file>/tmp/libmeegosyncml-tests.out</file>
+        <file>/tmp/libmeegosyncml-tests.detailed</file>
+        <file>/tmp/libmeegosyncml-tests.cmp</file>
+      </get>
     </set>
   </suite>
 </testdefinition>

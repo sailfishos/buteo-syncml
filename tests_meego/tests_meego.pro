@@ -51,6 +51,7 @@ HEADERS += SyncAgentTest.h \
     AlertPackageTest.h \
     AuthenticationPackageTest.h \
     DevInfPackageTest.h \
+    DevInfHandlerTest.h \
     FinalPackageTest.h \
     LocalChangesPackageTest.h \
     LocalMappingsPackageTest.h \
@@ -75,6 +76,7 @@ SOURCES += Tests.cpp \
     AlertPackageTest.cpp \
     AuthenticationPackageTest.cpp \
     DevInfPackageTest.cpp \
+    DevInfHandlerTest.cpp \
     FinalPackageTest.cpp \
     LocalChangesPackageTest.cpp \
     LocalMappingsPackageTest.cpp \

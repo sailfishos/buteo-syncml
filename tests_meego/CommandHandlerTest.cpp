@@ -37,6 +37,7 @@
 
 #include "CommandHandler.h"
 #include "ResponseGenerator.h"
+#include "ChangeLog.h"
 #include "ConflictResolver.h"
 #include "QtEncoder.h"
 #include "SyncMLMessage.h"
@@ -587,6 +588,74 @@ void CommandHandlerTest::testSyncReplaceConflict_01()
 
     QCOMPARE( processed_spy.count(), 0 );
 
+}
+
+void CommandHandlerTest::testGetStatusType()
+{
+    CommandHandler handler(ROLE_SERVER);
+
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(-50)), UNKNOWN);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(0)), UNKNOWN);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(50)), UNKNOWN);
+
+    QCOMPARE(handler.getStatusType(IN_PROGRESS), INFORMATIONAL);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(199)), UNKNOWN);
+
+    QCOMPARE(handler.getStatusType(SUCCESS), SUCCESSFUL);
+    QCOMPARE(handler.getStatusType(ATOMIC_ROLLBACK_OK), SUCCESSFUL);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(299)), UNKNOWN);
+
+    QCOMPARE(handler.getStatusType(MULTIPLE_CHOICES), REDIRECTION);
+    QCOMPARE(handler.getStatusType(USE_PROXY), REDIRECTION);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(399)), UNKNOWN);
+
+    QCOMPARE(handler.getStatusType(BAD_REQUEST), ORIGINATOR_EXCEPTION);
+    QCOMPARE(handler.getStatusType(MOVE_FAILED), ORIGINATOR_EXCEPTION);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(499)), UNKNOWN);
+
+
+    QCOMPARE(handler.getStatusType(COMMAND_FAILED), RECIPIENT_EXCEPTION);
+    QCOMPARE(handler.getStatusType(ATOMIC_RESPONSE_TOO_LARGE), RECIPIENT_EXCEPTION);
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(599)), UNKNOWN);
+
+    QCOMPARE(handler.getStatusType(static_cast<ResponseStatusCode>(1000)), UNKNOWN);
+}
+
+void CommandHandlerTest::testNotImplemented()
+{
+    CommandHandler handler(ROLE_SERVER);
+    QCOMPARE(handler.handleRedirection(MULTIPLE_CHOICES), NOT_IMPLEMENTED);
+}
+
+void CommandHandlerTest::testHandleMap()
+{
+    CommandHandler handler(ROLE_SERVER);
+    const QString src1("fooSource1");
+    const QString src2("fooSource2");
+    const QString trg1("barTarget1");
+    const QString trg2("barTarget2");
+
+    SyncTarget target(new ChangeLog("sourceDevice", "targetDevice", DIRECTION_TWO_WAY),
+                      new MockStorage("storage"),
+                      SyncMode(),
+                      QString());
+    MapParams map;
+
+    MapItemParams param;
+    param.source = src1;
+    param.target = trg1;
+    map.mapItems.append(param);
+
+    param.source = src2;
+    param.target = trg2;
+    map.mapItems.append(param);
+
+    QCOMPARE(handler.handleMap(map, target), SUCCESS);
+    QCOMPARE(target.getUIDMappings().size(), 2);
+    QCOMPARE(target.getUIDMappings().at(0).iRemoteUID, src1);
+    QCOMPARE(target.getUIDMappings().at(0).iLocalUID, trg1);
+    QCOMPARE(target.getUIDMappings().at(1).iRemoteUID, src2);
+    QCOMPARE(target.getUIDMappings().at(1).iLocalUID, trg2);
 }
 
 TESTLOADER_ADD_TEST(CommandHandlerTest);

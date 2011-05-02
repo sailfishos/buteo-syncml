@@ -64,6 +64,9 @@ private slots:
     void testComposeServerModificationsPackage();
     void testSyncFinished();
     void testHandleInformativeAlert();
+    void testSyncInitiate();
+    void testSyncAlert();
+    void testUnsupportedCalls();
 
     void regression_NB166841_01();
     void regression_NB166841_02();

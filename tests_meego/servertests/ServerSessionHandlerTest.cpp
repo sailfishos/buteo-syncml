@@ -241,6 +241,42 @@ void ServerSessionHandlerTest::testHandleInformativeAlert()
 
 }
 
+void ServerSessionHandlerTest::testSyncInitiate()
+{
+    ServerSessionHandler sessionHandler(iConfig);
+    sessionHandler.initiateSync();
+    QCOMPARE(sessionHandler.getSyncState(), PREPARED);
+}
+
+void ServerSessionHandlerTest::testUnsupportedCalls()
+{
+    iHandler->initiateSync();
+    SyncState prevState = iHandler->getSyncState();
+    // After unsupported calls the state should be the same as it was previously
+    iHandler->suspendSync();
+    QCOMPARE(iHandler->getSyncState(), prevState);
+    iHandler->resumeSync();
+    QCOMPARE(iHandler->getSyncState(), prevState);
+}
+
+void ServerSessionHandlerTest::testSyncAlert()
+{
+    CommandParams params;
+    SyncMode syncMode(TWO_WAY_SYNC);
+
+    iHandler->setSyncState(PREPARED);
+    QCOMPARE(iHandler->syncAlertReceived(syncMode, params), INCOMPLETE_COMMAND);
+    QCOMPARE(iHandler->getSyncState(), REMOTE_INIT);
+
+    iHandler->setSyncState(LOCAL_INIT);
+    QCOMPARE(iHandler->syncAlertReceived(syncMode, params), INCOMPLETE_COMMAND);
+    QCOMPARE(iHandler->getSyncState(), LOCAL_INIT);
+
+    iHandler->setSyncState(NOT_PREPARED);
+    QCOMPARE(iHandler->syncAlertReceived(syncMode, params), COMMAND_NOT_ALLOWED);
+    QCOMPARE(iHandler->getSyncState(), NOT_PREPARED);
+}
+
 void ServerSessionHandlerTest::regression_NB166841_01()
 {
     // regression_NB166841_01: Test that target setup succeeds if source db uri,

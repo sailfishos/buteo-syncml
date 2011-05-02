@@ -48,10 +48,8 @@ private slots:
     void testHandleGet2();
     void testHandleGet3();
 
-    void testHandlePut1();
-    void testHandlePut2();
-
-    void testHandleResults1();
+    void testHandlePut();
+    void testHandleResults();
 
 };
 

@@ -129,10 +129,7 @@ QMAKE_CXXFLAGS = -Wall \
     -Wno-cast-align \
     -O2 -finline-functions
 
-QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda \
-    $(OBJECTS_DIR)/*.gcno \
-    $(OBJECTS_DIR)/*.gcov \
-    lib*.so* \
+QMAKE_CLEAN += lib*.so* \
     lib$${TARGET}.prl pkgconfig/*
 
 QMAKE_STRIP = strip
@@ -155,33 +152,22 @@ QMAKE_PKGCONFIG_LIBDIR  = $$target.path
 QMAKE_PKGCONFIG_INCDIR  = $$headers.path
 pkgconfig.files = $${TARGET}.pc
 
-# #####################################################################
-# make coverage (debug)
-# #####################################################################
-coverage.CONFIG += recursive
-QMAKE_EXTRA_TARGETS += coverage
-CONFIG(debug,debug|release){
-    QMAKE_EXTRA_TARGETS += cov_cxxflags \
-			cov_lflags
+# Uncomment the following line to enable GCOV/LCOV report generation
+#CONFIG += gcov
 
-    cov_cxxflags.target = coverage
-    cov_cxxflags.depends = CXXFLAGS \
-         += \
-        -fprofile-arcs \
-        -ftest-coverage
+gcov {
+    message(Test coverage report is ENABLED)
 
-    cov_lflags.target = coverage
-    cov_lflags.depends = LFLAGS \
-        += \
-        -fprofile-arcs \
-	-ftest-coverage
+    QMAKE_CC = SBOX_USE_CCACHE=no $$QMAKE_CC
+    QMAKE_CXX = SBOX_USE_CCACHE=no $$QMAKE_CXX
 
-    coverage.commands = @echo \
-        "Built with coverage support..."
-
-    build_pass|!debug_and_release : coverage.depends = all
-
-    QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda \
-        $(OBJECTS_DIR)/*.gcno \
-        $(OBJECTS_DIR)/*.gcov
+    QMAKE_CFLAGS += -fprofile-arcs -ftest-coverage
+    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
+    LIBS += -lgcov
 }
+
+!gcov {
+    message(Test coverage report is DISABLED)
+}
+
+QMAKE_CLEAN += *.gcno *.gcda *.gcov

@@ -38,7 +38,7 @@
 #include "DevInfPackage.h"
 #include "TestLoader.h"
 
-#include "Logger.h"
+#include "LogMacros.h"
 
 using namespace DataSync;
 
@@ -48,7 +48,7 @@ void DevInfHandlerTest::testComposeLocalInitiatedDevInfExchange1()
     DevInfHandler handler( deviceInfo );
 
     QList<StoragePlugin*>storages;
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     Role role = ROLE_CLIENT;
     ResponseGenerator generator;
 
@@ -69,7 +69,7 @@ void DevInfHandlerTest::testComposeLocalInitiatedDevInfExchange2()
     DevInfHandler handler( deviceInfo );
 
     QList<StoragePlugin*>storages;
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     Role role = ROLE_CLIENT;
     ResponseGenerator generator;
 
@@ -90,10 +90,10 @@ void DevInfHandlerTest::testHandleGet1()
     DevInfHandler handler( deviceInfo );
 
     QList<StoragePlugin*>storages;
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     Role role = ROLE_CLIENT;
     ResponseGenerator generator;
-    SyncActionData get;
+    CommandParams get;
 
     handler.iLocalDevInfSent = false;
     handler.iRemoteDevInfReceived = false;
@@ -112,10 +112,10 @@ void DevInfHandlerTest::testHandleGet2()
     DevInfHandler handler( deviceInfo );
 
     QList<StoragePlugin*>storages;
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     Role role = ROLE_CLIENT;
     ResponseGenerator generator;
-    SyncActionData get;
+    CommandParams get;
 
     ItemParams item;
     item.target = SYNCML_DEVINF_PATH_12;
@@ -144,10 +144,10 @@ void DevInfHandlerTest::testHandleGet3()
     DevInfHandler handler( deviceInfo );
 
     QList<StoragePlugin*>storages;
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     Role role = ROLE_CLIENT;
     ResponseGenerator generator;
-    SyncActionData get;
+    CommandParams get;
 
     ItemParams item;
     item.target = SYNCML_DEVINF_PATH_12;
@@ -169,44 +169,36 @@ void DevInfHandlerTest::testHandleGet3()
 
 }
 
-void DevInfHandlerTest::testHandlePut1()
+void DevInfHandlerTest::testHandlePut()
 {
     DeviceInfo deviceInfo;
     DevInfHandler handler( deviceInfo );
 
-    ProtocolVersion version = DS_1_2;
-    SyncActionData put;
+    ProtocolVersion version = SYNCML_1_2;
+    PutParams put;
 
     ResponseStatusCode response = handler.handlePut( put, version );
     QCOMPARE( response, COMMAND_FAILED );
 
-}
-
-void DevInfHandlerTest::testHandlePut2()
-{
-    DeviceInfo deviceInfo;
-    DevInfHandler handler( deviceInfo );
-
-    ProtocolVersion version = DS_1_2;
-    SyncActionData put;
-
-    ItemParams item;
-    item.source= SYNCML_DEVINF_PATH_12;
-    put.items.append(item);
-
-    ResponseStatusCode response = handler.handlePut( put, version );
+    put.devInf.source = SYNCML_DEVINF_PATH_12;
+    response = handler.handlePut( put, version );
     QCOMPARE( response, SUCCESS );
+
 }
 
-void DevInfHandlerTest::testHandleResults1()
+void DevInfHandlerTest::testHandleResults()
 {
     DeviceInfo deviceInfo;
     DevInfHandler handler( deviceInfo );
 
-    ProtocolVersion version = DS_1_2;
+    ProtocolVersion version = SYNCML_1_2;
     ResultsParams results;
 
     ResponseStatusCode response = handler.handleResults( results, version );
+    QCOMPARE( response, COMMAND_FAILED );
+
+    results.devInf.source = SYNCML_DEVINF_PATH_12;
+    response = handler.handleResults( results, version );
     QCOMPARE( response, SUCCESS );
 }
 

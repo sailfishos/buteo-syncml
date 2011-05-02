@@ -40,6 +40,7 @@
 #include "BaseTransport.h"
 #include "SyncAgentConfig.h"
 #include "SyncTarget.h"
+#include "OBEXConnection.h"
 #include "DatabaseHandler.h"
 #include "StorageHandler.h"
 #include <QDebug>
@@ -389,6 +390,26 @@ private:
 
     bool        iDoReceive;
 
+};
+
+
+class OBEXConnectionTest : public DataSync::OBEXConnection {
+public:
+    OBEXConnectionTest(bool connected) : OBEXConnection(), mIsConnected(connected) { }
+
+    int connect()
+    {
+        return mIsConnected ? 123 : -1;
+    }
+    bool isConnected() const
+    {
+        return mIsConnected;
+    }
+    void disconnect() { }
+    virtual ~OBEXConnectionTest() { }
+
+private:
+    int mIsConnected;
 };
 
 #endif

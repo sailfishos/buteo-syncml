@@ -51,7 +51,7 @@ HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent 
     iManager = new QNetworkAccessManager;
 
     iManager->setConfiguration(QNetworkConfiguration());
-    iManager->proxy().setType( QNetworkProxy::NoProxy );
+    iManager->setProxy(QNetworkProxy(QNetworkProxy::NoProxy));
 }
 
 HTTPTransport::~HTTPTransport()
@@ -74,14 +74,18 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
     else if( aProperty == HTTPPROXYHOSTPROP )
     {
         LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
-        iManager->proxy().setType( QNetworkProxy::HttpProxy );
-        iManager->proxy().setHostName(HTTPPROXYHOSTPROP);
+        QNetworkProxy proxy = iManager->proxy();
+        proxy.setType( QNetworkProxy::HttpProxy );
+        proxy.setHostName(aValue);
+        iManager->setProxy(proxy);
     }
     else if( aProperty == HTTPPROXYPORTPROP )
     {
         LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
-        iManager->proxy().setType( QNetworkProxy::HttpProxy );
-        iManager->proxy().setPort( HTTPPROXYPORTPROP.toInt() );
+        QNetworkProxy proxy = iManager->proxy();
+        proxy.setType( QNetworkProxy::HttpProxy );
+        proxy.setPort( aValue.toInt() );
+        iManager->setProxy(proxy);
     }
 
 }

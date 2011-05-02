@@ -51,7 +51,8 @@ class SyncModeTest : public QObject
         void testSyncDirection();
         void testSyncInitiator();
         void testSyncType();
-
+        void testSyncAlertCode();
+        void testToSyncML();
 };
 
 }

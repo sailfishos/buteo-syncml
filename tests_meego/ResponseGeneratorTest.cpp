@@ -47,6 +47,213 @@ using namespace DataSync;
 
 // @todo: need better unit tests here
 
+void ResponseGeneratorTest::testAddStatusStatus()
+{
+    ResponseGenerator respGen;
+    StatusParams* stParams1 = new StatusParams();
+    stParams1->cmdId = 1;
+    respGen.addStatus(stParams1);
+
+    StatusParams* stParams2 = new StatusParams();
+    stParams2->cmdId = 2;
+    stParams2->cmd = SYNCML_ELEMENT_SYNCHDR;
+    respGen.addStatus(stParams2);
+
+    QCOMPARE(respGen.getStatuses().size(), 2);
+    QCOMPARE(respGen.getStatuses().at(0)->cmdId, 2);
+    QCOMPARE(respGen.getStatuses().at(1)->cmdId, 1);
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(new StatusParams());
+    QCOMPARE(respGen.getStatuses().size(), 2);
+}
+
+void ResponseGeneratorTest::testAddStatusHeader()
+{
+    ResponseGenerator respGen;
+    HeaderParams header;
+    ChalParams chal;
+
+    int id = 123;
+    QString type("fooType");
+    header.msgID = id;
+    chal.meta.type = type;
+
+    respGen.addStatus(header, SUCCESS);
+    respGen.addStatus(header, chal, ITEM_ADDED);
+
+    QCOMPARE(respGen.getStatuses().size(), 2);
+    QCOMPARE(respGen.getStatuses().at(0)->msgRef, id);
+    QCOMPARE(respGen.getStatuses().at(0)->data, SUCCESS);
+    QCOMPARE(respGen.getStatuses().at(1)->msgRef, id);
+    QCOMPARE(respGen.getStatuses().at(1)->data, ITEM_ADDED);
+    QCOMPARE(respGen.getStatuses().at(1)->chal.meta.type, type);
+}
+
+void ResponseGeneratorTest::testAddStatusCommand1()
+{
+    ResponseGenerator respGen;
+    CommandParams params[10];
+    QString fooSrc1 = "fooSrc1";
+    QString fooSrc2 = "fooSrc2";
+
+    params[0].commandType = CommandParams::COMMAND_ALERT;
+    params[1].commandType = CommandParams::COMMAND_ADD;
+    params[2].commandType = CommandParams::COMMAND_REPLACE;
+    params[3].commandType = CommandParams::COMMAND_DELETE;
+    params[4].commandType = CommandParams::COMMAND_GET;
+    params[5].commandType = CommandParams::COMMAND_COPY;
+    params[6].commandType = CommandParams::COMMAND_MOVE;
+    params[7].commandType = CommandParams::COMMAND_EXEC;
+    params[8].commandType = CommandParams::COMMAND_ATOMIC;
+    params[9].commandType = CommandParams::COMMAND_SEQUENCE;
+
+    ItemParams item1;
+    item1.source = fooSrc1;
+    ItemParams item2;
+    item2.source = fooSrc2;
+    params[9].items.append(item1);
+    params[9].items.append(item2);
+
+    for (int i = 0; i < 10; i++)
+        respGen.addStatus(params[i], SUCCESS, true);
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params[0], SUCCESS, true);
+
+    QCOMPARE(respGen.getStatuses().size(), 10);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_ALERT));
+    QCOMPARE(respGen.getStatuses().at(1)->cmd, QString(SYNCML_ELEMENT_ADD));
+    QCOMPARE(respGen.getStatuses().at(2)->cmd, QString(SYNCML_ELEMENT_REPLACE));
+    QCOMPARE(respGen.getStatuses().at(3)->cmd, QString(SYNCML_ELEMENT_DELETE));
+    QCOMPARE(respGen.getStatuses().at(4)->cmd, QString(SYNCML_ELEMENT_GET));
+    QCOMPARE(respGen.getStatuses().at(5)->cmd, QString(SYNCML_ELEMENT_COPY));
+    QCOMPARE(respGen.getStatuses().at(6)->cmd, QString(SYNCML_ELEMENT_MOVE));
+    QCOMPARE(respGen.getStatuses().at(7)->cmd, QString(SYNCML_ELEMENT_EXEC));
+    QCOMPARE(respGen.getStatuses().at(8)->cmd, QString(SYNCML_ELEMENT_ATOMIC));
+    QCOMPARE(respGen.getStatuses().at(9)->cmd, QString(SYNCML_ELEMENT_SEQUENCE));
+    QCOMPARE(respGen.getStatuses().at(9)->items.at(0).source, fooSrc1);
+    QCOMPARE(respGen.getStatuses().at(9)->items.at(1).source, fooSrc2);
+}
+
+void ResponseGeneratorTest::testAddStatusCommand2()
+{
+    ResponseGenerator respGen;
+    CommandParams params[10];
+    QString fooSrc1 = "fooSrc1";
+    QString fooSrc2 = "fooSrc2";
+
+    params[0].commandType = CommandParams::COMMAND_ALERT;
+    params[1].commandType = CommandParams::COMMAND_ADD;
+    params[2].commandType = CommandParams::COMMAND_REPLACE;
+    params[3].commandType = CommandParams::COMMAND_DELETE;
+    params[4].commandType = CommandParams::COMMAND_GET;
+    params[5].commandType = CommandParams::COMMAND_COPY;
+    params[6].commandType = CommandParams::COMMAND_MOVE;
+    params[7].commandType = CommandParams::COMMAND_EXEC;
+    params[8].commandType = CommandParams::COMMAND_ATOMIC;
+    params[9].commandType = CommandParams::COMMAND_SEQUENCE;
+
+    ItemParams item1;
+    item1.source = fooSrc1;
+    ItemParams item2;
+    item2.source = fooSrc2;
+    params[9].items.append(item1);
+    params[9].items.append(item2);
+
+    for (int i = 0; i < 10; i++)
+        respGen.addStatus(params[i], SUCCESS, QList<int>());
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params[0], SUCCESS, true);
+
+    QCOMPARE(respGen.getStatuses().size(), 10);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_ALERT));
+    QCOMPARE(respGen.getStatuses().at(1)->cmd, QString(SYNCML_ELEMENT_ADD));
+    QCOMPARE(respGen.getStatuses().at(2)->cmd, QString(SYNCML_ELEMENT_REPLACE));
+    QCOMPARE(respGen.getStatuses().at(3)->cmd, QString(SYNCML_ELEMENT_DELETE));
+    QCOMPARE(respGen.getStatuses().at(4)->cmd, QString(SYNCML_ELEMENT_GET));
+    QCOMPARE(respGen.getStatuses().at(5)->cmd, QString(SYNCML_ELEMENT_COPY));
+    QCOMPARE(respGen.getStatuses().at(6)->cmd, QString(SYNCML_ELEMENT_MOVE));
+    QCOMPARE(respGen.getStatuses().at(7)->cmd, QString(SYNCML_ELEMENT_EXEC));
+    QCOMPARE(respGen.getStatuses().at(8)->cmd, QString(SYNCML_ELEMENT_ATOMIC));
+    QCOMPARE(respGen.getStatuses().at(9)->cmd, QString(SYNCML_ELEMENT_SEQUENCE));
+    QCOMPARE(respGen.getStatuses().at(9)->items.count(), 0);
+}
+
+void ResponseGeneratorTest::testAddStatusSync()
+{
+    ResponseGenerator respGen;
+    SyncParams params;
+
+    int id = 123;
+    params.cmdId = id;
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params, SUCCESS);
+
+    respGen.ignoreStatuses(false);
+    respGen.addStatus(params, SUCCESS);
+    QCOMPARE(respGen.getStatuses().size(), 1);
+    QCOMPARE(respGen.getStatuses().at(0)->cmdRef, id);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_SYNC));
+}
+
+void ResponseGeneratorTest::testAddStatusMap()
+{
+    ResponseGenerator respGen;
+    MapParams params;
+
+    int id = 123;
+    params.cmdId = id;
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params, SUCCESS);
+
+    respGen.ignoreStatuses(false);
+    respGen.addStatus(params, SUCCESS);
+    QCOMPARE(respGen.getStatuses().size(), 1);
+    QCOMPARE(respGen.getStatuses().at(0)->cmdRef, id);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_MAP));
+}
+
+void ResponseGeneratorTest::testAddStatusResults()
+{
+    ResponseGenerator respGen;
+    ResultsParams params;
+
+    int id = 123;
+    params.cmdId = id;
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params, SUCCESS);
+
+    respGen.ignoreStatuses(false);
+    respGen.addStatus(params, SUCCESS);
+    QCOMPARE(respGen.getStatuses().size(), 1);
+    QCOMPARE(respGen.getStatuses().at(0)->cmdRef, id);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_RESULTS));
+}
+
+void ResponseGeneratorTest::testAddStatusPut()
+{
+    ResponseGenerator respGen;
+    PutParams params;
+
+    int id = 123;
+    params.cmdId = id;
+
+    respGen.ignoreStatuses(true);
+    respGen.addStatus(params, SUCCESS);
+
+    respGen.ignoreStatuses(false);
+    respGen.addStatus(params, SUCCESS);
+    QCOMPARE(respGen.getStatuses().size(), 1);
+    QCOMPARE(respGen.getStatuses().at(0)->cmdRef, id);
+    QCOMPARE(respGen.getStatuses().at(0)->cmd, QString(SYNCML_ELEMENT_PUT));
+}
+
+
 void ResponseGeneratorTest::testNB182304()
 {
 

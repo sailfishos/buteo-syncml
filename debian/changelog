@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.14) stable; urgency=low
+
+  * Unit test cases updated.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Mon, 02 May 2011 18:11:00 +0300
+
 libmeegosyncml (0.4.13) stable; urgency=low
 
   * Check if tables exist before removing change logs and anchors.

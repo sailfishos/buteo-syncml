@@ -100,6 +100,7 @@ void SyncAgentTest::testSync()
 
     // Start.
     QCOMPARE(agent->startSync(config), true);
+    QVERIFY(agent->isSyncing());
     agent->receiveStateChanged( LOCAL_INIT );
     QCOMPARE(agent->startSync(config), false);
 
@@ -122,13 +123,40 @@ void SyncAgentTest::testSync()
     QCOMPARE(qvariant_cast<DataSync::ModifiedDatabase>(processed_spy.at(0).at(1)), MOD_LOCAL_DATABASE );
     QCOMPARE(processed_spy.at(0).at(2).toString(), DB);
 
-    // Pause when finished.
+    // Pause, abort, resume when finished.
     agent->receiveSyncFinished( QString("IMEI"),SYNC_FINISHED, ERROR );
+    QCOMPARE(agent->isSyncing(), false);
     QCOMPARE(agent->abort(), false);
     QCOMPARE(agent->pauseSync(), false);
+    QCOMPARE(agent->resumeSync(), false);
 
     // Test in server mode.
+    config.setSyncParams(config.getRemoteDeviceName(),
+                         config.getProtocolVersion(),
+                         SyncMode(DIRECTION_FROM_SERVER, INIT_SERVER));
     QCOMPARE(agent->startSync(config), true);
+    QCOMPARE(agent->pauseSync(), true);
+    QCOMPARE(agent->abort(), true);
+
+    // Listening
+    agent->cleanSession();
+    QCOMPARE(agent->isListening(), false);
+    QCOMPARE(agent->listen(config), true);
+    QCOMPARE(agent->isListening(), true);
+    agent->listenEvent();
+    QCOMPARE(agent->isListening(), false);
+
+    agent->cleanSession();
+    QCOMPARE(agent->listen(config), true);
+    agent->listenError(ABORTED, "Testing error");
+    QCOMPARE(agent->isListening(), false);
+
+    agent->cleanSession();
+    QCOMPARE(agent->listen(config), true);
+    QCOMPARE(agent->abort(), true);
+    QCOMPARE(agent->isListening(), false);
+
+    QCOMPARE(agent->cleanUp(&config), false);
 
     destroySyncAgent_t* destroySyncAgent =
         (destroySyncAgent_t*) QLibrary::resolve("libmeegosyncml.so",

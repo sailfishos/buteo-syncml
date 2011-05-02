@@ -195,6 +195,9 @@ private slots:
     void testSyncDelete();
     void testSyncReplaceConflict();
     void testSyncReplaceConflict_01();
+    void testGetStatusType();
+    void testNotImplemented();
+    void testHandleMap();
 
 private:
 
