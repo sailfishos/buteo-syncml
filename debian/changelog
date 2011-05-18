@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.15) stable; urgency=low
+
+  * Fixes: NB#254284 - <coverity> defects from libmeegosyncml/0.4.14_0m6 .
+
+ -- Amit <amit.5.aggarwal@nokia.com>  Wed, 18 May 2011 18:11:00 +0300
+
 libmeegosyncml (0.4.14) stable; urgency=low
 
   * Unit test cases updated.

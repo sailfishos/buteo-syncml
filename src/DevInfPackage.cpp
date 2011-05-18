@@ -47,7 +47,7 @@ DevInfPackage::DevInfPackage( const QList<StoragePlugin*>& aDataStores,
                               const DeviceInfo& aDeviceInfo,
                               const ProtocolVersion& aVersion,
                               const Role& aRole )
-: iDataStores( aDataStores ), iDeviceInfo( aDeviceInfo ),
+: iMsgRef(0), iCmdRef(0), iDataStores( aDataStores ), iDeviceInfo( aDeviceInfo ),
   iVersion( aVersion ), iRole( aRole ), iType( PUTGET )
 {
     FUNCTION_CALL_TRACE;

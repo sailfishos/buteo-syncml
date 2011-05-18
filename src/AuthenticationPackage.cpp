@@ -84,8 +84,10 @@ bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold,
         Q_ASSERT( 0 );
     }
 
-    aMessage.addToHeader( cred );
-    aSizeThreshold -= cred->calculateSize(aWBXML, aVersion);
+    if(cred) {
+        aMessage.addToHeader( cred );
+        aSizeThreshold -= cred->calculateSize(aWBXML, aVersion);
+    }
 
     return true;
 }
