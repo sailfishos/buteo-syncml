@@ -1,3 +1,9 @@
+libmeegosyncml (0.4.16) stable; urgency=low
+
+  * Fixes: NB#258951 - msyncd crash when cancel the sync from transfer-ui
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Wed, 25 May 2011 11:09:12 +0530
+
 libmeegosyncml (0.4.15) stable; urgency=low
 
   * Fixes: NB#254284 - <coverity> defects from libmeegosyncml/0.4.14_0m6 .

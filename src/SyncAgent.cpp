@@ -489,8 +489,6 @@ void SyncAgent::listenEvent()
 
     iListener->stop();
 
-    cleanListen();
-
     if( data.iType == RequestListener::REQUEST_CLIENT )
     {
         LOG_DEBUG( "SyncAgent: Remote client requesting session with server");
