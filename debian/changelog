@@ -1,3 +1,10 @@
+libmeegosyncml (0.4.17) stable; urgency=low
+
+  * Fixes: NB#260125 - Remote sync failed with device and sync doesn't end in
+    transfer-ui
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 26 May 2011 17:27:00 +0530
+
 libmeegosyncml (0.4.16) stable; urgency=low
 
   * Fixes: NB#258951 - msyncd crash when cancel the sync from transfer-ui

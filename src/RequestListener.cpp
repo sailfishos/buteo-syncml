@@ -85,7 +85,8 @@ void RequestListener::stop()
     FUNCTION_CALL_TRACE
 
     disconnect( &iParser, 0, this, 0 );
-
+    disconnect( iTransport, SIGNAL(readXMLData(QIODevice *, bool)) ,
+             &iParser, SLOT(parseResponse(QIODevice *, bool)) );
     if( iTransport )
     {
         disconnect( iTransport, 0, this, 0 );
