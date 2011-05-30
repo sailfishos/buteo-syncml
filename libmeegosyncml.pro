@@ -2,7 +2,6 @@ include(doc/doc.pro)
 
 CONFIG += ordered \
 	qt \
-	debug \
 	thread 
 
 # Directories

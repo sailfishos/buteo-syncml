@@ -11,9 +11,11 @@ VER_MIN = 4
 VER_PAT = 6
 
 CONFIG += dll \ 
-    debug \
     create_pc \
-    create_prl
+    create_prl \
+    link_pkgconfig
+
+PKGCONFIG = synccommon
 
 INCLUDEPATH += . \
 	syncelements \

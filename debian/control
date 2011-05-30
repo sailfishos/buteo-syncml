@@ -1,7 +1,7 @@
 Source: libmeegosyncml
 Priority: extra
 Maintainer: Duggirala Karthik <karthik.2.duggirala@nokia.com>
-Build-Depends: debhelper (>= 5),doxygen, cdbs ,libqt4-dev (>= 4.5), libwbxml2-dev, libsqlite3-dev, libopenobex1-dev, libqt4-sql-sqlite
+Build-Depends: debhelper (>= 5),doxygen, cdbs ,libqt4-dev (>= 4.5), libwbxml2-dev, libsqlite3-dev, libopenobex1-dev, libqt4-sql-sqlite, sync-fw-dev
 Standards-Version: 3.7.2
 Section: libs
 

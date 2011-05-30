@@ -24,8 +24,8 @@ DEPENDPATH += . \
     transporttests
 CONFIG += qtestlib \
     link_prl \
-    debug \
-
+    link_pkgconfig \
+PKGCONFIG = synccommon
 # DEFINES += QT_NO_DEBUG_OUTPUT
 # use the meegosyncml library objects directly to get better debugging data
 # So if remember to compile them when debugging

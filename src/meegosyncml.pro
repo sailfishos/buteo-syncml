@@ -9,9 +9,7 @@ VER_MAJ = 0
 VER_MIN = 4
 VER_PAT = 6
 
-CONFIG += dll \ 
-    debug
-
+CONFIG += dll
 
 INCLUDEPATH += . \
 	syncelements \
