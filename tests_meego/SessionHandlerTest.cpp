@@ -415,7 +415,7 @@ void SessionHandlerTest::testClientWithServerInitiatedSAN()
     config.setExtension( SANMAPPINGSEXTENSION, QVariant( mappings ) );
 
     QByteArray message;
-    QVERIFY( readFile( "testfiles/SAN01.bin", message ) );
+    QVERIFY( readFile( "data/SAN01.bin", message ) );
 
     // Start.
     ClientSessionHandler session_handler(&config, NULL);

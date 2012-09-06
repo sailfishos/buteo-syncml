@@ -54,7 +54,7 @@ void SANTest::testParser01()
     QByteArray message;
     SANDS data;
 
-    QVERIFY( readFile( "testfiles/SAN01.bin", message ) );
+    QVERIFY( readFile( "data/SAN01.bin", message ) );
 
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
     QVERIFY( parser.parseSANMessageDS( message, data ) );
@@ -85,7 +85,7 @@ void SANTest::testParser02()
     QByteArray message;
     SANDS data;
 
-    QVERIFY( readFile( "testfiles/SAN02.bin", message ) );
+    QVERIFY( readFile( "data/SAN02.bin", message ) );
 
     QVERIFY( parser.checkDigest( message, serverIdentifier, password, nonce ) );
     QVERIFY( parser.parseSANMessageDS( message, data ) );
@@ -127,7 +127,7 @@ void SANTest::testGenerator01()
     QVERIFY( generator.generateSANMessageDS( data, "", "", message ) );
 
     QByteArray expected;
-    QVERIFY( readFile( "testfiles/SAN01.bin", expected ) );
+    QVERIFY( readFile( "data/SAN01.bin", expected ) );
     QCOMPARE( message, expected );
 
 }

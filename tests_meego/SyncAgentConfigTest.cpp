@@ -43,8 +43,8 @@ using namespace DataSync;
 void SyncAgentConfigTest::testConfParsing()
 {
 
-    const QString xsdFile( "testfiles/testconf.xsd" );
-    const QString configFile( "testfiles/testconf1.xml" );
+    const QString xsdFile( "data/testconf.xsd" );
+    const QString configFile( "data/testconf1.xml" );
     const QString dbFile( "/fooland/syncml.db" );
     const QString localDeviceName( "FoolandDevice" );
     const QString proxyHost( "http://www.google.com" );

@@ -145,12 +145,15 @@ QMAKE_CXXFLAGS += -Wall \
 
 # install
 testfiles.files = testfiles/*
-tests.files = tests.xml \
+testdefinition.files = tests.xml
+tests.files =  \
     runstarget.sh \
     libmeegosyncml-tests.ref
-tests.path = /usr/share/libmeegosyncml-tests/
-target.path = /usr/bin/
-testfiles.path = /usr/share/libmeegosyncml-tests/testfiles/
+tests.path = /opt/tests/buteo-syncml
+target.path = /opt/tests/buteo-syncml
+testfiles.path = /opt/tests/buteo-syncml/data/
+testdefinition.path = /opt/tests/buteo-syncml/test-definition
 INSTALLS += tests \
     target \
-    testfiles
+    testfiles \
+    testdefinition

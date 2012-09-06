@@ -9,7 +9,7 @@ echo "running ${1}..."
 
 FILE=${1##*/}
 
-cd /usr/share/libmeegosyncml-tests  
+cd /opt/tests/buteo-syncml
 
 ${1} -maxwarnings 0 1>/tmp/$FILE.out 2>&1
 RESULT=$?
