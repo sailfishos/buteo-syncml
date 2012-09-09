@@ -30,7 +30,7 @@ PKGCONFIG = synccommon
 # use the meegosyncml library objects directly to get better debugging data
 # So if remember to compile them when debugging
 LIBS += -lmeegosyncml \
-    -L../src/
+    -L../src/ -lsynccommon
 
 # This is needed to avoid adding the /usr/lib link directory before the
 # newer version in meegosyncml
