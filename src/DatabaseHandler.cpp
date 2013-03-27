@@ -34,6 +34,7 @@
 #include "DatabaseHandler.h"
 
 #include "LogMacros.h"
+#include "SyncCommonDefs.h"
 
 using namespace DataSync;
 
@@ -47,7 +48,14 @@ DatabaseHandler::DatabaseHandler( const QString& aDbFile )
 
     iConnectionName = CONNECTIONNAME + QString::number( connectionNumber++ );
     iDb = QSqlDatabase::addDatabase( "QSQLITE", iConnectionName );
-    iDb.setDatabaseName( aDbFile );
+
+    QDir cacheDir;
+    cacheDir.mkdir( Sync::syncCacheDir() );
+    QString path( Sync::syncCacheDir() );
+    path.append( QDir::separator() ).append( aDbFile );
+    path = QDir::toNativeSeparators( path );
+
+    iDb.setDatabaseName( path );
     if(!iDb.open())
 	    LOG_CRITICAL("can not open database");
 
