@@ -90,7 +90,7 @@ public:
      * @return True on success, otherwise false
      */
     bool fromFile( const QString& aFile,
-                   const QString& aSchemaFile = "/etc/sync/meego-syncml-conf.xsd" );
+                   const QString& aSchemaFile = "/etc/buteo/meego-syncml-conf.xsd" );
 
     /*! \brief Sets the transport to use in sync
      *
@@ -138,7 +138,7 @@ public:
 
     /*! \brief Set the database file location (full path)
      *
-     * If not set, defaults to /etc/syncml/syncml.db
+     * If not set, defaults to /etc/buteo/syncml.db
      *
      * @param aPath Full database file path
      */

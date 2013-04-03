@@ -4,7 +4,7 @@ include(client/client.pro)
 include(transport/transport.pro)
 
 TEMPLATE = lib
-TARGET = meegosyncml
+TARGET = buteosyncml
 
 VER_MAJ = 0
 VER_MIN = 4
@@ -15,7 +15,7 @@ CONFIG += dll \
     create_prl \
     link_pkgconfig
 
-PKGCONFIG = synccommon
+PKGCONFIG = buteosyncfw
 
 INCLUDEPATH += . \
 	syncelements \
@@ -138,10 +138,10 @@ QMAKE_STRIP = strip
 
 QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
-headers.path  = /usr/include/libmeegosyncml
+headers.path  = /usr/include/buteosyncml
 headers.files = $$HEADERS
 target.path   = /usr/lib
-config.path   = /etc/sync
+config.path   = /etc/buteo
 config.files  = config/meego-syncml-conf.xsd \
                 config/meego-syncml-conf.xml
                 

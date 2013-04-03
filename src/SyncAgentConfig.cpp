@@ -50,7 +50,7 @@ using namespace DataSync;
 SyncAgentConfig::SyncAgentConfig()
  : iTransport( NULL ),
    iStorageProvider( NULL ),
-   iDatabaseFilePath( "/etc/sync/syncml.db" ),
+   iDatabaseFilePath( "/etc/buteo/syncml.db" ),
    iProtocolVersion( SYNCML_1_2 ),
    iAuthenticationType( AUTH_NONE )
 {
