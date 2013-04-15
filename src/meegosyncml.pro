@@ -82,7 +82,6 @@ HEADERS += SyncItem.h \
 	ConflictResolver.h \
 	AuthHelper.h \
 	NonceStorage.h \
-	LogMacros.h \
 	StorageProvider.h \
 	ServerAlertedNotification.h \
     SyncMLGlobals.h \
@@ -120,7 +119,7 @@ QMAKE_STRIP = strip
 
 QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
-headers.path  = /usr/include/libmeegosyncml
+headers.path  = /usr/include/libbuteosyncml
 headers.files = $$HEADERS
 target.path   = /usr/lib
 config.path   = /etc/sync

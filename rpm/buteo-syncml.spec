@@ -45,14 +45,14 @@ Requires: %{name} = %{version}-%{release}
 %files tests
 %defattr(-,root,root,-)
 %{_bindir}/*-tests
-%{_datadir}/libmeegosyncml-tests
+%{_datadir}/libbuteosyncml-tests
 
 %prep
 %setup -q
 
 
 %build
-qmake libmeegosyncml.pro
+qmake libbuteosyncml.pro
 make %{?_smp_mflags}
 
 

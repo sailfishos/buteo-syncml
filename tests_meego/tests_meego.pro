@@ -1,5 +1,5 @@
 TEMPLATE = app
-TARGET = libmeegosyncml-tests
+TARGET = libbuteosyncml-tests
 include(syncelementstests/syncelementstests.pro)
 include(servertests/servertests.pro)
 include(clienttests/clienttests.pro)
@@ -11,7 +11,6 @@ INCLUDEPATH += . \
     ../src/server \
     ../src/client \
     ../testapp/common \
-    /usr/include/libsynccommon \
     syncelementstests \
     servertests \
     clienttests \
@@ -24,16 +23,16 @@ DEPENDPATH += . \
     transporttests
 CONFIG += qtestlib \
     link_prl \
-    link_pkgconfig \
-PKGCONFIG = synccommon
+    link_pkgconfig
+PKGCONFIG = buteosyncfw
 # DEFINES += QT_NO_DEBUG_OUTPUT
-# use the meegosyncml library objects directly to get better debugging data
+# use the buteosyncml library objects directly to get better debugging data
 # So if remember to compile them when debugging
-LIBS += -lmeegosyncml \
-    -L../src/ -lsynccommon
+LIBS += -lbuteosyncml \
+	-L../src/
 
 # This is needed to avoid adding the /usr/lib link directory before the
-# newer version in meegosyncml
+# newer version in buteosyncml
 QMAKE_LIBDIR_QT = ../src \
     $$QMAKE_LIBDIR_QT
 QT += testlib \
@@ -148,7 +147,7 @@ testfiles.files = testfiles/*
 testdefinition.files = tests.xml
 tests.files =  \
     runstarget.sh \
-    libmeegosyncml-tests.ref
+    libbuteosyncml-tests.ref
 tests.path = /opt/tests/buteo-syncml
 target.path = /opt/tests/buteo-syncml
 testfiles.path = /opt/tests/buteo-syncml/data/

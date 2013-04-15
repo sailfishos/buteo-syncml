@@ -96,7 +96,6 @@ HEADERS += SyncItem.h \
 	ConflictResolver.h \
 	AuthHelper.h \
 	NonceStorage.h \
-	LogMacros.h \
 	StorageProvider.h \
 	ServerAlertedNotification.h \
     SyncMLGlobals.h \

@@ -44,7 +44,6 @@
 
 #include "LogMacros.h"
 
-
 using namespace DataSync;
 
 void ServerSessionHandlerTest::initTestCase()

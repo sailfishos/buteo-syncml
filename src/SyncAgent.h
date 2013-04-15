@@ -31,11 +31,11 @@
 * 
 */
 
-/*! \mainpage libmeegosyncml
+/*! \mainpage libbuteosyncml
  *
  * \section intro_sec Library overview
  *
- * Libmeegosyncml implements Open Mobile Alliance Data Synchronization protocol
+ * Libbuteosyncml implements Open Mobile Alliance Data Synchronization protocol
  * (OMA DS), formerly known as SyncML. This library offers:
  * - Support for OMA DS 1.1.2 and 1.2.1
  * - Both OMA DS Client and Server functionality
@@ -55,14 +55,14 @@
  * \section other_sec Other
  * \li \ref conformance\n
  *
- * \page whatis What is libmeegosyncml?
- *  Libmeegosyncml is a protocol stack that implements OMA DS standard. It is based
+ * \page whatis What is libbuteosyncml?
+ *  Libbuteosyncml is a protocol stack that implements OMA DS standard. It is based
  *  on Qt and provides easy-to-use and easy-to-understand interface for synchronizing
  *  data between devices and services.
  *
- *  It should be noted libmeegosyncml it is not a complete synchronization solution,
+ *  It should be noted libbuteosyncml it is not a complete synchronization solution,
  *  because in addition to the protocol stack, a total solution would include at least:
- * - Integration to storage backends. Libmeegosyncml has been designed to be
+ * - Integration to storage backends. Libbuteosyncml has been designed to be
  *   generic enough to allow synchronization of practically any kind of data
  *   ranging from simple PIM data to large files. It does not understand anything
  *   about the data it is synchronizing; this is the responsibility of 'storage
@@ -73,7 +73,7 @@
  *   synchronization session, instead of exchanging all the items. Implementation of
  *   this detection of changes (additions, modifications and deletion of items) is
  *   the responsibility of developers writing the 'storage plugins'.
- * - User interface. Libmeegosyncml includes Qt signals that provide information about
+ * - User interface. Libbuteosyncml includes Qt signals that provide information about
  *   an ongoing synchronization sessions, but it is the responsibility of the developers
  *   to act on these signals.
  *
@@ -91,18 +91,18 @@
  *
  * The most critical configuration parameters include:
  *
- * - Storage provider. Developers using libmeegosyncml must implement StorageProvider
+ * - Storage provider. Developers using libbuteosyncml must implement StorageProvider
  *   interface that SyncAgent uses to query storage backends when required. These storage
  *   backends are abstracted by StoragePlugin interface, which developers also must implement
- *   for each type of data they wish to synchronize. Libmeegosyncml does not provide readymade
+ *   for each type of data they wish to synchronize. Libbuteosyncml does not provide readymade
  *   StoragePlugin implementations, as these are highly dependant on the underlying storage
  *   backend.
- * - Transport. Libmeegosyncml includes readymade transport for HTTP. For OBEX, SyncML bindings
+ * - Transport. Libbuteosyncml includes readymade transport for HTTP. For OBEX, SyncML bindings
  *   are provided. Users must provide an implementation for OBEXConnection interface to
  *   to use whatever transport layer is wanted ( for example Bluetooth, USB, IrDA, etc ). Creation
  *   of totally custom transports is also supported, they can be implemented by inheriting from
  *   Transport interface (or from BaseTransport abstract class that includes WbXML support).
- * - Location of database. Libmeegosyncml maintains an SQL database that includes SyncML sync
+ * - Location of database. Libbuteosyncml maintains an SQL database that includes SyncML sync
  *   anchors, item ID mappings, MD5 nonces and suspend/resume information. By default this
  *   database is placed to /etc/sync/, but is highly recommended that synchronization applications
  *   specify their own location for this database.
@@ -119,7 +119,7 @@
  *
  * \page creatingstorageplugin Creating a storage plugin
  *
- * Developers using libmeegosyncml must implement StorageProvider callback interface. This interface is
+ * Developers using libbuteosyncml must implement StorageProvider callback interface. This interface is
  * used by SyncAgent to reserve and release storage backends, based on either storage database URI or MIME type.
  * Individual storage backends are abstracted by StoragePlugin interface. This interface includes all the necessary
  * callback functions that SyncAgent needs to synchronize the database. This involves functionality related
@@ -462,7 +462,7 @@
  * QT       += core network
  * QT       -= gui
  * TARGET = example1
- * LIBS += -lmeegosyncml
+ * LIBS += -lbuteosyncml
  * TEMPLATE = app
  * SOURCES += main.cpp
  *
@@ -470,9 +470,9 @@
  *
  * #include <QtCore/QCoreApplication>
  *
- * #include <libmeegosyncml/SyncAgent.h>
- * #include <libmeegosyncml/SyncAgentConfig.h>
- * #include <libmeegosyncml/HTTPTransport.h>
+ * #include <buteosyncml/SyncAgent.h>
+ * #include <buteosyncml/SyncAgentConfig.h>
+ * #include <buteosyncml/HTTPTransport.h>
  *
  * #include "MyStorageProvider.h"
  *
