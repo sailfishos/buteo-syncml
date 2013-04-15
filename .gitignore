@@ -1,0 +1,6 @@
+Makefile
+*.list
+*.prl
+*.so*
+src/pkgconfig
+tests_meego/libbuteosyncml-tests

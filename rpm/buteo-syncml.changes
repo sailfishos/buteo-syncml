@@ -1,3 +1,32 @@
+* Mon Sep 24 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.5.0
+- Update to nemo upstream, contributing to JB#2310
+
+* Thu Sep 06 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.4.18
+- Update to latest upstream
+- Move tests to /opt/tests
+
+* Mon Jan 31 2011 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.10.7
+- Update version, fixing BMC#13137
+
+* Wed Jan 05 2011 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.10.2
+- Update version, fixing BMC#11996
+
+* Fri Dec 17 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9.52
+- Update version, fixing BMC#11096
+
+* Wed Nov 24 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9.47
+- Update version, required for buteo-sync-plugins fixes from BME#3888
+
+* Sun Oct 17 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9.38
+- Update to latest version
+
+* Thu Sep 23 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9.35
+- Update version, fixing BMC#6136
+
+* Tue Aug 24 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9.28
+- Update to latest version
+- Change BuildRequires to pkgconfig
+
 * Mon Jun 28 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.4.9
 - Update to latest version
 
