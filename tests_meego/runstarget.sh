@@ -11,10 +11,4 @@ FILE=${1##*/}
 
 cd /opt/tests/buteo-syncml
 
-${1} -maxwarnings 0
-RESULT=$?
-
-# Exit with the same code as the test binary
-#exit $RESULT
-# Exit always with zero until problems in CI environment are resolved
-exit 0
+exec ${1} -maxwarnings 0
