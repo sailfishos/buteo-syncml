@@ -10,12 +10,6 @@
         <step expected_result="0">/opt/tests/buteo-syncml/runstarget.sh /opt/tests/buteo-syncml/libbuteosyncml-tests</step>
       </case>
 
-      <!-- Get optional - fetches additional result files -->
-      <get>
-        <file>/tmp/libmeegosyncml-tests.out</file>
-        <file>/tmp/libmeegosyncml-tests.detailed</file>
-        <file>/tmp/libmeegosyncml-tests.cmp</file>
-      </get>
     </set>
   </suite>
 </testdefinition>

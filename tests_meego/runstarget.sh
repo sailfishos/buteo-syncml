@@ -11,14 +11,8 @@ FILE=${1##*/}
 
 cd /opt/tests/buteo-syncml
 
-${1} -maxwarnings 0 1>/tmp/$FILE.out 2>&1
+${1} -maxwarnings 0
 RESULT=$?
-
-echo "$RESULT is return value of executing ${1}" >> /tmp/$FILE.out
-
-grep "Totals:" /tmp/$FILE.out >/tmp/$FILE.cmp
-grep -E "PASS|FAIL|Totals:|Start testing|Finished testing" /tmp/$FILE.out >/tmp/$FILE.detailed
-echo "Test finished with return value $RESULT. Summary can be found in /tmp/$FILE.cmp"
 
 # Exit with the same code as the test binary
 #exit $RESULT
