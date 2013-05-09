@@ -57,7 +57,7 @@ void SyncMLHdrTest::testSyncMLHdr_11()
     SyncMLHdr hdr(headerParams);
 
     QByteArray expected;
-    QVERIFY( readFile( "testfiles/SyncMLHdrTest_11.txt", expected ) );
+    QVERIFY( readFile( "data/SyncMLHdrTest_11.txt", expected ) );
     QtEncoder encoder;
     QByteArray output;
     QVERIFY( encoder.encodeToXML( hdr, output, true ) );
@@ -79,7 +79,7 @@ void SyncMLHdrTest::testSyncMLHdr_12()
     SyncMLHdr hdr(headerParams);
 
     QByteArray expected;
-    QVERIFY( readFile( "testfiles/SyncMLHdrTest.txt", expected ) );
+    QVERIFY( readFile( "data/SyncMLHdrTest.txt", expected ) );
     QtEncoder encoder;
     QByteArray output;
     QVERIFY( encoder.encodeToXML( hdr, output, true ) );

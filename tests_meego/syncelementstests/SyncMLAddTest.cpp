@@ -41,9 +41,9 @@ using namespace DataSync;
 //QString add QString(
 void SyncMLAddTest::testSyncMLAdd() {
     SyncMLAdd add(10);
-    QFile toXMLfile("testfiles/testAdd.txt");
+    QFile toXMLfile("data/testAdd.txt");
     if(!toXMLfile.open(QIODevice::ReadOnly)) {
-        QFAIL("Failed to open the file testfiles/testAlert.txt");
+        QFAIL("Failed to open the file data/testAlert.txt");
     } else {
 
         QtEncoder encoder;

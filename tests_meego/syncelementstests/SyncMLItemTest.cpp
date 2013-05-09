@@ -60,7 +60,7 @@ void SyncMLItemTest::testSyncMLItem()
 
     QByteArray data;
 
-    QVERIFY( readFile("testfiles/testItem.txt", data ) );
+    QVERIFY( readFile("data/testItem.txt", data ) );
 
     QtEncoder encoder;
     QByteArray output;

@@ -85,7 +85,7 @@ void BaseTransportTest::testBasicXMLSend()
     QVERIFY( readData.count() == 0 );
 
     QByteArray correctOutput;
-    QVERIFY( readFile( "testfiles/basicbasetransport.txt", correctOutput ) );
+    QVERIFY( readFile( "data/basicbasetransport.txt", correctOutput ) );
 
     QVERIFY( transport.iContentType == SYNCML_CONTTYPE_XML );
     QVERIFY( transport.iData == correctOutput );
@@ -103,7 +103,7 @@ void BaseTransportTest::testBasicXMLReceive()
     transport.setWbXml( false );
 
     transport.iContentType = SYNCML_CONTTYPE_XML;
-    QVERIFY( readFile( "testfiles/basicbasetransport.txt", transport.iData ) );
+    QVERIFY( readFile( "data/basicbasetransport.txt", transport.iData ) );
 
     QVERIFY( transport.receive() == true );
 
@@ -148,7 +148,7 @@ void BaseTransportTest::testBasicWbXMLSend()
     QVERIFY( readData.count() == 0 );
 
     QByteArray correctOutput;
-    QVERIFY( readFile( "testfiles/basicbasetransport.bin", correctOutput ) == true );
+    QVERIFY( readFile( "data/basicbasetransport.bin", correctOutput ) == true );
 
     QVERIFY( transport.iContentType == SYNCML_CONTTYPE_WBXML );
 
@@ -171,7 +171,7 @@ void BaseTransportTest::testBasicWbXMLReceive()
     transport.setWbXml( true );
 
     transport.iContentType = SYNCML_CONTTYPE_WBXML;
-    QVERIFY( readFile( "testfiles/basicbasetransport.bin", transport.iData ) );
+    QVERIFY( readFile( "data/basicbasetransport.bin", transport.iData ) );
 
     QVERIFY( transport.receive() == true );
 
@@ -183,7 +183,7 @@ void BaseTransportTest::testBasicWbXMLReceive()
     QByteArray data = dev->readAll();
 
     QByteArray correctOutput;
-    QVERIFY( readFile( "testfiles/basicbasetransport2.txt", correctOutput ) );
+    QVERIFY( readFile( "data/basicbasetransport2.txt", correctOutput ) );
 
     // These tests are failing outside scratchbox. This is probably due to differences
     // in the libwbxml2 output because different versions of the library are used.
@@ -205,7 +205,7 @@ void BaseTransportTest::testSANReceive01()
     QByteArray contentType = SYNCML_CONTTYPE_SAN_DS;
     QByteArray originalData;
 
-    QVERIFY( readFile( "testfiles/SAN01.bin", originalData ) );
+    QVERIFY( readFile( "data/SAN01.bin", originalData ) );
 
     transport.iContentType = contentType;
     transport.iData = originalData;
@@ -238,7 +238,7 @@ void BaseTransportTest::testSANReceive02()
     QByteArray contentType = SYNCML_CONTTYPE_DS_WBXML;
     QByteArray originalData;
 
-    QVERIFY( readFile( "testfiles/SAN01.bin", originalData ) );
+    QVERIFY( readFile( "data/SAN01.bin", originalData ) );
 
     transport.iContentType = contentType;
     transport.iData = originalData;
