@@ -133,9 +133,9 @@ QMAKE_CXXFLAGS = -Wall \
 QMAKE_CLEAN += lib*.so* \
     lib$${TARGET}.prl pkgconfig/*
 
-QMAKE_STRIP = strip
+#QMAKE_STRIP = strip
 
-QMAKE_STRIPFLAGS_LIB += --strip-unneeded
+#QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
 headers.path  = /usr/include/buteosyncml
 headers.files = $$HEADERS

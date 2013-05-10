@@ -115,9 +115,9 @@ QMAKE_CLEAN += $(OBJECTS_DIR)/*.gcda \
     $(OBJECTS_DIR)/*.gcov \
     lib*.so*
 
-QMAKE_STRIP = strip
+#QMAKE_STRIP = strip
 
-QMAKE_STRIPFLAGS_LIB += --strip-unneeded
+#QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
 headers.path  = /usr/include/libbuteosyncml
 headers.files = $$HEADERS

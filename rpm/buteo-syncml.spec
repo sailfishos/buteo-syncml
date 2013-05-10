@@ -59,7 +59,7 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-qmake libbuteosyncml.pro
+%qmake libbuteosyncml.pro
 make %{?_smp_mflags}
 
 
