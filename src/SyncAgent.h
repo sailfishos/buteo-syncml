@@ -745,6 +745,7 @@ private:
 
     void abortListen();
     void cleanListen();
+    void cleanListenLater();
 
     RequestListener*        iListener;
     SessionHandler*         iHandler;
