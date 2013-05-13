@@ -49,11 +49,10 @@ DatabaseHandler::DatabaseHandler( const QString& aDbFile )
     iConnectionName = CONNECTIONNAME + QString::number( connectionNumber++ );
     iDb = QSqlDatabase::addDatabase( "QSQLITE", iConnectionName );
 
-    QDir cacheDir;
-    cacheDir.mkdir( Sync::syncCacheDir() );
     QString path( Sync::syncCacheDir() );
     path.append( QDir::separator() ).append( aDbFile );
     path = QDir::toNativeSeparators( path );
+    QDir().mkpath( QFileInfo(path).path() );
 
     iDb.setDatabaseName( path );
     if(!iDb.open())
