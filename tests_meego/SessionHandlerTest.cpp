@@ -877,7 +877,7 @@ void SessionHandlerTest::testClientAuthBasicContinuous()
     // Test that basic authentication information is continued to be sent
     // if server responds with 200.
 
-    QVERIFY( false );
+    QSKIP( "Unimplemented!", SkipAll );
 }
 
 void SessionHandlerTest::testClientAuthMD5NoCreds()
@@ -1218,7 +1218,7 @@ void SessionHandlerTest::testClientAuthMD5ChalToBasic()
 
 void SessionHandlerTest::testClientAuthMD5Continuous()
 {
-    QVERIFY( false );
+    QSKIP( "Unimplemented!", SkipAll );
 }
 
 void SessionHandlerTest::regression_NB153701_01()
