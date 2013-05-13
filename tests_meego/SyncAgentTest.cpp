@@ -68,7 +68,7 @@ void SyncAgentTest::releaseStorage( StoragePlugin* aStorage )
 void SyncAgentTest::testSync()
 {
     createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve(
-            "libmeegosyncml.so", "createSyncAgent");
+            "libbuteosyncml.so", "createSyncAgent");
     QVERIFY(NULL != createSyncAgent);
     SyncAgent* agent = createSyncAgent(NULL);
     QVERIFY(NULL != agent);
@@ -159,7 +159,7 @@ void SyncAgentTest::testSync()
     QCOMPARE(agent->cleanUp(&config), false);
 
     destroySyncAgent_t* destroySyncAgent =
-        (destroySyncAgent_t*) QLibrary::resolve("libmeegosyncml.so",
+        (destroySyncAgent_t*) QLibrary::resolve("libbuteosyncml.so",
                 "destroySyncAgent");
     QVERIFY(NULL != destroySyncAgent);
     destroySyncAgent(agent);
