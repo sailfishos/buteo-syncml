@@ -53,7 +53,7 @@ void ServerSessionHandlerTest::initTestCase()
     iConfig = new SyncAgentConfig();
     QString localDb = "localcontacts";
     iStorage = new MockStorage( localDb );
-    iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
+    iTransport = new MockTransport(QString("data/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
     const SyncAgentConfig *tempConstConfig = iConfig;
     iHandler = new ServerSessionHandler(tempConstConfig);

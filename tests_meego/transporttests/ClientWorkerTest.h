@@ -88,7 +88,7 @@ private slots:
     void readData();
 
 private:
-    quint16             iPort;
+    volatile quint16    iPort;
     QTcpSocket*         iServerSocket;
     QList<QByteArray>   iResponses;
 

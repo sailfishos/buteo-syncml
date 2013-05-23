@@ -488,6 +488,7 @@ void SyncAgent::listenEvent()
     RequestListener::RequestData data = iListener->takeRequestData();
 
     iListener->stop();
+    cleanListenLater();
 
     if( data.iType == RequestListener::REQUEST_CLIENT )
     {
@@ -619,5 +620,13 @@ void SyncAgent::cleanListen()
     FUNCTION_CALL_TRACE
 
     delete iListener;
+    iListener = NULL;
+}
+
+void SyncAgent::cleanListenLater()
+{
+    FUNCTION_CALL_TRACE
+
+    iListener->deleteLater();
     iListener = NULL;
 }

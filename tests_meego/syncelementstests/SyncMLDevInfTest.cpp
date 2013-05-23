@@ -50,7 +50,7 @@ void SyncMLDevInfTest::testSyncMLDevInf() {
     SyncMLDevInf devInf( pluginList, devInfo, SYNCML_1_2, ROLE_CLIENT);
 
     QByteArray expected;
-    QVERIFY( readFile("testfiles/testDevInf.txt", expected ) );
+    QVERIFY( readFile("data/testDevInf.txt", expected ) );
     QtEncoder encoder;
     QByteArray output;
     QVERIFY( encoder.encodeToXML( devInf, output, true ) );

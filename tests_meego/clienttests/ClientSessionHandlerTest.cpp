@@ -51,7 +51,7 @@ void ClientSessionHandlerTest::initTestCase()
     iDbHandler = new DatabaseHandler( "/tmp/clientsessionhandler.db");
     iClientId = QString("clientId");
     iConfig = new SyncAgentConfig();
-    iTransport = new MockTransport(QString("testfiles/transport_initrequest_nohdr.txt"));
+    iTransport = new MockTransport(QString("data/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
     const SyncAgentConfig *tempConstConfig = iConfig;
     iHandler = new ClientSessionHandler(tempConstConfig);

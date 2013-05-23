@@ -61,7 +61,7 @@ void SyncMLAlertTest::testSyncMLAlert()
     SyncMLAlert alert(alertParams);
 
     QByteArray expected;
-    QVERIFY( readFile( "testfiles/testAlert.txt", expected ) );
+    QVERIFY( readFile( "data/testAlert.txt", expected ) );
 
     QtEncoder encoder;
     QByteArray output;

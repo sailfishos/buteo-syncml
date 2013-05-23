@@ -105,7 +105,7 @@ void ClientWorkerTest::testConnectSuccess()
     // Case to test successful OBEX CONNECT
 
     QByteArray rsp1;
-    QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
+    QVERIFY( readFile( "data/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
     OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
@@ -155,7 +155,7 @@ void ClientWorkerTest::testConnectRefused()
     // As connection is not up yet, stack should not send error signals
 
     QByteArray rsp1;
-    QVERIFY( readFile( "testfiles/obexresp02.bin", rsp1 ) );
+    QVERIFY( readFile( "data/obexresp02.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
     OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
@@ -180,11 +180,11 @@ void ClientWorkerTest::testDisconnectSuccess()
     // Case to test successful OBEX DISCONNECT
 
     QByteArray rsp1;
-    QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
+    QVERIFY( readFile( "data/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
     QByteArray rsp2;
-    QVERIFY( readFile( "testfiles/obexresp03.bin", rsp2 ) );
+    QVERIFY( readFile( "data/obexresp03.bin", rsp2 ) );
     iServerThread->addResponse( rsp2 );
 
     OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
@@ -219,7 +219,7 @@ void ClientWorkerTest::testDisconnectLinkFailure()
     // about the failure
 
     QByteArray rsp1;
-    QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
+    QVERIFY( readFile( "data/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
     OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );
@@ -253,11 +253,11 @@ void ClientWorkerTest::testDisconnectRefused()
     // request
 
     QByteArray rsp1;
-    QVERIFY( readFile( "testfiles/obexresp01.bin", rsp1 ) );
+    QVERIFY( readFile( "data/obexresp01.bin", rsp1 ) );
     iServerThread->addResponse( rsp1 );
 
     QByteArray rsp2;
-    QVERIFY( readFile( "testfiles/obexresp02.bin", rsp2 ) );
+    QVERIFY( readFile( "data/obexresp02.bin", rsp2 ) );
     iServerThread->addResponse( rsp2 );
 
     OBEXClientWorker worker( iClientSocket->socketDescriptor(), MTU, TIMEOUT );

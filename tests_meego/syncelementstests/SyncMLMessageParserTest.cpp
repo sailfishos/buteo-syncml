@@ -51,7 +51,7 @@ void SyncMLMessageParserTest::testResp1()
 
     QByteArray data;
 
-    QVERIFY( readFile( "testfiles/resp.txt", data ) );
+    QVERIFY( readFile( "data/resp.txt", data ) );
 
     QBuffer buffer(&data );
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
@@ -198,37 +198,37 @@ void SyncMLMessageParserTest::testInvalid1()
     QSignalSpy errorSpy( &parser, SIGNAL(parsingError(DataSync::ParserError)) );
 
     QByteArray data;
-    QVERIFY( readFile( "testfiles/respinvalid1.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid1.txt", data ) );
     QBuffer buffer(&data );
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
     buffer.close();
 
-    QVERIFY( readFile( "testfiles/respinvalid2.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid2.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
     buffer.close();
 
-    QVERIFY( readFile( "testfiles/respinvalid3.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid3.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
     buffer.close();
 
-    QVERIFY( readFile( "testfiles/respinvalid4.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid4.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
     buffer.close();
 
-    QVERIFY( readFile( "testfiles/respinvalid5.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid5.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
     buffer.close();
 
-    QVERIFY( readFile( "testfiles/respinvalid6.txt", data ) );
+    QVERIFY( readFile( "data/respinvalid6.txt", data ) );
     buffer.setBuffer(&data);
     QVERIFY( buffer.open( QIODevice::ReadOnly ) );
     parser.parseResponse( &buffer, true );
@@ -269,7 +269,7 @@ void SyncMLMessageParserTest::verifyDelete( const DataSync::CommandParams& aData
 void SyncMLMessageParserTest::testDevInf11()
 {
     QByteArray data;
-    QVERIFY( readFile( "testfiles/devinf01.txt", data ) );
+    QVERIFY( readFile( "data/devinf01.txt", data ) );
     QBuffer buffer( &data );
     buffer.open( QIODevice::ReadOnly );
     buffer.seek( 0 );
@@ -367,7 +367,7 @@ void SyncMLMessageParserTest::testDevInf11()
 void SyncMLMessageParserTest::testDevInf12()
 {
     QByteArray data;
-    QVERIFY( readFile( "testfiles/devinf02.txt", data ) );
+    QVERIFY( readFile( "data/devinf02.txt", data ) );
     QBuffer buffer( &data );
     buffer.open( QIODevice::ReadOnly );
     buffer.seek( 0 );
@@ -471,7 +471,7 @@ void SyncMLMessageParserTest::testDevInf12()
 void SyncMLMessageParserTest::testSubcommands()
 {
     QByteArray data;
-    QVERIFY( readFile( "testfiles/subcommands01.txt", data ) );
+    QVERIFY( readFile( "data/subcommands01.txt", data ) );
     QBuffer buffer( &data );
     buffer.open( QIODevice::ReadOnly );
     buffer.seek( 0 );
@@ -530,7 +530,7 @@ void SyncMLMessageParserTest::testSubcommands()
 void SyncMLMessageParserTest::testEmbeddedXML()
 {
     QByteArray data;
-    QVERIFY( readFile( "testfiles/resp2.txt", data ) );
+    QVERIFY( readFile( "data/resp2.txt", data ) );
     QBuffer buffer( &data );
     buffer.open( QIODevice::ReadOnly );
     buffer.seek( 0 );

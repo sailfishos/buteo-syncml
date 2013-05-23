@@ -111,6 +111,8 @@ public:
         iFormats.setPreferredTx(format);
         iFormats.rx().append(format);
         iFormats.tx().append(format);
+
+        iIdCounter = 0;
     }
 
     virtual ~MockStorage() {}
@@ -198,7 +200,7 @@ public:
 
     virtual SyncItem* newItem()
     {
-        return new MockSyncItem( "1" );
+        return new MockSyncItem( "" );
     }
 
     virtual SyncItem* getSyncItem( const SyncItemKey& aKey )
@@ -228,6 +230,7 @@ public:
         QList<StoragePluginStatus> results;
 
         for( int i = 0; i < aItems.count(); ++i ) {
+            aItems[i]->setKey( QString("MockStorage-item-%1").arg( ++iIdCounter ) );
             results.append( STATUS_OK );
         }
 
@@ -267,7 +270,7 @@ protected:
     QString                     iSourceURI;
     qint64                      iMaxObjSize;
     StorageContentFormatInfo    iFormats;
-
+    int                         iIdCounter;
 };
 
 class MockTransport : public DataSync::Transport {
