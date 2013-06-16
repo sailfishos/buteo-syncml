@@ -4,6 +4,14 @@ include(syncelementstests/syncelementstests.pro)
 include(servertests/servertests.pro)
 include(clienttests/clienttests.pro)
 include(transporttests/transporttests.pro)
+VPATH = ../src/client \
+    ../src/syncelements \
+    ../src/server \
+    ../src/transport \
+    syncelementstests \
+    servertests \
+    clienttests \
+    transporttests
 INCLUDEPATH += . \
     ../src/ \
     ../src/syncelements \
@@ -24,12 +32,20 @@ DEPENDPATH += . \
 CONFIG += qtestlib \
     link_prl \
     link_pkgconfig
-PKGCONFIG = buteosyncfw
+
+equals(QT_MAJOR_VERSION, 4): {
+    PKGCONFIG += buteosyncfw
+    LIBS += -lbuteosyncml
+}
+equals(QT_MAJOR_VERSION, 5): {
+    PKGCONFIG += buteosyncfw5
+    LIBS += -lbuteosyncml5
+}
+
 # DEFINES += QT_NO_DEBUG_OUTPUT
 # use the buteosyncml library objects directly to get better debugging data
 # So if remember to compile them when debugging
-LIBS += -lbuteosyncml \
-	-L../src/
+LIBS += -L../src/
 
 # This is needed to avoid adding the /usr/lib link directory before the
 # newer version in buteosyncml
@@ -138,7 +154,7 @@ OTHER_FILES += testfiles/transport_initrequest_nohdr.txt \
     testfiles/devinf02.txt \
     testfiles/subcommands01.txt \
     testfiles/resp2.txt
-    
+
 QMAKE_CXXFLAGS += -Wall \
     -g
 

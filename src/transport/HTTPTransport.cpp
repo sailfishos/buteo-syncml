@@ -5,30 +5,30 @@
 *
 * Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
 *
-* Redistribution and use in source and binary forms, with or without 
+* Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
 *
-* Redistributions of source code must retain the above copyright notice, 
+* Redistributions of source code must retain the above copyright notice,
 * this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, 
-* this list of conditions and the following disclaimer in the documentation 
+* Redistributions in binary form must reproduce the above copyright notice,
+* this list of conditions and the following disclaimer in the documentation
 * and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may 
-* be used to endorse or promote products derived from this software without 
+* Neither the name of Nokia Corporation nor the names of its contributors may
+* be used to endorse or promote products derived from this software without
 * specific prior written permission.
 *
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 * THE POSSIBILITY OF SUCH DAMAGE.
-* 
+*
 */
 
 #include "HTTPTransport.h"
@@ -175,12 +175,12 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
 
     QUrl url;
     // The URL might be percent encoded
-    url = QUrl::fromEncoded( getRemoteLocURI().toAscii() );
+    url = QUrl::fromEncoded( getRemoteLocURI().toLatin1() );
     if( !url.isValid() )
     {
         url = QUrl( getRemoteLocURI() );
     }
-    aRequest.setRawHeader( HTTP_HDRSTR_POST, url.path().toAscii());
+    aRequest.setRawHeader( HTTP_HDRSTR_POST, url.path().toLatin1());
     aRequest.setUrl( url );
     aRequest.setRawHeader( HTTP_HDRSTR_UA, HTTP_UA_VALUE);
     aRequest.setRawHeader( HTTP_HDRSTR_CONTENT_TYPE, aContentType );
@@ -188,7 +188,7 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
     aRequest.setHeader( QNetworkRequest::ContentLengthHeader, QVariant( aContentLength ) );
     QMap<QString, QString>::const_iterator i;
     for (i = iXheaders.constBegin(); i != iXheaders.constEnd(); i++) {
-	    aRequest.setRawHeader(i.key().toAscii(), i.value().toAscii());
+            aRequest.setRawHeader(i.key().toLatin1(), i.value().toLatin1());
     }
 
 #ifndef QT_NO_OPENSSL
@@ -215,7 +215,7 @@ bool HTTPTransport::sendRequest( const QByteArray& aData, const QString& aConten
     FUNCTION_CALL_TRACE;
     // build the message, and send it
     QNetworkRequest request;
-    prepareRequest( request, aContentType.toAscii(), aData.size() );
+    prepareRequest( request, aContentType.toLatin1(), aData.size() );
 
 #ifndef QT_NO_DEBUG
     // Print the message
@@ -364,7 +364,10 @@ void HTTPTransport::sslErrors( QNetworkReply* aReply, const QList<QSslError>& aE
     LOG_DEBUG("list size :" << aErrors.size());
     foreach( const QSslError& sslError , aErrors) {
         LOG_DEBUG(sslError.errorString());
-        if (sslError.certificate().isValid()) {
+        // the original version used isValid(), which would check if the certificate is not expired
+        // or blacklisted; as that information might be useful in the log I guess that the intention
+        // here was to check for a certificate
+        if (!sslError.certificate().isNull()) {
             LOG_DEBUG("StartDate: " << sslError.certificate().effectiveDate());
             LOG_DEBUG("ExpiryDate:" << sslError.certificate().expiryDate());
             LOG_DEBUG("Issuer Info:");

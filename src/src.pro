@@ -4,58 +4,65 @@ include(client/client.pro)
 include(transport/transport.pro)
 
 TEMPLATE = lib
-TARGET = buteosyncml
+equals(QT_MAJOR_VERSION, 4): TARGET = buteosyncml
+equals(QT_MAJOR_VERSION, 5): TARGET = buteosyncml5
 
 VER_MAJ = 0
 VER_MIN = 4
 VER_PAT = 6
 
-CONFIG += dll \ 
+VPATH += client \
+    syncelements \
+    server \
+    transport
+
+CONFIG += dll \
     create_pc \
     create_prl \
     link_pkgconfig
 
-PKGCONFIG = buteosyncfw
+equals(QT_MAJOR_VERSION, 4): PKGCONFIG = buteosyncfw
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG = buteosyncfw5
 
 INCLUDEPATH += . \
-	syncelements \
-	server \
-	client \
-	transport
+        syncelements \
+        server \
+        client \
+        transport
 
 DEPENDPATH += . \
-	syncelements \
-	server \
-	client \
-	transport
+        syncelements \
+        server \
+        client \
+        transport
 
 SOURCES += SyncItem.cpp \
-	ChangeLog.cpp \
-	SuspendLog.cpp \
-	SyncAgent.cpp \
-	SyncAgentConfig.cpp \
-	SyncMLMessageParser.cpp \
-	AuthenticationPackage.cpp \
-	LocalChangesPackage.cpp \
-	LocalMappingsPackage.cpp \
-	DeviceInfo.cpp \
-	RemoteDeviceInfo.cpp \
-	SyncTarget.cpp \
-	FinalPackage.cpp \
-	AlertPackage.cpp \
-	SyncResults.cpp \
-	SessionHandler.cpp \
-	CommandHandler.cpp \
-	StorageHandler.cpp \
-	ResponseGenerator.cpp \
-	SyncMode.cpp \
-	DevInfPackage.cpp \
-	DatabaseHandler.cpp \
-	ConflictResolver.cpp \
-	AuthHelper.cpp \
-	NonceStorage.cpp \
-	ServerAlertedNotification.cpp \
-	RequestListener.cpp \
+        ChangeLog.cpp \
+        SuspendLog.cpp \
+        SyncAgent.cpp \
+        SyncAgentConfig.cpp \
+        SyncMLMessageParser.cpp \
+        AuthenticationPackage.cpp \
+        LocalChangesPackage.cpp \
+        LocalMappingsPackage.cpp \
+        DeviceInfo.cpp \
+        RemoteDeviceInfo.cpp \
+        SyncTarget.cpp \
+        FinalPackage.cpp \
+        AlertPackage.cpp \
+        SyncResults.cpp \
+        SessionHandler.cpp \
+        CommandHandler.cpp \
+        StorageHandler.cpp \
+        ResponseGenerator.cpp \
+        SyncMode.cpp \
+        DevInfPackage.cpp \
+        DatabaseHandler.cpp \
+        ConflictResolver.cpp \
+        AuthHelper.cpp \
+        NonceStorage.cpp \
+        ServerAlertedNotification.cpp \
+        RequestListener.cpp \
     DevInfHandler.cpp \
     SyncItemPrefetcher.cpp \
     CTCap.cpp \
@@ -65,39 +72,39 @@ SOURCES += SyncItem.cpp \
     SessionParams.cpp
 
 HEADERS += SyncItem.h \
-	StoragePlugin.h \
-	ChangeLog.h \
-	SuspendLog.h \
-	SyncAgent.h \
-	SyncItemKey.h \
-	datatypes.h \
+        StoragePlugin.h \
+        ChangeLog.h \
+        SuspendLog.h \
+        SyncAgent.h \
+        SyncItemKey.h \
+        datatypes.h \
     Fragments.h \
-	SyncAgentConfig.h \
-	SyncMLMessageParser.h \
-	AuthenticationPackage.h \
-	LocalChangesPackage.h \
-	LocalMappingsPackage.h \
-	Package.h \
-	DeviceInfo.h \
-	RemoteDeviceInfo.h \
-	SyncAgentConsts.h \
-	SyncResults.h \
-	SyncTarget.h \
-	FinalPackage.h \
-	AlertPackage.h \
-	SyncMLCommand.h \
-	SessionHandler.h \
-	CommandHandler.h \
-	StorageHandler.h \
-	ResponseGenerator.h \
-	SyncMode.h \
-	DevInfPackage.h \
-	DatabaseHandler.h \
-	ConflictResolver.h \
-	AuthHelper.h \
-	NonceStorage.h \
-	StorageProvider.h \
-	ServerAlertedNotification.h \
+        SyncAgentConfig.h \
+        SyncMLMessageParser.h \
+        AuthenticationPackage.h \
+        LocalChangesPackage.h \
+        LocalMappingsPackage.h \
+        Package.h \
+        DeviceInfo.h \
+        RemoteDeviceInfo.h \
+        SyncAgentConsts.h \
+        SyncResults.h \
+        SyncTarget.h \
+        FinalPackage.h \
+        AlertPackage.h \
+        SyncMLCommand.h \
+        SessionHandler.h \
+        CommandHandler.h \
+        StorageHandler.h \
+        ResponseGenerator.h \
+        SyncMode.h \
+        DevInfPackage.h \
+        DatabaseHandler.h \
+        ConflictResolver.h \
+        AuthHelper.h \
+        NonceStorage.h \
+        StorageProvider.h \
+        ServerAlertedNotification.h \
     SyncMLGlobals.h \
     RequestListener.h \
     DevInfHandler.h \
@@ -109,7 +116,7 @@ HEADERS += SyncItem.h \
     LocalChanges.h \
     SessionAuthentication.h \
     SessionParams.h
-    
+
 OTHER_FILES += config/meego-syncml-conf.xsd \
                config/meego-syncml-conf.xml
 
@@ -137,16 +144,18 @@ QMAKE_CLEAN += lib*.so* \
 
 #QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
-headers.path  = /usr/include/buteosyncml
+equals(QT_MAJOR_VERSION, 4): headers.path  = /usr/include/buteosyncml
+equals(QT_MAJOR_VERSION, 5): headers.path  = /usr/include/buteosyncml5
+
 headers.files = $$HEADERS
 target.path   = /usr/lib
 config.path   = /etc/buteo
 config.files  = config/meego-syncml-conf.xsd \
                 config/meego-syncml-conf.xml
-                
+
 INSTALLS += target \
-    	    headers \
-    	    config
+            headers \
+            config
 
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_LIBDIR  = $$target.path
