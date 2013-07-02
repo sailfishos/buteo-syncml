@@ -122,7 +122,8 @@ OTHER_FILES += config/meego-syncml-conf.xsd \
 
 LIBS += -lsqlite3 -lwbxml2 -lopenobex
 
-QTDIR = /usr/lib/qt4
+equals(QT_MAJOR_VERSION, 4): QTDIR = /usr/lib/qt4
+equals(QT_MAJOR_VERSION, 5): QTDIR = /usr/lib/qt5
 
 QT += network \
     xml \
