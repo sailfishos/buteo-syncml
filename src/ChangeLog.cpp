@@ -280,6 +280,7 @@ bool ChangeLog::loadAnchors( QSqlDatabase& aDbHandle )
     const QString queryString( "SELECT local_sync_anchor, remote_sync_anchor, last_sync_time FROM change_logs WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
 
     QSqlQuery query( queryString, aDbHandle );
+    query.prepare( queryString );
     query.bindValue( ":remote_device", iRemoteDevice );
     query.bindValue( ":source_db_uri", iSourceDbURI );
     query.bindValue( ":sync_direction", iSyncDirection );
@@ -322,6 +323,7 @@ bool ChangeLog::saveAnchors( QSqlDatabase& aDbHandle )
         const QString queryString( "INSERT INTO change_logs(remote_device, source_db_uri, sync_direction, local_sync_anchor, remote_sync_anchor, last_sync_time) VALUES (:remote_device, :source_db_uri, :sync_direction, :local_sync_anchor, :remote_sync_anchor, :last_sync_time)" );
 
         QSqlQuery query( queryString, aDbHandle );
+        query.prepare( queryString );
         query.bindValue( ":remote_device", iRemoteDevice );
         query.bindValue( ":source_db_uri", iSourceDbURI );
         query.bindValue( ":sync_direction", iSyncDirection );
@@ -366,6 +368,7 @@ bool ChangeLog::removeAnchors( QSqlDatabase& aDbHandle )
         const QString queryString( "DELETE FROM change_logs WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
 
         QSqlQuery query( queryString, aDbHandle );
+        query.prepare( queryString );
         query.bindValue( ":remote_device", iRemoteDevice );
         query.bindValue( ":source_db_uri", iSourceDbURI );
         query.bindValue( ":sync_direction", iSyncDirection );
@@ -390,6 +393,7 @@ bool ChangeLog::loadMaps( QSqlDatabase& aDbHandle )
     const QString queryString("SELECT local_id, remote_id FROM id_maps WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
 
     QSqlQuery query( queryString, aDbHandle );
+    query.prepare( queryString );
     query.bindValue( ":remote_device", iRemoteDevice );
     query.bindValue( ":source_db_uri", iSourceDbURI );
     query.bindValue( ":sync_direction", iSyncDirection );
@@ -428,6 +432,7 @@ bool ChangeLog::saveMaps( QSqlDatabase& aDbHandle )
         const QString queryString( "INSERT INTO id_maps(remote_device, source_db_uri, sync_direction, local_id, remote_id) values(:remote_device, :source_db_uri, :sync_direction, :local_id, :remote_id)" );
 
         QSqlQuery query( queryString, aDbHandle );
+        query.prepare( queryString );
 
         QVariantList device;
         QVariantList sourceDbURI;
@@ -481,6 +486,7 @@ bool ChangeLog::removeMaps( QSqlDatabase& aDbHandle )
         const QString queryString( "DELETE FROM id_maps WHERE remote_device = :remote_device AND source_db_uri = :source_db_uri AND sync_direction = :sync_direction" );
 
         QSqlQuery query( queryString, aDbHandle );
+        query.prepare( queryString );
         query.bindValue( ":remote_device", iRemoteDevice );
         query.bindValue( ":source_db_uri", iSourceDbURI );
         query.bindValue( ":sync_direction", iSyncDirection );
