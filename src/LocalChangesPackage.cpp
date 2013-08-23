@@ -393,7 +393,10 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                         LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
                         // Need to send more chunks after this one
                         item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
-                        aParent.addSizeMetadata( size );
+                        // syncml-ds-tool from libsyncml complains that
+                        // consecutive package of a single message should
+                        // not have size in header
+                        //aParent.addSizeMetadata( size );
                         itemObject->insertData( data );
                         itemObject->insertMoreData();
                         iLargeObjectState.iOffset += aSizeThreshold;
