@@ -222,9 +222,9 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 
         target->setTargetDatabase( serverURI );
 
-        // Check that we have a last anchor. If not, force slow sync
-        if( target->getRemoteLastAnchor().isEmpty() ) {
-            LOG_DEBUG( "Did not find last remote anchor, forcing slow sync" );
+        // Use slow sync if this is the preferred mode or if we don't have a last anchor
+        if( iConfig->getSyncMode().syncType() == TYPE_SLOW || target->getRemoteLastAnchor().isEmpty() ) {
+            LOG_DEBUG( "Did not find last remote anchor or slow sync is forced, using slow sync" );
             SyncMode* mode = target->getSyncMode();
             mode->toSlowSync();
             target->setSyncMode( *mode );
@@ -686,8 +686,8 @@ void ClientSessionHandler::setupSyncTargets()
         if (target != NULL) {
             QString targetDb = iConfig->getTarget( sourceDb );
             target->setTargetDatabase( targetDb );
-            // Check that we have a last anchor. If not, force slow sync
-            if( target->getRemoteLastAnchor().isEmpty() ) {
+            // Use slow sync if this is the preferred mode or if we don't have a last anchor
+            if (iConfig->getSyncMode().syncType() == TYPE_SLOW || target->getRemoteLastAnchor().isEmpty()) {
                 LOG_DEBUG( "Did not find last remote anchor, forcing slow sync" );
                 SyncMode* mode = target->getSyncMode();
                 mode->toSlowSync();
