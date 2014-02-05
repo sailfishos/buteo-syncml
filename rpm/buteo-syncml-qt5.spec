@@ -15,7 +15,7 @@ BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(libwbxml2)
 BuildRequires: pkgconfig(sqlite3)
 BuildRequires: pkgconfig(openobex)
-BuildRequires: pkgconfig(buteosyncfw5)
+BuildRequires: pkgconfig(buteosyncfw5) >= 0.6.24
 
 %description
 %{summary}.

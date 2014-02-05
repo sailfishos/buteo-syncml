@@ -469,7 +469,9 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
     target->setRemoteNextAnchor( anchors.next );
     target->setTargetDatabase( item.source );
 
-    if( anchorMismatch( aSyncMode, *target, anchors.last ) )
+    if( aSyncMode.syncType() == TYPE_SLOW
+            || iConfig->getSyncMode().syncType() == TYPE_SLOW
+            || anchorMismatch( aSyncMode, *target, anchors.last ) )
     {
 
         LOG_DEBUG("Anchor mismatch, refresh required");
