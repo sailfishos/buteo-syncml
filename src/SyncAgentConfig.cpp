@@ -37,9 +37,11 @@
 #include <QXmlSchemaValidator>
 #include <QXmlStreamReader>
 #include <QFile>
+#include <QDir>
 #include <QStringList>
 
 #include "SyncAgentConfigProperties.h"
+#include "SyncCommonDefs.h"
 #include "datatypes.h"
 #include "Transport.h"
 
@@ -400,7 +402,18 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
                 reader.readNext();
                 QString dbPath = reader.text().toString();
                 LOG_DEBUG( "Found critical property" << DBPATH <<":" << dbPath );
-                setDatabaseFilePath( dbPath );
+
+                QFileInfo dbPathInfo(dbPath);
+                if (dbPathInfo.isAbsolute()) {
+                    setDatabaseFilePath( dbPath );
+                } else {
+                    if (QDir().mkpath(Sync::syncCacheDir())) {
+                        setDatabaseFilePath(Sync::syncCacheDir() + QDir::separator() + dbPathInfo.fileName());
+                    } else {
+                        LOG_CRITICAL("Unable to create database dir");
+                        return false;
+                    }
+                }
             }
             else if( reader.name() == LOCALDEVICENAME )
             {

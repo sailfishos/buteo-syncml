@@ -48,10 +48,10 @@ public:
 
     /*! \brief Constructor
      *
-     * @param aDbFile Database filename to create and open
+     * @param aDbFile Path of database file to create and open
      *
      */
-    explicit DatabaseHandler( const QString& aDbFile );
+    explicit DatabaseHandler( const QString& aDbFilePath );
 
     /*! \brief Destructor
      *
