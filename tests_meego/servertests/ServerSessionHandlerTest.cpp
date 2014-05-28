@@ -302,7 +302,9 @@ void ServerSessionHandlerTest::regression_NB166841_01()
     item.meta.anchor.next = nextAnchor;
     alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
-    QCOMPARE( status, SUCCESS );
+    // Intentionally expecting REFRESH_REQUIRED inst. of SUCCESS. Would need
+    // TYPE_FAST and valid last anchor otherwise.
+    QCOMPARE( status, REFRESH_REQUIRED );
 }
 
 void ServerSessionHandlerTest::regression_NB166841_02()
@@ -329,7 +331,9 @@ void ServerSessionHandlerTest::regression_NB166841_02()
     item.meta.anchor.next = nextAnchor;
     alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
-    QCOMPARE( status, SUCCESS );
+    // Intentionally expecting REFRESH_REQUIRED inst. of SUCCESS. Would need
+    // TYPE_FAST and valid last anchor otherwise.
+    QCOMPARE( status, REFRESH_REQUIRED );
 }
 
 void ServerSessionHandlerTest::regression_NB166841_03()
