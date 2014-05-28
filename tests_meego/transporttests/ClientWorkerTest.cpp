@@ -38,7 +38,6 @@
 #include <QTcpServer>
 #include <QSignalSpy>
 
-#include "TestLoader.h"
 #include "TestUtils.h"
 
 #include "OBEXClientWorker.h"
@@ -362,4 +361,4 @@ void ServerThread::readData()
 
 }
 
-TESTLOADER_ADD_TEST(ClientWorkerTest);
+QTEST_MAIN(DataSync::ClientWorkerTest)

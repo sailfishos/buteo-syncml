@@ -34,7 +34,6 @@
 #include "BaseTransportTest.h"
 
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
 #include "TestUtils.h"
 #include "Fragments.h"
 #include "Mock.h"
@@ -257,4 +256,4 @@ void BaseTransportTest::testSANReceive02()
 
 }
 
-TESTLOADER_ADD_TEST(BaseTransportTest);
+QTEST_MAIN(BaseTransportTest)

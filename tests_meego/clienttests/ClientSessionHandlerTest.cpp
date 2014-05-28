@@ -36,7 +36,6 @@
 #include <QtTest>
 
 #include "ClientSessionHandler.h"
-#include "TestLoader.h"
 #include "SyncAgentConfig.h"
 #include "datatypes.h"
 #include "Mock.h"
@@ -248,4 +247,4 @@ void ClientSessionHandlerTest::regression_NB166841_03()
 }
 
 
-TESTLOADER_ADD_TEST(ClientSessionHandlerTest);
+QTEST_MAIN(ClientSessionHandlerTest)

@@ -1,13 +1,12 @@
-SOURCES += BaseTransportTest.cpp \
-           HTTPTransportTest.cpp \
-           OBEXTransportTest.cpp \
-           SocketPair.cpp \
-           ClientWorkerTest.cpp \
-           ServerWorkerTest.cpp
+include(../tests_common.pri)
+TEMPLATE = subdirs
+SUBDIRS = \
+    BaseTransportTest.pro \
+    ClientWorkerTest.pro \
+    HTTPTransportTest.pro \
+    OBEXTransportTest.pro \
+    ServerWorkerTest.pro \
 
-HEADERS += BaseTransportTest.h \
-           HTTPTransportTest.h \
-           OBEXTransportTest.h \
-		   SocketPair.h \
-		   ClientWorkerTest.h \
-		   ServerWorkerTest.h
+# Dead code?
+#SocketPair.cpp
+#SocketPair.h

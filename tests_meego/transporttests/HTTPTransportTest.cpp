@@ -38,7 +38,6 @@
 #include "SyncAgentConfigProperties.h"
 #include <QNetworkProxy>
 
-#include "TestLoader.h"
 #include "TestUtils.h"
 #include "Fragments.h"
 #include "Mock.h"
@@ -121,4 +120,4 @@ void HTTPTransportTest::testSetProxy()
     QCOMPARE(proxy.port(), port);
 }
 
-TESTLOADER_ADD_TEST(HTTPTransportTest);
+QTEST_MAIN(HTTPTransportTest)

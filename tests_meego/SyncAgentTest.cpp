@@ -34,7 +34,6 @@
 #include "SyncAgent.h"
 #include "SyncAgentConfig.h"
 #include "SyncAgentTest.h"
-#include "TestLoader.h"
 #include "Mock.h"
 #include "StoragePlugin.h"
 #include <QSignalSpy>
@@ -167,4 +166,4 @@ void SyncAgentTest::testSync()
 }
 
 
-TESTLOADER_ADD_TEST(SyncAgentTest);
+QTEST_MAIN(SyncAgentTest)

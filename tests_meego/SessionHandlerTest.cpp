@@ -45,7 +45,6 @@
 #include "SyncAgentConfigProperties.h"
 #include "SyncCommonDefs.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -1400,4 +1399,4 @@ void SessionHandlerTest::regression_NB153701_04()
 
 }
 
-TESTLOADER_ADD_TEST(SessionHandlerTest);
+QTEST_MAIN(SessionHandlerTest)

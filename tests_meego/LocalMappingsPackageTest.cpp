@@ -39,7 +39,6 @@
 #include "QtEncoder.h"
 #include "Fragments.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -88,4 +87,4 @@ void LocalMappingsPackageTest::testPackage()
 
 
 
-TESTLOADER_ADD_TEST(LocalMappingsPackageTest);
+QTEST_MAIN(LocalMappingsPackageTest)

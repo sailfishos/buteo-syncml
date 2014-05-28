@@ -33,7 +33,6 @@
 
 #include "SyncResultTest.h"
 #include "SyncResults.h"
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -94,4 +93,4 @@ void SyncResultsTest::testAddProcessedItem()
 
 
 
-TESTLOADER_ADD_TEST(SyncResultsTest);
+QTEST_MAIN(DataSync::SyncResultsTest)

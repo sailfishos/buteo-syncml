@@ -34,7 +34,6 @@
 #include "AlertPackageTest.h"
 #include "AlertPackage.h"
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
 #include "Mock.h"
 #include "QtEncoder.h"
 
@@ -108,4 +107,4 @@ void AlertPackageTest::testWrite()
     QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_ALERT) != -1);
 }
 
-TESTLOADER_ADD_TEST(AlertPackageTest);
+QTEST_MAIN(AlertPackageTest)

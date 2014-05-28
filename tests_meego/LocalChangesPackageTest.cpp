@@ -41,7 +41,6 @@
 #include "Mock.h"
 #include "Fragments.h"
 
-#include "TestLoader.h"
 
 
 LocalChangesPackageStorage::LocalChangesPackageStorage( const QString& aSourceURI )
@@ -384,4 +383,4 @@ void LocalChangesPackageTest::testLargeObjects()
     QVERIFY( !result_xml2.contains( "MoreData" ) );
 
 }
-TESTLOADER_ADD_TEST(LocalChangesPackageTest);
+QTEST_MAIN(LocalChangesPackageTest)

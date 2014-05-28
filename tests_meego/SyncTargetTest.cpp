@@ -35,7 +35,6 @@
 #include "SyncTarget.h"
 #include "DatabaseHandler.h"
 #include "Mock.h"
-#include "TestLoader.h"
 #include "ChangeLog.h"
 
 using namespace DataSync;
@@ -96,4 +95,4 @@ void SyncTargetTest::testSetRefreshFromClient()
     QCOMPARE( iSyncTarget->setRefreshFromClient(), false );
 }
 
-TESTLOADER_ADD_TEST(SyncTargetTest);
+QTEST_MAIN(DataSync::SyncTargetTest)

@@ -36,7 +36,6 @@
 #include <QtTest>
 
 #include "ServerSessionHandler.h"
-#include "TestLoader.h"
 #include "SyncAgentConfig.h"
 #include "datatypes.h"
 #include "Mock.h"
@@ -400,4 +399,4 @@ void ServerSessionHandlerTest::testSetClientRefresh()
     QCOMPARE( status, REFRESH_REQUIRED );
 }
 
-TESTLOADER_ADD_TEST(ServerSessionHandlerTest);
+QTEST_MAIN(ServerSessionHandlerTest)

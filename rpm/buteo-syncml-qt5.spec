@@ -52,10 +52,7 @@ Requires: %{name} = %{version}-%{release}
 
 %files tests
 %defattr(-,root,root,-)
-/opt/tests/buteo-syncml/test-definition/tests.xml
-/opt/tests/buteo-syncml/libbuteosyncml-tests
-/opt/tests/buteo-syncml/runstarget.sh
-/opt/tests/buteo-syncml/data/
+/opt/tests/buteo-syncml/*
 
 
 %prep

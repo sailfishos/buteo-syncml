@@ -41,7 +41,6 @@
 #include "QtEncoder.h"
 #include "SyncMLMessage.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -699,5 +698,5 @@ void ResponseGeneratorTest::test208762()
 
 }
         
-TESTLOADER_ADD_TEST(ResponseGeneratorTest);
+QTEST_MAIN(DataSync::ResponseGeneratorTest)
 

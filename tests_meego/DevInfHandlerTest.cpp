@@ -36,7 +36,6 @@
 #include "DevInfHandler.h"
 #include "ResponseGenerator.h"
 #include "DevInfPackage.h"
-#include "TestLoader.h"
 
 #include "LogMacros.h"
 
@@ -202,5 +201,5 @@ void DevInfHandlerTest::testHandleResults()
     QCOMPARE( response, SUCCESS );
 }
 
-TESTLOADER_ADD_TEST(DevInfHandlerTest);
+QTEST_MAIN(DevInfHandlerTest)
 

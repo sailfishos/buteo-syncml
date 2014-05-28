@@ -37,7 +37,6 @@
 #include "OBEXTransport.h"
 #include "SyncAgentConfigProperties.h"
 
-#include "TestLoader.h"
 #include "TestUtils.h"
 #include "Fragments.h"
 #include "Mock.h"
@@ -107,4 +106,4 @@ void OBEXTransportTest::testClientSend()
 }
 
 
-TESTLOADER_ADD_TEST(OBEXTransportTest);
+QTEST_MAIN(OBEXTransportTest)

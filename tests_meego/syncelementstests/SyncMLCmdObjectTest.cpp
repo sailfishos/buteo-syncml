@@ -35,7 +35,6 @@
 
 #include <QtTest>
 
-#include "TestLoader.h"
 #include "SyncMLCmdObject.h"
 
 using namespace DataSync;
@@ -106,4 +105,4 @@ void SyncMLCmdObjectTest::testAddGetChildren()
 
 }
 
-TESTLOADER_ADD_TEST(SyncMLCmdObjectTest);
+QTEST_MAIN(SyncMLCmdObjectTest)

@@ -38,7 +38,6 @@
 #include "QtEncoder.h"
 #include "LibWbXML2Encoder.h"
 #include "TestUtils.h"
-#include "TestLoader.h"
 #include "datatypes.h"
 
 #include <QtTest>
@@ -133,4 +132,4 @@ void SyncMLItemTest::regressionNB188615_03()
 
 }
 
-TESTLOADER_ADD_TEST(SyncMLItemTest);
+QTEST_MAIN(SyncMLItemTest)

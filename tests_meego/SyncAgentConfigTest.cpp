@@ -36,7 +36,6 @@
 #include "SyncAgentConfig.h"
 #include "SyncAgentConfigProperties.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -109,4 +108,4 @@ void SyncAgentConfigTest::testConfParsing()
 
 }
 
-TESTLOADER_ADD_TEST(SyncAgentConfigTest);
+QTEST_MAIN(DataSync::SyncAgentConfigTest)

@@ -33,10 +33,9 @@
 
 #include "SyncMLStatusTest.h"
 
-#include "TestLoader.h"
 
 void SyncMLStatusTest::testSyncMLStatus()
 {
 }
 
-TESTLOADER_ADD_TEST(SyncMLStatusTest);
+QTEST_MAIN(SyncMLStatusTest)

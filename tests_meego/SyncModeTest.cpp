@@ -36,7 +36,6 @@
 #include "SyncMode.h"
 #include "datatypes.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -208,4 +207,4 @@ void SyncModeTest::testToSyncML()
     QCOMPARE(mode.toSyncMLCode(), -1);
 }
 
-TESTLOADER_ADD_TEST(SyncModeTest);
+QTEST_MAIN(DataSync::SyncModeTest)

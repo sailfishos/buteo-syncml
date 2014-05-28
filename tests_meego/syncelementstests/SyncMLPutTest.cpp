@@ -33,6 +33,5 @@
 
 #include "SyncMLPutTest.h"
 
-#include "TestLoader.h"
 
-TESTLOADER_ADD_TEST(SyncMLPutTest);
+QTEST_MAIN(SyncMLPutTest)

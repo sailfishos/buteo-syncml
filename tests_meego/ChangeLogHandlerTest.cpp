@@ -36,7 +36,6 @@
 #include "ChangeLogHandler.h"
 #include "DatabaseHandler.h"
 #include "datatypes.h"
-#include "TestLoader.h"
 using namespace DataSync;
 
 #include <QTest>
@@ -89,4 +88,4 @@ void ChangeLogHandlerTest::testCreateChangeLogTable()
 
 }
 
-TESTLOADER_ADD_TEST(ChangeLogHandlerTest);
+QTEST_MAIN(ChangeLogHandlerTest)

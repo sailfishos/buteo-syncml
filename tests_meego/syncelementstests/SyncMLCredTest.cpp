@@ -33,9 +33,8 @@
 
 #include "SyncMLCredTest.h"
 
-#include "TestLoader.h"
 
 // @todo: SyncMLCred no longer generates basic and md5 data by itself, now it
 //        is handled by AuthHelper. Proper tests should be written for it
 
-TESTLOADER_ADD_TEST(SyncMLCredTest);
+QTEST_MAIN(SyncMLCredTest)

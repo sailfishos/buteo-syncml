@@ -36,7 +36,6 @@
 #include "DatabaseHandler.h"
 #include "NonceStorage.h"
 
-#include "TestLoader.h"
 
 const QString DB( "/tmp/noncestoragetest.db" );
 const QString LOCALDEVICE( "localDevice" );
@@ -73,5 +72,5 @@ void NonceStorageTest::testClearNonce()
     QVERIFY( nonces.nonce().isEmpty() );
 }
 
-TESTLOADER_ADD_TEST(NonceStorageTest);
+QTEST_MAIN(DataSync::NonceStorageTest)
 

@@ -37,7 +37,6 @@
 #include "SyncMLAdd.h"
 #include "SyncMLDelete.h"
 #include "SyncMLReplace.h"
-#include "TestLoader.h"
 #include "QtEncoder.h"
 
 #include <QDebug>
@@ -66,4 +65,4 @@ void SyncMLSyncTest::testAddNumberOfChanges()
 
     QCOMPARE(output, expected);
 }
-TESTLOADER_ADD_TEST(SyncMLSyncTest);
+QTEST_MAIN(SyncMLSyncTest)
