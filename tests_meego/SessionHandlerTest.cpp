@@ -83,16 +83,12 @@ void SessionHandlerTest::releaseStorage( StoragePlugin* aStorage )
 
 void SessionHandlerTest::init()
 {
-    // See DataSync::DatabaseHandler::DatabaseHandler()
-    QString effectivePath = Sync::syncCacheDir() + QDir::separator() + DBFILE;
-    QFile::remove( effectivePath );
+    QFile::remove( DBFILE );
 }
 
 void SessionHandlerTest::cleanup()
 {
-    // See DataSync::DatabaseHandler::DatabaseHandler()
-    QString effectivePath = Sync::syncCacheDir() + QDir::separator() + DBFILE;
-    QFile::remove( effectivePath );
+    QFile::remove( DBFILE );
 }
 
 void SessionHandlerTest::testClientWithClientInitiated()
