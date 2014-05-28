@@ -67,7 +67,11 @@ void SyncAgentTest::releaseStorage( StoragePlugin* aStorage )
 void SyncAgentTest::testSync()
 {
     createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve(
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
             "libbuteosyncml.so", "createSyncAgent");
+#else
+            "libbuteosyncml5.so", "createSyncAgent");
+#endif
     QVERIFY(NULL != createSyncAgent);
     SyncAgent* agent = createSyncAgent(NULL);
     QVERIFY(NULL != agent);
@@ -158,7 +162,11 @@ void SyncAgentTest::testSync()
     QCOMPARE(agent->cleanUp(&config), false);
 
     destroySyncAgent_t* destroySyncAgent =
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         (destroySyncAgent_t*) QLibrary::resolve("libbuteosyncml.so",
+#else
+        (destroySyncAgent_t*) QLibrary::resolve("libbuteosyncml5.so",
+#endif
                 "destroySyncAgent");
     QVERIFY(NULL != destroySyncAgent);
     destroySyncAgent(agent);
