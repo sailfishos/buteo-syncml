@@ -106,7 +106,7 @@ void NonceStorage::setNonce( const QByteArray& aNonce )
 
     clearNonce();
 
-    const QString insertQuery( "INSERT INTO nonces(local_device, remote_device, nonce) values(:local_device, :remove_device, :nonce)" );
+    const QString insertQuery( "INSERT INTO nonces(local_device, remote_device, nonce) values(:local_device, :remote_device, :nonce)" );
 
     QSqlQuery query( iDbHandle );
 
