@@ -9,48 +9,49 @@ SUBDIRS = \
     syncelementstests \
     transporttests \
 
-OTHER_FILES += testfiles/transport_initrequest_nohdr.txt \
-    testfiles/transport_initrequest.txt \
-    testfiles/toXMLtest.txt \
-    testfiles/testURI.txt \
-    testfiles/testMap.txt \
-    testfiles/testAlert.txt \
-    testfiles/syncml_resp5.txt \
-    testfiles/syncml_resp4.txt \
-    testfiles/syncml_resp3.txt \
-    testfiles/syncml_resp2.txt \
-    testfiles/syncml_resp.txt \
-    testfiles/syncml_init.txt \
-    testfiles/SyncMLHdrTest_11.txt \
-    testfiles/SyncMLHdrTest.txt \
-    testfiles/resp.txt \
-    testfiles/basicbasetransport.txt \
-    testfiles/basicbasetransport.bin \
-    testfiles/basicbasetransport2.txt \
-    testfiles/cmdhandler_put.txt \
-    testfiles/cmdhandler_get.txt \
-    testfiles/SAN01.bin \
-    testfiles/SAN02.bin \
-    testfiles/obexresp01.bin \
-    testfiles/obexresp02.bin \
-    testfiles/obexresp03.bin \
-    testfiles/respinvalid1.txt \
-    testfiles/respinvalid2.txt \
-    testfiles/respinvalid3.txt \
-    testfiles/respinvalid4.txt \
-    testfiles/respinvalid5.txt \
-    testfiles/respinvalid6.txt \
-    testfiles/testconf.xsd \
-    testfiles/testconf1.xml \
-    testfiles/devinf01.txt \
-    testfiles/devinf02.txt \
-    testfiles/subcommands01.txt \
-    testfiles/resp2.txt
+OTHER_FILES += \
+    data/transport_initrequest_nohdr.txt \
+    data/transport_initrequest.txt \
+    data/toXMLtest.txt \
+    data/testURI.txt \
+    data/testMap.txt \
+    data/testAlert.txt \
+    data/syncml_resp5.txt \
+    data/syncml_resp4.txt \
+    data/syncml_resp3.txt \
+    data/syncml_resp2.txt \
+    data/syncml_resp.txt \
+    data/syncml_init.txt \
+    data/SyncMLHdrTest_11.txt \
+    data/SyncMLHdrTest.txt \
+    data/resp.txt \
+    data/basicbasetransport.txt \
+    data/basicbasetransport.bin \
+    data/basicbasetransport2.txt \
+    data/cmdhandler_put.txt \
+    data/cmdhandler_get.txt \
+    data/SAN01.bin \
+    data/SAN02.bin \
+    data/obexresp01.bin \
+    data/obexresp02.bin \
+    data/obexresp03.bin \
+    data/respinvalid1.txt \
+    data/respinvalid2.txt \
+    data/respinvalid3.txt \
+    data/respinvalid4.txt \
+    data/respinvalid5.txt \
+    data/respinvalid6.txt \
+    data/testconf.xsd \
+    data/testconf1.xml \
+    data/devinf01.txt \
+    data/devinf02.txt \
+    data/subcommands01.txt \
+    data/resp2.txt
 
 # install
-testfiles.files = testfiles/*
-testfiles.path = $${INSTALL_TESTDATADIR}
-INSTALLS += testfiles
+testdata.files = data/*
+testdata.path = $${INSTALL_TESTDATADIR}
+INSTALLS += testdata
 testdefinition.files = tests.xml
 testdefinition.path = $${INSTALL_TESTDIR}
 INSTALLS += testdefinition

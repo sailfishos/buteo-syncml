@@ -13,3 +13,11 @@ LIBS += -L$${OUT_PWD}/$${tests_subdir_r} -lTestUtils
 
 target.path = $${INSTALL_TESTDIR}/$${tests_subdir}
 INSTALLS += target
+
+check.depends = all
+check.commands = '\
+    cd "$${PWD}" \
+    && export LD_LIBRARY_PATH="$${OUT_PWD}/$${tests_subdir_r}/../src:\$\${LD_LIBRARY_PATH}" \
+    && $${OUT_PWD}/$${TARGET}'
+check.CONFIG = phony
+QMAKE_EXTRA_TARGETS += check
