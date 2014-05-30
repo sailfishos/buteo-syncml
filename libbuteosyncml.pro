@@ -1,4 +1,4 @@
-include(doc/doc.pro)
+include(doc/doc.pri)
 
 CONFIG += ordered \
 	qt \

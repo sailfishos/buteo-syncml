@@ -32,6 +32,6 @@
 #* 
 #*/
 ./coverage.sh
-cd ../..
+cd ..
 doxygen Doxyfile
 
