@@ -5,7 +5,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-cd /opt/tests/buteo-syncml
+cd "$(dirname "${0}")"
 
 PATH=".:${PATH}"
 exec "${@}" -maxwarnings 0

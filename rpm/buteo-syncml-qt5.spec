@@ -52,7 +52,7 @@ Requires: %{name} = %{version}-%{release}
 
 %files tests
 %defattr(-,root,root,-)
-/opt/tests/buteo-syncml/*
+/opt/tests/%{name}/*
 
 
 %prep

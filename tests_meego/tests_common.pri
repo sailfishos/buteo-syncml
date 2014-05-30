@@ -44,8 +44,7 @@ DEPENDPATH = \
     $${PWD}/../src/server \
     $${PWD}/../src/client \
 
-# TODO: append $${DASH_QT_VERSION}
-INSTALL_TESTDIR = /opt/tests/buteo-syncml
+INSTALL_TESTDIR = /opt/tests/buteo-syncml$${DASH_QT_VERSION}
 INSTALL_TESTDATADIR = $${INSTALL_TESTDIR}/data
 
 }
