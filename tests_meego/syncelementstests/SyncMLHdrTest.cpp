@@ -38,7 +38,6 @@
 #include "Fragments.h"
 #include "TestUtils.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -87,4 +86,4 @@ void SyncMLHdrTest::testSyncMLHdr_12()
 }
 
 
-TESTLOADER_ADD_TEST(SyncMLHdrTest);
+QTEST_MAIN(SyncMLHdrTest)

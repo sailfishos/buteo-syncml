@@ -35,7 +35,6 @@
 #include "datatypes.h"
 #include "SyncMLMap.h"
 #include "SyncMLMapItem.h"
-#include "TestLoader.h"
 #include "QtEncoder.h"
 #include <QDebug>
 
@@ -64,4 +63,4 @@ void SyncMLMapTest::testBasic()
 
     QCOMPARE(output, expected);
 }
-TESTLOADER_ADD_TEST(SyncMLMapTest);
+QTEST_MAIN(SyncMLMapTest)

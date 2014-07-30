@@ -1,15 +1,168 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
-  <!-- Test suite, name mandatory - the same as test package name -->
-  <suite name="libmeegosyncml-tests" domain="synchronization"> 
-    <!-- At least one set per suite, name and description mandatory -->
-    <set name="SyncmlStack " description="tests for syncml-stack" feature="Sync ML 1.1">
+  <suite name="buteo-syncml-qt5" domain="synchronization">
 
-      <case name="libmeegosyncml-all" type="Functional" description="Running Tests for Syncml Stack" timeout="1000" subfeature="">
-        <!-- At least one step per test, expected_result optional - tells which return code is considered passed -->
-        <step expected_result="0">/opt/tests/buteo-syncml/runstarget.sh /opt/tests/buteo-syncml/libbuteosyncml-tests</step>
+    <set name="general" description="buteo-syncml-qt5 general tests" feature="Sync ML 1.1">
+      <case name="AlertPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh AlertPackageTest</step>
       </case>
-
+      <case name="AuthHelperTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh AuthHelperTest</step>
+      </case>
+      <case name="AuthenticationPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh AuthenticationPackageTest</step>
+      </case>
+      <!--case name="ChangeLogHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh ChangeLogHandlerTest</step>
+      </case-->
+      <case name="ChangeLogTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh ChangeLogTest</step>
+      </case>
+      <case name="CommandHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh CommandHandlerTest</step>
+      </case>
+      <case name="ConflictResolverTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh ConflictResolverTest</step>
+      </case>
+      <case name="DevInfHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh DevInfHandlerTest</step>
+      </case>
+      <case name="DevInfPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh DevInfPackageTest</step>
+      </case>
+      <case name="FinalPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh FinalPackageTest</step>
+      </case>
+      <case name="LocalChangesPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh LocalChangesPackageTest</step>
+      </case>
+      <case name="LocalMappingsPackageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh LocalMappingsPackageTest</step>
+      </case>
+      <case name="NonceStorageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh NonceStorageTest</step>
+      </case>
+      <case name="ResponseGeneratorTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh ResponseGeneratorTest</step>
+      </case>
+      <case name="SANTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SANTest</step>
+      </case>
+      <case name="SessionHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SessionHandlerTest</step>
+      </case>
+      <case name="StorageHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh StorageHandlerTest</step>
+      </case>
+      <case name="SyncAgentConfigTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncAgentConfigTest</step>
+      </case>
+      <case name="SyncAgentTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncAgentTest</step>
+      </case>
+      <case name="SyncItemPrefetcherTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncItemPrefetcherTest</step>
+      </case>
+      <case name="SyncModeTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncModeTest</step>
+      </case>
+      <case name="SyncResultTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncResultTest</step>
+      </case>
+      <case name="SyncTargetTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh SyncTargetTest</step>
+      </case>
     </set>
+
+    <set name="client" description="buteo-syncml-qt5 client tests" feature="Sync ML 1.1">
+      <case name="clienttests/ClientSessionHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh clienttests/ClientSessionHandlerTest</step>
+      </case>
+    </set>
+
+    <set name="server" description="buteo-syncml-qt5 server tests" feature="Sync ML 1.1">
+      <!--case name="servertests/ServerCommandHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh servertests/ServerCommandHandlerTest</step>
+      </case-->
+      <case name="servertests/ServerSessionHandlerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh servertests/ServerSessionHandlerTest</step>
+      </case>
+    </set>
+
+    <set name="sync-element" description="buteo-syncml-qt5 sync-element tests" feature="Sync ML 1.1">
+      <case name="syncelementstests/SyncMLAddTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLAddTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLAlertTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLAlertTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLBodyTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLBodyTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLCmdObjectTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLCmdObjectTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLCredTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLCredTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLDeleteTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLDeleteTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLDevInfTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLDevInfTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLHdrTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLHdrTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLItemTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLItemTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLLocalChangeTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLLocalChangeTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLMapTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLMapTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLMessageParserTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLMessageParserTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLMessageTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLMessageTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLPutTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLPutTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLReplaceTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLReplaceTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLResultsTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLResultsTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLStatusTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLStatusTest</step>
+      </case>
+      <case name="syncelementstests/SyncMLSyncTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh syncelementstests/SyncMLSyncTest</step>
+      </case>
+    </set>
+
+    <set name="transport" description="buteo-syncml-qt5 transport tests" feature="Sync ML 1.1">
+      <case name="transporttests/BaseTransportTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh transporttests/BaseTransportTest</step>
+      </case>
+      <case name="transporttests/ClientWorkerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh transporttests/ClientWorkerTest</step>
+      </case>
+      <case name="transporttests/HTTPTransportTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh transporttests/HTTPTransportTest</step>
+      </case>
+      <case name="transporttests/OBEXTransportTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh transporttests/OBEXTransportTest</step>
+      </case>
+      <case name="transporttests/ServerWorkerTest">
+        <step>/opt/tests/buteo-syncml-qt5/runstarget.sh transporttests/ServerWorkerTest</step>
+      </case>
+    </set>
+
   </suite>
 </testdefinition>

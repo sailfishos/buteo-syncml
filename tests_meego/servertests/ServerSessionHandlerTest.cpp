@@ -36,7 +36,6 @@
 #include <QtTest>
 
 #include "ServerSessionHandler.h"
-#include "TestLoader.h"
 #include "SyncAgentConfig.h"
 #include "datatypes.h"
 #include "Mock.h"
@@ -46,15 +45,18 @@
 
 using namespace DataSync;
 
+static QString DBFILE( "/tmp/serversessionhandler.db" );
+
 void ServerSessionHandlerTest::initTestCase()
 {
-    iDbHandler = new DatabaseHandler( "/tmp/serversessionhandler.db");
+    iDbHandler = new DatabaseHandler( DBFILE );
     iClientId = QString("clientId");
     iConfig = new SyncAgentConfig();
     QString localDb = "localcontacts";
     iStorage = new MockStorage( localDb );
     iTransport = new MockTransport(QString("data/transport_initrequest_nohdr.txt"));
     iConfig->setTransport(iTransport);
+    iConfig->setDatabaseFilePath( DBFILE );
     const SyncAgentConfig *tempConstConfig = iConfig;
     iHandler = new ServerSessionHandler(tempConstConfig);
 }
@@ -285,6 +287,7 @@ void ServerSessionHandlerTest::regression_NB166841_01()
     const QString nextAnchor( "0" );
 
     SyncAgentConfig config;
+    config.setDatabaseFilePath( DBFILE );
     ServerSessionHandler sessionHandler(&config);
 
     MockStorage* storage = new MockStorage( sourceURI );
@@ -299,7 +302,9 @@ void ServerSessionHandlerTest::regression_NB166841_01()
     item.meta.anchor.next = nextAnchor;
     alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
-    QCOMPARE( status, SUCCESS );
+    // Intentionally expecting REFRESH_REQUIRED inst. of SUCCESS. Would need
+    // TYPE_FAST and valid last anchor otherwise.
+    QCOMPARE( status, REFRESH_REQUIRED );
 }
 
 void ServerSessionHandlerTest::regression_NB166841_02()
@@ -311,6 +316,7 @@ void ServerSessionHandlerTest::regression_NB166841_02()
     const QString nextAnchor( "0" );
 
     SyncAgentConfig config;
+    config.setDatabaseFilePath( DBFILE );
     ServerSessionHandler sessionHandler(&config);
 
     MockStorage* storage = new MockStorage( sourceURI, mimeURI );
@@ -325,7 +331,9 @@ void ServerSessionHandlerTest::regression_NB166841_02()
     item.meta.anchor.next = nextAnchor;
     alert.items.append(item);
     ResponseStatusCode status = sessionHandler.setupTargetByClient(syncMode,alert);
-    QCOMPARE( status, SUCCESS );
+    // Intentionally expecting REFRESH_REQUIRED inst. of SUCCESS. Would need
+    // TYPE_FAST and valid last anchor otherwise.
+    QCOMPARE( status, REFRESH_REQUIRED );
 }
 
 void ServerSessionHandlerTest::regression_NB166841_03()
@@ -336,6 +344,7 @@ void ServerSessionHandlerTest::regression_NB166841_03()
     const QString nextAnchor( "0" );
 
     SyncAgentConfig config;
+    config.setDatabaseFilePath( DBFILE );
     ServerSessionHandler sessionHandler(&config);
 
     SyncMode syncMode(DIRECTION_TWO_WAY, INIT_CLIENT, TYPE_SLOW);
@@ -354,6 +363,7 @@ void ServerSessionHandlerTest::regression_NB166841_04()
     const QString targetURI( "./source" );
 
     SyncAgentConfig config;
+    config.setDatabaseFilePath( DBFILE );
     ServerSessionHandler sessionHandler(&config);
 
     MockStorage* storage = new MockStorage( sourceURI );
@@ -381,6 +391,7 @@ void ServerSessionHandlerTest::testSetClientRefresh()
     SyncMode nextSyncMode(DIRECTION_FROM_CLIENT,INIT_CLIENT,TYPE_FAST);
 
     SyncAgentConfig config;
+    config.setDatabaseFilePath( DBFILE );
     ServerSessionHandler sessionHandler(&config);
 
     MockStorage* storage = new MockStorage( sourceURI );
@@ -400,4 +411,4 @@ void ServerSessionHandlerTest::testSetClientRefresh()
     QCOMPARE( status, REFRESH_REQUIRED );
 }
 
-TESTLOADER_ADD_TEST(ServerSessionHandlerTest);
+QTEST_MAIN(ServerSessionHandlerTest)

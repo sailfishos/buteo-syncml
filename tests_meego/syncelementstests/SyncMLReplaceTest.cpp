@@ -33,6 +33,5 @@
 
 #include "SyncMLReplaceTest.h"
 
-#include "TestLoader.h"
 
-TESTLOADER_ADD_TEST(SyncMLReplaceTest);
+QTEST_MAIN(SyncMLReplaceTest)

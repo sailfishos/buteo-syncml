@@ -35,7 +35,6 @@
 
 #include "DevInfPackage.h"
 #include "SyncMLMessage.h"
-#include "TestLoader.h"
 #include "Mock.h"
 #include "QtEncoder.h"
 #include "DeviceInfo.h"
@@ -198,4 +197,4 @@ void DevInfPackageTest::verifyGet( const QByteArray& aData )
     QVERIFY( aData.contains( "./devinf12") );
 }
 
-TESTLOADER_ADD_TEST(DevInfPackageTest);
+QTEST_MAIN(DevInfPackageTest)

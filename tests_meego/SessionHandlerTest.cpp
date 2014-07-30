@@ -45,7 +45,6 @@
 #include "SyncAgentConfigProperties.h"
 #include "SyncCommonDefs.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -84,16 +83,12 @@ void SessionHandlerTest::releaseStorage( StoragePlugin* aStorage )
 
 void SessionHandlerTest::init()
 {
-    // See DataSync::DatabaseHandler::DatabaseHandler()
-    QString effectivePath = Sync::syncCacheDir() + QDir::separator() + DBFILE;
-    QFile::remove( effectivePath );
+    QFile::remove( DBFILE );
 }
 
 void SessionHandlerTest::cleanup()
 {
-    // See DataSync::DatabaseHandler::DatabaseHandler()
-    QString effectivePath = Sync::syncCacheDir() + QDir::separator() + DBFILE;
-    QFile::remove( effectivePath );
+    QFile::remove( DBFILE );
 }
 
 void SessionHandlerTest::testClientWithClientInitiated()
@@ -1400,4 +1395,4 @@ void SessionHandlerTest::regression_NB153701_04()
 
 }
 
-TESTLOADER_ADD_TEST(SessionHandlerTest);
+QTEST_MAIN(SessionHandlerTest)

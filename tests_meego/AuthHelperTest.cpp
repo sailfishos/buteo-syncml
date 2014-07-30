@@ -33,7 +33,6 @@
 
 #include "AuthHelperTest.h"
 #include "AuthHelper.h"
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -65,5 +64,5 @@ void AuthHelperTest::testAuthEncodeMD5()
 
 
 
-TESTLOADER_ADD_TEST(AuthHelperTest);
+QTEST_MAIN(DataSync::AuthHelperTest)
 

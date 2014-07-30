@@ -37,7 +37,6 @@
 #include "SyncMLMessage.h"
 #include "Fragments.h"
 #include "QtEncoder.h"
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -58,4 +57,4 @@ void FinalPackageTest::testPackage()
     QVERIFY(result_xml.indexOf(SYNCML_ELEMENT_FINAL) != -1);
 }
 
-TESTLOADER_ADD_TEST(FinalPackageTest);
+QTEST_MAIN(FinalPackageTest)

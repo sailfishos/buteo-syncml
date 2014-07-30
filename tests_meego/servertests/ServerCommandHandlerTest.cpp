@@ -38,7 +38,6 @@
 #include "datatypes.h"
 #include "Mock.h"
 #include "SyncTarget.h"
-#include "TestLoader.h"
 #include "StorageHandler.h"
 #include "ConflictResolver.h"
 #include "DeviceInfo.h"
@@ -339,7 +338,7 @@ void DataSync::ServerCommandHandlerTest::testHandleSyncLargeObject()
                                  responseGenerator, ConflictResolver, MODE_SERVER );
 }
 
-TESTLOADER_ADD_TEST(ServerCommandHandlerTest);
+QTEST_MAIN(DataSync::ServerCommandHandlerTest)
 
 
 

@@ -37,7 +37,6 @@
 
 #include "SyncItemPrefetcher.h"
 #include "Mock.h"
-#include "TestLoader.h"
 
 #include "LogMacros.h"
 
@@ -362,4 +361,4 @@ void SyncItemPrefetcherTest::testAbnormalBadItemCount()
     delete item;
 }
 
-TESTLOADER_ADD_TEST(SyncItemPrefetcherTest);
+QTEST_MAIN(SyncItemPrefetcherTest)

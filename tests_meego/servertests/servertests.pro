@@ -1,4 +1,7 @@
-SOURCES += ServerSessionHandlerTest.cpp 
+include(../tests_common.pri)
+TEMPLATE = subdirs
+SUBDIRS = \
+    ServerSessionHandlerTest.pro \
 
-HEADERS += ServerSessionHandlerTest.h 
-
+    # Dead code?
+    #ServerCommandHandlerTest.pro

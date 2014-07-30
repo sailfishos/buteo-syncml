@@ -33,6 +33,5 @@
 
 #include "SyncMLDeleteTest.h"
 
-#include "TestLoader.h"
 
-TESTLOADER_ADD_TEST(SyncMLDeleteTest);
+QTEST_MAIN(SyncMLDeleteTest)

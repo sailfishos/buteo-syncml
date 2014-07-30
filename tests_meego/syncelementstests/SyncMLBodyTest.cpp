@@ -33,7 +33,6 @@
 
 #include "SyncMLBody.h"
 #include "SyncMLBodyTest.h"
-#include "TestLoader.h"
 
 #include <QDebug>
 
@@ -45,4 +44,4 @@ void SyncMLBodyTest::testGetXML() {
 //  qDebug() << xmlBody;
 //  QVERIFY ( !xmlBody.isEmpty());
 }
-TESTLOADER_ADD_TEST(SyncMLBodyTest);
+QTEST_MAIN(SyncMLBodyTest)

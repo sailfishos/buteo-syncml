@@ -36,7 +36,6 @@
 #include "AuthenticationPackage.h"
 #include "SyncMLMessage.h"
 #include "QtEncoder.h"
-#include "TestLoader.h"
 #include "Fragments.h"
 #include "datatypes.h"
 
@@ -103,4 +102,4 @@ void AuthenticationPackageTest::testWrite2()
 
 }
 
-TESTLOADER_ADD_TEST(AuthenticationPackageTest);
+QTEST_MAIN(AuthenticationPackageTest)

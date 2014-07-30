@@ -36,7 +36,6 @@
 #include <QDebug>
 
 #include "TestUtils.h"
-#include "TestLoader.h"
 #include "ServerAlertedNotification.h"
 
 using namespace DataSync;
@@ -132,4 +131,4 @@ void SANTest::testGenerator01()
 
 }
 
-TESTLOADER_ADD_TEST( SANTest );
+QTEST_MAIN(DataSync::SANTest)

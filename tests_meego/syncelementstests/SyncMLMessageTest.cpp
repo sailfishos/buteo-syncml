@@ -33,10 +33,9 @@
 
 #include "SyncMLMessageTest.h"
 
-#include "TestLoader.h"
 
 void SyncMLMessageTest::testSyncMLMessage()
 {
     // @TODO add the actual test .
 }
-TESTLOADER_ADD_TEST(SyncMLMessageTest);
+QTEST_MAIN(SyncMLMessageTest)

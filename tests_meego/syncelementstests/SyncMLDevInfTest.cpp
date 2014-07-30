@@ -39,7 +39,6 @@
 #include "TestUtils.h"
 #include "QtEncoder.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -58,4 +57,4 @@ void SyncMLDevInfTest::testSyncMLDevInf() {
     QCOMPARE( expected.simplified(), output.simplified() );
 
 }
-TESTLOADER_ADD_TEST(SyncMLDevInfTest);
+QTEST_MAIN(SyncMLDevInfTest)

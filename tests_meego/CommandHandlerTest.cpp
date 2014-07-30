@@ -46,7 +46,6 @@
 #include "TestUtils.h"
 #include "LogMacros.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -658,4 +657,4 @@ void CommandHandlerTest::testHandleMap()
     QCOMPARE(target.getUIDMappings().at(1).iLocalUID, trg2);
 }
 
-TESTLOADER_ADD_TEST(CommandHandlerTest);
+QTEST_MAIN(DataSync::CommandHandlerTest)

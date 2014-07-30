@@ -38,7 +38,6 @@
 #include <QBuffer>
 
 #include "SyncMLMessageParser.h"
-#include "TestLoader.h"
 #include "TestUtils.h"
 #include "RemoteDeviceInfo.h"
 
@@ -552,4 +551,4 @@ void SyncMLMessageParserTest::testEmbeddedXML()
     QCOMPARE( status->items.first().data, expected );
 }
 
-TESTLOADER_ADD_TEST(SyncMLMessageParserTest);
+QTEST_MAIN(SyncMLMessageParserTest)

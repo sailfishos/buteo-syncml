@@ -33,7 +33,6 @@
 
 #include <QtTest>
 #include "SyncMLAddTest.h"
-#include "TestLoader.h"
 #include "SyncMLAdd.h"
 #include "QtEncoder.h"
 
@@ -54,5 +53,5 @@ void SyncMLAddTest::testSyncMLAdd() {
     }
 }
 
-TESTLOADER_ADD_TEST(SyncMLAddTest);
+QTEST_MAIN(SyncMLAddTest)
 

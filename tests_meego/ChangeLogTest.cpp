@@ -36,7 +36,6 @@
 
 #include "DatabaseHandler.h"
 #include "SyncMode.h"
-#include "TestLoader.h"
 
 #include "LogMacros.h"
 
@@ -252,4 +251,4 @@ void ChangeLogTest::testOwnedGetSetMaps()
 
 }
 
-TESTLOADER_ADD_TEST(ChangeLogTest);
+QTEST_MAIN(ChangeLogTest)

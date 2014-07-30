@@ -34,9 +34,8 @@
 
 #include "ConflictResolverTest.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
 
-TESTLOADER_ADD_TEST(ConflictResolverTest);
+QTEST_MAIN(DataSync::ConflictResolverTest)

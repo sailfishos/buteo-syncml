@@ -36,7 +36,6 @@
 #include "ConflictResolver.h"
 #include "LogMacros.h"
 
-#include "TestLoader.h"
 
 using namespace DataSync;
 
@@ -365,4 +364,4 @@ void StorageHandlerTest::regression_NB203771_05()
     QVERIFY( changes.removed.size() == 1 ); 
 }
 
-TESTLOADER_ADD_TEST(StorageHandlerTest);
+QTEST_MAIN(DataSync::StorageHandlerTest)

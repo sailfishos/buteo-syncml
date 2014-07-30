@@ -33,6 +33,5 @@
 
 #include "SyncMLLocalChangeTest.h"
 
-#include "TestLoader.h"
 
-TESTLOADER_ADD_TEST(SyncMLLocalChangeTest);
+QTEST_MAIN(SyncMLLocalChangeTest)
