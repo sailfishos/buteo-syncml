@@ -1,5 +1,5 @@
 Name: buteo-syncml-qt5
-Version: 0.5.7
+Version: 0.5.8
 Release: 1
 Summary: SyncML library for MeeGo sync
 Group: System/Libraries
