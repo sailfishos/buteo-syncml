@@ -134,8 +134,15 @@ void CommandHandler::handleStatus(StatusParams* aStatusParams )
 {
     FUNCTION_CALL_TRACE;
 
-    ResponseStatusCode statusCode = aStatusParams->data;
-    StatusCodeType statusType = getStatusType(statusCode);
+    ResponseStatusCode statusCode;
+    StatusCodeType statusType;
+
+    if (aStatusParams != NULL)
+        statusCode = aStatusParams->data;
+    else
+        return;
+
+    statusType = getStatusType(statusCode);
 
     switch (statusType) {
         case INFORMATIONAL:
@@ -171,10 +178,9 @@ void CommandHandler::handleStatus(StatusParams* aStatusParams )
         }
     }
 
-    if (aStatusParams != NULL &&
-        ( aStatusParams->cmd == SYNCML_ELEMENT_ADD ||
-          aStatusParams->cmd == SYNCML_ELEMENT_REPLACE ||
-          aStatusParams->cmd == SYNCML_ELEMENT_DELETE ) ) {
+    if ( aStatusParams->cmd == SYNCML_ELEMENT_ADD ||
+         aStatusParams->cmd == SYNCML_ELEMENT_REPLACE ||
+         aStatusParams->cmd == SYNCML_ELEMENT_DELETE ) {
         emit itemAcknowledged( aStatusParams->msgRef, aStatusParams->cmdRef, aStatusParams->sourceRef );
     }
 
