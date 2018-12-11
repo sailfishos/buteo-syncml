@@ -161,7 +161,7 @@ INSTALLS += target \
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_LIBDIR  = $$target.path
 QMAKE_PKGCONFIG_INCDIR  = $$headers.path
-pkgconfig.files = $${TARGET}.pc
+QMAKE_PKGCONFIG_VERSION = $$VERSION
 
 # Uncomment the following line to enable GCOV/LCOV report generation
 #CONFIG += gcov
