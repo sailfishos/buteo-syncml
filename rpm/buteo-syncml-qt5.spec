@@ -60,7 +60,7 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-qmake -qt=5 -recursive libbuteosyncml.pro
+%qmake5 "VERSION=%{version}" -recursive libbuteosyncml.pro
 make %{?_smp_mflags}
 
 

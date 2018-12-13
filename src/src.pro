@@ -4,12 +4,7 @@ include(client/client.pro)
 include(transport/transport.pro)
 
 TEMPLATE = lib
-equals(QT_MAJOR_VERSION, 4): TARGET = buteosyncml
-equals(QT_MAJOR_VERSION, 5): TARGET = buteosyncml5
-
-VER_MAJ = 0
-VER_MIN = 4
-VER_PAT = 6
+TARGET = buteosyncml5
 
 VPATH += client \
     syncelements \
@@ -21,8 +16,7 @@ CONFIG += dll \
     create_prl \
     link_pkgconfig
 
-equals(QT_MAJOR_VERSION, 4): PKGCONFIG = buteosyncfw
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG = buteosyncfw5
+PKGCONFIG = buteosyncfw5
 
 INCLUDEPATH += . \
         syncelements \
@@ -122,8 +116,7 @@ OTHER_FILES += config/meego-syncml-conf.xsd \
 
 LIBS += -lsqlite3 -lwbxml2 -lopenobex
 
-equals(QT_MAJOR_VERSION, 4): QTDIR = /usr/lib/qt4
-equals(QT_MAJOR_VERSION, 5): QTDIR = /usr/lib/qt5
+QTDIR = /usr/lib/qt5
 
 QT += network \
     xml \
@@ -145,9 +138,7 @@ QMAKE_CLEAN += lib*.so* \
 
 #QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
-equals(QT_MAJOR_VERSION, 4): headers.path  = /usr/include/buteosyncml
-equals(QT_MAJOR_VERSION, 5): headers.path  = /usr/include/buteosyncml5
-
+headers.path  = /usr/include/buteosyncml5
 headers.files = $$HEADERS
 target.path   = /usr/lib
 config.path   = /etc/buteo
@@ -161,7 +152,7 @@ INSTALLS += target \
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
 QMAKE_PKGCONFIG_LIBDIR  = $$target.path
 QMAKE_PKGCONFIG_INCDIR  = $$headers.path
-pkgconfig.files = $${TARGET}.pc
+QMAKE_PKGCONFIG_VERSION = $$VERSION
 
 # Uncomment the following line to enable GCOV/LCOV report generation
 #CONFIG += gcov
