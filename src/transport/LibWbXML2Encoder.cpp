@@ -35,6 +35,7 @@
 
 #include "SyncMLMessage.h"
 #include "datatypes.h"
+#include <wbxml/wbxml_encoder.h>
 
 #include "LogMacros.h"
 
@@ -174,19 +175,28 @@ bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteA
 
     LOG_DEBUG("Converting WbXML to XML");
 
-    WBXMLGenXMLParams params;
-    params.lang = WBXML_LANG_UNKNOWN;
+    WBXMLError error = WBXML_OK;
+    WBXMLConvWBXML2XML *conv = NULL;
+
+    error = wbxml_conv_wbxml2xml_create( &conv );
+    if (error != WBXML_OK) {
+        LOG_DEBUG("WbXML to XML conversion failed: " << (const char* )wbxml_errors_string( error ) );
+        return false;
+    }
+
+    wbxml_conv_wbxml2xml_set_language( conv, WBXML_LANG_UNKNOWN );
 
     if( aPrettyPrint ) {
-        params.gen_type = WBXML_GEN_XML_INDENT;
-        params.indent = 3;
+        wbxml_conv_wbxml2xml_set_gen_type( conv, WBXML_GEN_XML_INDENT );
+        wbxml_conv_wbxml2xml_set_indent( conv, 3 );
     }
     else {
-        params.gen_type = WBXML_GEN_XML_COMPACT;
-        params.indent = 0;
+        wbxml_conv_wbxml2xml_set_gen_type( conv, WBXML_GEN_XML_COMPACT );
+        wbxml_conv_wbxml2xml_set_indent( conv, 0 );
     }
 
-    params.keep_ignorable_ws = TRUE;
+    wbxml_conv_wbxml2xml_enable_preserve_whitespaces( conv );
+    wbxml_conv_wbxml2xml_set_charset( conv, WBXML_CHARSET_UNKNOWN );
 
     const WB_UTINY* wbxml = reinterpret_cast<const WB_UTINY*>( aWbXMLDocument.constData() );
     WB_ULONG wbxml_len = aWbXMLDocument.size();
@@ -196,9 +206,9 @@ bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteA
 
     LOG_DEBUG( "WbXML buffer size: " << wbxml_len );
 
-    WBXMLError error = wbxml_conv_wbxml2xml_withlen( const_cast<WB_UTINY*>( wbxml ), wbxml_len,
-                                                     &xml, &xml_len,
-                                                     &params );
+    error = wbxml_conv_wbxml2xml_run( conv, const_cast<WB_UTINY*>( wbxml ), wbxml_len,
+                                                       &xml, &xml_len);
+    wbxml_conv_wbxml2xml_destroy(conv);
 
     QByteArray data;
 

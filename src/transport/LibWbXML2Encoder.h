@@ -39,9 +39,13 @@
 // libwbxml2-0 includes wbxml_config.h in wbxml.h.
 #define WBXML_SUPPORT_SYNCML
 
-#include <wbxml.h>
+#include <wbxml/wbxml.h>
 
 #include "SyncAgentConsts.h"
+
+// Defined opaquely to match the full definitions in <wbxml/wbxml_tree.h>
+typedef struct WBXMLTree_s WBXMLTree;
+typedef struct WBXMLTreeNode_s WBXMLTreeNode;
 
 namespace DataSync {
 
