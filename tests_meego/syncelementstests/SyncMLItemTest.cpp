@@ -73,9 +73,9 @@ void SyncMLItemTest::regressionNB188615_01()
     // Regression test for NB#188615: make sure that data encoded
     // in UTF-8 is written properly when constructing XML using
     // Qt
-    const char utf[] = { 0xC5, 0x9F, 0 };
+    const unsigned char utf[] = { 0xC5, 0x9F, 0 };
 
-    QByteArray data( utf );
+    QByteArray data( (const char*)utf );
 
     SyncMLItem item;
 
@@ -94,8 +94,8 @@ void SyncMLItemTest::regressionNB188615_02()
     // Regression test for NB#188615: make sure that data encoded
     // in UTF-8 is written properly when constructing XML using
     // libwbxml2
-    const char utf[] = { 0xC5, 0x9F, 0 };
-    QByteArray data( utf );
+    const unsigned char utf[] = { 0xC5, 0x9F, 0 };
+    QByteArray data( (const char*)utf );
 
     SyncMLItem item;
     // Add namespace attribute, needed by libwbxml2
@@ -115,9 +115,9 @@ void SyncMLItemTest::regressionNB188615_03()
     // Regression test for NB#188615: make sure that data encoded
     // in UTF-8 is written properly when constructing WnXML using
     // libwbxml2
-    const char utf[] = { 0xC5, 0x9F, 0 };
+    const unsigned char utf[] = { 0xC5, 0x9F, 0 };
 
-    QByteArray data( utf );
+    QByteArray data( (const char*)utf );
 
     SyncMLItem item;
     // Add namespace attribute, needed by libwbxml2
