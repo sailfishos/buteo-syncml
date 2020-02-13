@@ -14,7 +14,8 @@ CONFIG += link_prl link_pkgconfig
 # So if remember to compile them when debugging
 LIBS += -L$${OUT_PWD}/$${tests_subdir_r}/../src/
 
-PKGCONFIG += buteosyncfw5
+PKGCONFIG += buteosyncfw5 \
+    libwbxml2
 LIBS += -lbuteosyncml5
 
 # This is needed to avoid adding the /usr/lib link directory before the

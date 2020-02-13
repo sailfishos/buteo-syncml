@@ -1,6 +1,7 @@
 include(tests_common.pri)
 TEMPLATE = subdirs
 CONFIG += ordered
+PKGCONFIG = libwbxml2
 SUBDIRS = \
     TestUtils.pro \
     generaltests.pro \

@@ -16,7 +16,8 @@ CONFIG += dll \
     create_prl \
     link_pkgconfig
 
-PKGCONFIG = buteosyncfw5
+PKGCONFIG = buteosyncfw5 \
+    libwbxml2
 
 INCLUDEPATH += . \
         syncelements \
@@ -114,7 +115,7 @@ HEADERS += SyncItem.h \
 OTHER_FILES += config/meego-syncml-conf.xsd \
                config/meego-syncml-conf.xml
 
-LIBS += -lsqlite3 -lwbxml2 -lopenobex
+LIBS += -lsqlite3 -lopenobex
 
 QTDIR = /usr/lib/qt5
 
