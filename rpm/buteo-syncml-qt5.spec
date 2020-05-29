@@ -2,9 +2,8 @@ Name: buteo-syncml-qt5
 Version: 0.5.9
 Release: 1
 Summary: SyncML library for MeeGo sync
-Group: System/Libraries
-License: LGPLv2.1
-URL: https://github.com/nemomobile/buteo-syncml
+License: LGPLv2+
+URL: https://git.sailfishos.org/mer-core/buteo-syncml
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: doxygen
 BuildRequires: pkgconfig(Qt5Core)
@@ -28,7 +27,6 @@ BuildRequires: pkgconfig(buteosyncfw5) >= 0.6.24
 
 %package devel
 Summary: Development files for %{name}
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 
 %description devel
@@ -44,7 +42,6 @@ Requires: %{name} = %{version}-%{release}
 
 %package tests
 Summary: Development files for %{name}
-Group: System/Libraries
 Requires: %{name} = %{version}-%{release}
 
 %description tests
