@@ -117,7 +117,7 @@ OTHER_FILES += config/meego-syncml-conf.xsd \
 
 LIBS += -lsqlite3 -lopenobex
 
-QTDIR = /usr/lib/qt5
+QTDIR = $$[QT_INSTALL_LIBS]/qt5
 
 QT += network \
     xml \
@@ -139,9 +139,9 @@ QMAKE_CLEAN += lib*.so* \
 
 #QMAKE_STRIPFLAGS_LIB += --strip-unneeded
 
-headers.path  = /usr/include/buteosyncml5
+headers.path  = $$PREFIX/include/buteosyncml5
 headers.files = $$HEADERS
-target.path   = /usr/lib
+target.path   = $$[QT_INSTALL_LIBS]
 config.path   = /etc/buteo
 config.files  = config/meego-syncml-conf.xsd \
                 config/meego-syncml-conf.xml
