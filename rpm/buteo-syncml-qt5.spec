@@ -1,5 +1,5 @@
 Name: buteo-syncml-qt5
-Version: 0.5.9
+Version: 0.5.13
 Release: 1
 Summary: SyncML library for MeeGo sync
 License: LGPLv2+
