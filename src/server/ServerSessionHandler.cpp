@@ -42,7 +42,7 @@
 #include "ServerAlertedNotification.h"
 #include "StorageProvider.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 
 using namespace DataSync;
@@ -52,18 +52,18 @@ ServerSessionHandler::ServerSessionHandler( const SyncAgentConfig* aConfig, QObj
    iConfig(aConfig)
 
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 }
 
 ServerSessionHandler::~ServerSessionHandler()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 void ServerSessionHandler::initiateSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !prepareSync() )
     {
@@ -74,7 +74,7 @@ void ServerSessionHandler::initiateSync()
     setupSession( sessionId );
     ProtocolVersion protocolVersion = getProtocolVersion();
 
-    LOG_DEBUG("Using protocol version " << protocolVersion);
+    qCDebug(lcSyncML) << "Using protocol version " << protocolVersion;
 
     QList<QString> sourceDbs = iConfig->getSourceDbs();
     QList< QPair<QString, QString> > storages;
@@ -96,14 +96,14 @@ void ServerSessionHandler::initiateSync()
 
     if( storages.count() != sourceDbs.count() )
     {
-        LOG_CRITICAL( "Could not find all targets, aborting sync" );
+        qCCritical(lcSyncML) << "Could not find all targets, aborting sync";
         abortSync( DATABASE_FAILURE, "Could not find all sync targets" );
         return;
     }
 
     if( !getTransport().init() )
     {
-        LOG_CRITICAL( "Could not initialize transport" );
+        qCCritical(lcSyncML) << "Could not initialize transport";
         abortSync( CONNECTION_ERROR, "Could not initiate transport" );
         return;
     }
@@ -121,7 +121,7 @@ void ServerSessionHandler::initiateSync()
 
 void ServerSessionHandler::serveRequest( QList<Fragment*>& aFragments )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !prepareSync() )
     {
@@ -133,7 +133,7 @@ void ServerSessionHandler::serveRequest( QList<Fragment*>& aFragments )
 
 void ServerSessionHandler::suspendSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Sync cannot be suspended or resumed from server. Therefore this function
     // should never be called. Abort with internal error in those situations
@@ -142,7 +142,7 @@ void ServerSessionHandler::suspendSync()
 
 void ServerSessionHandler::resumeSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Sync cannot be suspended or resumed from server. Therefore this function
     // should never be called. Abort with internal error in those situations
@@ -152,7 +152,7 @@ void ServerSessionHandler::resumeSync()
 void ServerSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState state = getSyncState();
 
@@ -168,7 +168,7 @@ ResponseStatusCode ServerSessionHandler::syncAlertReceived( const SyncMode& aSyn
                                                             CommandParams& aAlertParams )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status;
 
@@ -201,7 +201,7 @@ ResponseStatusCode ServerSessionHandler::syncAlertReceived( const SyncMode& aSyn
 bool ServerSessionHandler::syncReceived()
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState syncState = getSyncState();
 
@@ -250,7 +250,7 @@ bool ServerSessionHandler::syncReceived()
 bool ServerSessionHandler::mapReceived()
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState syncState = getSyncState();
 
@@ -275,7 +275,7 @@ bool ServerSessionHandler::mapReceived()
 
 void ServerSessionHandler::finalReceived()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState syncState = getSyncState();
 
@@ -348,7 +348,7 @@ void ServerSessionHandler::finalReceived()
 
 void ServerSessionHandler::messageParsed()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState syncState = getSyncState();
 
@@ -389,7 +389,7 @@ void ServerSessionHandler::messageParsed()
 
 void ServerSessionHandler::resendPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncState syncState = getSyncState();
 
@@ -422,11 +422,11 @@ void ServerSessionHandler::resendPackage()
 ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aSyncMode,
                                                               CommandParams& aAlertParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aAlertParams.items.isEmpty() )
     {
-        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert without any items! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -440,7 +440,7 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
         anchors.next.isEmpty() ||
         ( item.target.isEmpty() && meta.type.isEmpty() ) )
     {
-        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -474,7 +474,7 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
             || anchorMismatch( aSyncMode, *target, anchors.last ) )
     {
 
-        LOG_DEBUG("Anchor mismatch, refresh required");
+        qCDebug(lcSyncML) << "Anchor mismatch, refresh required";
         // Anchor mismatch, must revert to slow sync
         status = REFRESH_REQUIRED;
 
@@ -486,7 +486,7 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
         int datastoreIndex = -1;
         const QList<Datastore>& datastores = getDevInfHandler().getRemoteDeviceInfo().datastores();
 
-        LOG_DEBUG("Count for remote device stores:::"  << datastores.count());
+        qCDebug(lcSyncML) << "Count for remote device stores:::"  << datastores.count();
 
         for( int i = 0; i < datastores.count(); ++i )
         {
@@ -502,17 +502,17 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
             if( datastores[datastoreIndex].syncCaps().contains( DataSync::SYNCTYPE_FROMCLIENTSLOW ) &&
                 (clientInitiedRefresh = target->setRefreshFromClient()) )
             {
-                LOG_DEBUG("Anchor mismatch, client refresh required, sending 203 as client supports refresh");
+                qCDebug(lcSyncML) << "Anchor mismatch, client refresh required, sending 203 as client supports refresh";
             }
 
             if( !clientInitiedRefresh ){
-                LOG_DEBUG("Anchor mismatch, refresh required, sending 202");
+                qCDebug(lcSyncML) << "Anchor mismatch, refresh required, sending 202";
                 target->revertSyncMode();
             }
         }
         else
         {
-            LOG_DEBUG("Anchor mismatch but have no device info available, reverting");
+            qCDebug(lcSyncML) << "Anchor mismatch but have no device info available, reverting";
             target->revertSyncMode();
         }
 
@@ -540,11 +540,11 @@ ResponseStatusCode ServerSessionHandler::setupTargetByClient( const SyncMode& aS
 ResponseStatusCode ServerSessionHandler::acknowledgeTarget( const SyncMode& /*aSyncMode*/,
                                                             CommandParams& aAlertParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aAlertParams.items.isEmpty() )
     {
-        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert without any items! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -552,7 +552,7 @@ ResponseStatusCode ServerSessionHandler::acknowledgeTarget( const SyncMode& /*aS
 
     if( item.target.isEmpty() )
     {
-        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -576,7 +576,7 @@ ResponseStatusCode ServerSessionHandler::acknowledgeTarget( const SyncMode& /*aS
 
 void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qint32 alertCode = iConfig->getSyncMode().toSyncMLCode();
 
@@ -596,7 +596,7 @@ void ServerSessionHandler::composeSyncML11ServerAlertedSyncPackage( const QList<
 
 void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const QList< QPair<QString, QString> >& aStorages )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SANHandler handler;
     SANDS data;
@@ -622,13 +622,13 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const
     QString password = getConfig()->getPassword();
     if( !handler.generateSANMessageDS( data, user, password, message ) )
     {
-        LOG_CRITICAL( "Could not generate SyncML 1.2 SAN package" );
+        qCCritical(lcSyncML) << "Could not generate SyncML 1.2 SAN package";
         abortSync( INTERNAL_ERROR, "Error while generating 1.2 SAN package" );
         return;
     }
     if( !getTransport().sendSAN( message ) )
     {
-        LOG_CRITICAL( "Could not send SyncML 1.2 SAN package" );
+        qCCritical(lcSyncML) << "Could not send SyncML 1.2 SAN package";
         abortSync( INTERNAL_ERROR, "Error while sending 1.2 SAN package" );
     }
 
@@ -636,7 +636,7 @@ void ServerSessionHandler::composeAndSendSyncML12ServerAlertedSyncPackage( const
 
 void ServerSessionHandler::composeServerInitializationPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     composeServerInitialization();
 
@@ -647,7 +647,7 @@ void ServerSessionHandler::composeServerInitializationPackage()
 
 void ServerSessionHandler::composeServerModificationsPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // If doing sync without init phase, also send initialization
     if( isSyncWithoutInitPhase() ) {
@@ -662,7 +662,7 @@ void ServerSessionHandler::composeServerModificationsPackage()
 
 void ServerSessionHandler::composeMapAcknowledgementPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Close the package by appending Final
     getResponseGenerator().addPackage( new FinalPackage() );
@@ -671,7 +671,7 @@ void ServerSessionHandler::composeMapAcknowledgementPackage()
 
 void ServerSessionHandler::composeServerInitialization()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Sync init packages include alerts to inform client about the databases we wish to sync
     const QList<SyncTarget*>& targets = getSyncTargets();
@@ -692,7 +692,7 @@ void ServerSessionHandler::composeServerInitialization()
 
 void ServerSessionHandler::serverInitiatedSyncDS11( const QList< QPair<QString, QString> >& aStorages )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Send initialization package to client
     composeSyncML11ServerAlertedSyncPackage( aStorages );
@@ -704,7 +704,7 @@ void ServerSessionHandler::serverInitiatedSyncDS11( const QList< QPair<QString, 
 
 void ServerSessionHandler::serverInitiatedSyncDS12( const QList< QPair<QString, QString> >& aStorages )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Send initialization package to client
     composeAndSendSyncML12ServerAlertedSyncPackage( aStorages );

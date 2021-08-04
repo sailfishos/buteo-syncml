@@ -38,7 +38,7 @@
 #include "datatypes.h"
 #include "SyncAgentConfigProperties.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -46,7 +46,7 @@ HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent 
 : BaseTransport( aContext, aParent), iManager( 0 ), iFirstMessageSent( false ),
   iMaxNumberOfResendAttempts( 0 ), iNumberOfResendAttempts( 0 )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iManager = new QNetworkAccessManager;
 
@@ -56,7 +56,7 @@ HTTPTransport::HTTPTransport( const ProtocolContext& aContext, QObject* aParent 
 
 HTTPTransport::~HTTPTransport()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     delete iManager;
     iManager = NULL;
@@ -64,16 +64,16 @@ HTTPTransport::~HTTPTransport()
 
 void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aProperty == HTTPNUMBEROFRESENDATTEMPTSPROP )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         iMaxNumberOfResendAttempts = aValue.toInt();
     }
     else if( aProperty == HTTPPROXYHOSTPROP )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         QNetworkProxy proxy = iManager->proxy();
         proxy.setType( QNetworkProxy::HttpProxy );
         proxy.setHostName(aValue);
@@ -81,7 +81,7 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
     }
     else if( aProperty == HTTPPROXYPORTPROP )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         QNetworkProxy proxy = iManager->proxy();
         proxy.setType( QNetworkProxy::HttpProxy );
         proxy.setPort( aValue.toInt() );
@@ -92,7 +92,7 @@ void HTTPTransport::setProperty( const QString& aProperty, const QString& aValue
 
 bool HTTPTransport::init()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     connect( iManager, SIGNAL(finished(QNetworkReply *)),
               this, SLOT(httpRequestFinished(QNetworkReply *)), Qt::QueuedConnection);
@@ -112,7 +112,7 @@ bool HTTPTransport::init()
 
 void HTTPTransport::close()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool HTTPTransport::prepareSend()
@@ -123,7 +123,7 @@ bool HTTPTransport::prepareSend()
 
 bool HTTPTransport::doSend( const QByteArray& aData, const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( sendRequest( aData, aContentType ) )
     {
@@ -147,14 +147,14 @@ bool HTTPTransport::doSend( const QByteArray& aData, const QString& aContentType
 
 bool HTTPTransport::doReceive( const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     Q_UNUSED( aContentType );
     return true;
 }
 
 void HTTPTransport::setProxyConfig( const QNetworkProxy& aProxy )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iManager->setProxy( aProxy );
 }
 
@@ -171,7 +171,7 @@ void HTTPTransport::addXheader(const QString& aName, const QString& aValue)
 void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray& aContentType,
                                     int aContentLength )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QUrl url;
     // The URL might be percent encoded
@@ -194,7 +194,7 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
 #ifndef QT_NO_OPENSSL
     //do it only for https
     if( url.toString().contains(SYNCML_SCHEMA_HTTPS)) {
-        LOG_DEBUG("HTTPS protocol detected");
+        qCDebug(lcSyncML) << "HTTPS protocol detected";
 //        Don't remove the below commented code.
 //        this can be used while adding full fledged ssl support.
 //        QNetworkAccessManager sets the default configuration needed for https
@@ -212,18 +212,18 @@ void HTTPTransport::prepareRequest( QNetworkRequest& aRequest, const QByteArray&
 
 bool HTTPTransport::sendRequest( const QByteArray& aData, const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     // build the message, and send it
     QNetworkRequest request;
     prepareRequest( request, aContentType.toLatin1(), aData.size() );
 
 #ifndef QT_NO_DEBUG
     // Print the message
-    LOG_PROTOCOL("Sending request to" << request.url().host());
-    LOG_PROTOCOL("Headers:");
+    qCDebug(lcSyncMLProtocol) << "Sending request to" << request.url().host();
+    qCDebug(lcSyncMLProtocol) << "Headers:";
     QList<QByteArray> headers = request.rawHeaderList();
     foreach( const QByteArray& ar, headers ) {
-            LOG_PROTOCOL(ar << ": " << request.rawHeader(ar));
+            qCDebug(lcSyncMLProtocol) << ar << ": " << request.rawHeader(ar);
     }
 #endif  //  QT_NO_DEBUG
 
@@ -239,7 +239,7 @@ bool HTTPTransport::sendRequest( const QByteArray& aData, const QString& aConten
 
 bool HTTPTransport::shouldResend() const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // We should try to re-send a message if it's the first message to be sent,
     // and if we have some retry attempts left
@@ -253,9 +253,9 @@ bool HTTPTransport::shouldResend() const
 
 bool HTTPTransport::resend()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Attempting to re-send initialization package, attempt number:" << iNumberOfResendAttempts + 1 );
+    qCDebug(lcSyncML) << "Attempting to re-send initialization package, attempt number:" << iNumberOfResendAttempts + 1;
 
     if( sendRequest( iFirstMessageData, iFirstMessageContentType ) ) {
         ++iNumberOfResendAttempts;
@@ -269,17 +269,17 @@ bool HTTPTransport::resend()
 
 void HTTPTransport::slotNetworkStateChanged(bool aState)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if (aState == false) {
-        LOG_DEBUG("Network accessible state:"<<aState);
+        qCDebug(lcSyncML) << "Network accessible state:"<<aState;
         emit sendEvent(TRANSPORT_CONNECTION_FAILED, "Network error");
     }
 }
 
 void HTTPTransport::httpRequestFinished( QNetworkReply *aReply )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( aReply );
 
@@ -294,14 +294,14 @@ void HTTPTransport::httpRequestFinished( QNetworkReply *aReply )
                 // If message should not be re-sent, or the re-send fails, handle as
                 // an error
                 if( !shouldResend() || !resend() ) {
-                    LOG_DEBUG("Connection timeout:" << aReply->errorString());
+                    qCDebug(lcSyncML) << "Connection timeout:" << aReply->errorString();
                     emit sendEvent(TRANSPORT_CONNECTION_TIMEOUT, aReply->errorString());
                 }
                 break;
             }
             default:
             {
-                LOG_DEBUG("TRANSPORT ERROR REASON:" << aReply->errorString());
+                qCDebug(lcSyncML) << "TRANSPORT ERROR REASON:" << aReply->errorString();
                 emit sendEvent(TRANSPORT_CONNECTION_FAILED, aReply->errorString());
                 break;
             }
@@ -310,12 +310,12 @@ void HTTPTransport::httpRequestFinished( QNetworkReply *aReply )
     else {
 
 #ifndef QT_NO_DEBUG
-        LOG_PROTOCOL( "Received response" );
-        LOG_PROTOCOL( "Headers:" );
+        qCDebug(lcSyncMLProtocol) << "Received response" ;
+        qCDebug(lcSyncMLProtocol) << "Headers:" ;
 
         QList<QByteArray> headers = aReply->rawHeaderList();
         foreach( const QByteArray& ar, headers ) {
-                LOG_PROTOCOL(ar << ": " << aReply->rawHeader(ar));
+                qCDebug(lcSyncMLProtocol) << ar << ": " << aReply->rawHeader(ar);
         }
 #endif  //  QT_NO_DEBUG
 
@@ -345,36 +345,36 @@ void HTTPTransport::httpRequestFinished( QNetworkReply *aReply )
 }
 
 void HTTPTransport::authRequired(QNetworkReply* /*aReply*/, QAuthenticator* /*aAuth*/ ) {
-    FUNCTION_CALL_TRACE
-    LOG_DEBUG("Network Connection needs authentication");
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
+    qCDebug(lcSyncML) << "Network Connection needs authentication";
     emit sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, "Authentication required" );
 }
 
 void HTTPTransport::handleProxyAuthentication(QNetworkProxy& /*aProxy*/, QAuthenticator* /*aAuth*/ )
 {
-    FUNCTION_CALL_TRACE
-    LOG_DEBUG( "Proxy needs authentication" );
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
+    qCDebug(lcSyncML) << "Proxy needs authentication";
     sendEvent( TRANSPORT_CONNECTION_AUTHENTICATION_NEEDED, "Authentication required" );
 }
 
 #ifndef QT_NO_OPENSSL
 void HTTPTransport::sslErrors( QNetworkReply* aReply, const QList<QSslError>& aErrors ) {
-    FUNCTION_CALL_TRACE
-    LOG_DEBUG("SSL Errors received");
-    LOG_DEBUG("list size :" << aErrors.size());
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
+    qCDebug(lcSyncML) << "SSL Errors received";
+    qCDebug(lcSyncML) << "list size :" << aErrors.size();
     foreach( const QSslError& sslError , aErrors) {
-        LOG_DEBUG(sslError.errorString());
+        qCDebug(lcSyncML) << sslError.errorString();
         // the original version used isValid(), which would check if the certificate is not expired
         // or blacklisted; as that information might be useful in the log I guess that the intention
         // here was to check for a certificate
         if (!sslError.certificate().isNull()) {
-            LOG_DEBUG("StartDate: " << sslError.certificate().effectiveDate());
-            LOG_DEBUG("ExpiryDate:" << sslError.certificate().expiryDate());
-            LOG_DEBUG("Issuer Info:");
-            LOG_DEBUG("Organization:" << sslError.certificate().issuerInfo( QSslCertificate::Organization ) );
+            qCDebug(lcSyncML) << "StartDate: " << sslError.certificate().effectiveDate();
+            qCDebug(lcSyncML) << "ExpiryDate:" << sslError.certificate().expiryDate();
+            qCDebug(lcSyncML) << "Issuer Info:";
+            qCDebug(lcSyncML) << "Organization:" << sslError.certificate().issuerInfo( QSslCertificate::Organization );
         }
     }
-    LOG_DEBUG("Ignoring SSL Errors");
+    qCDebug(lcSyncML) << "Ignoring SSL Errors";
     aReply->ignoreSslErrors();
 
 }

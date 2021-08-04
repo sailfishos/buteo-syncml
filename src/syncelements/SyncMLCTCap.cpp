@@ -32,11 +32,12 @@
 */
 
 #include "SyncMLCTCap.h"
+#include "SyncMLGlobals.h"
 
 #include <QXmlStreamReader>
 
 #include "datatypes.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -50,7 +51,7 @@ SyncMLCTCap::~SyncMLCTCap()
 
 void SyncMLCTCap::addCTCap( const QByteArray& aDescription )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 
     QXmlStreamReader reader( aDescription );
@@ -75,7 +76,7 @@ void SyncMLCTCap::addCTCap( const QByteArray& aDescription )
 void SyncMLCTCap::processElement( QXmlStreamReader& aReader, SyncMLCmdObject* aParent )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncMLCmdObject* obj = new SyncMLCmdObject( aReader.name().toString() );
 

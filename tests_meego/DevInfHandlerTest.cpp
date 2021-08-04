@@ -37,7 +37,7 @@
 #include "ResponseGenerator.h"
 #include "DevInfPackage.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 

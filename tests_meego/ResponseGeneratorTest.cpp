@@ -32,7 +32,7 @@
 */
 
 #include <QDebug>
-#include <LogMacros.h>
+#include <SyncMLLogging.h>
 
 #include "ResponseGeneratorTest.h"
 
@@ -454,7 +454,7 @@ void ResponseGeneratorTest::testNB182304()
 
 void ResponseGeneratorTest::test208762()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const int maxMsgSize = 8000;
     ResponseGenerator respGen;

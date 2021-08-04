@@ -35,7 +35,7 @@
 
 #include <QCryptographicHash>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -86,7 +86,7 @@ bool SANHandler::checkDigest( const QByteArray& aMessage,
                               const QString& aPassword,
                               const QString& aNonce )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray messageDigest = aMessage.left( DIGEST_SIZE );
     QByteArray messageNotification = aMessage.mid( DIGEST_SIZE );
@@ -106,9 +106,9 @@ bool SANHandler::checkDigest( const QByteArray& aMessage,
 bool SANHandler::parseSANMessageDM( const QByteArray& aMessage,
                                     SANDM& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Parsing SAN message of" << aMessage.size() << "bytes" );
+    qCDebug(lcSyncML) << "Parsing SAN message of" << aMessage.size() << "bytes";
 
     QByteArray notification;
 
@@ -118,7 +118,7 @@ bool SANHandler::parseSANMessageDM( const QByteArray& aMessage,
     }
 
     if( !notification.isEmpty() ) {
-        LOG_WARNING( "Invalid notification body" );
+        qCWarning(lcSyncML) << "Invalid notification body";
         return false;
     }
 
@@ -128,9 +128,9 @@ bool SANHandler::parseSANMessageDM( const QByteArray& aMessage,
 bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
                                     SANDS &aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Parsing SAN message of" << aMessage.size() << "bytes" );
+    qCDebug(lcSyncML) << "Parsing SAN message of" << aMessage.size() << "bytes";
 
     QByteArray notification;
 
@@ -140,14 +140,14 @@ bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
     }
 
     if( notification.isEmpty() ) {
-        LOG_WARNING( "Invalid notification body" );
+        qCWarning(lcSyncML) << "Invalid notification body";
         return false;
     }
 
     int numberOfSyncs = notification[0] >> 4;
 
     if( numberOfSyncs == 0 ) {
-        LOG_WARNING( "Syncing of all data stores not supported" );
+        qCWarning(lcSyncML) << "Syncing of all data stores not supported";
         return false;
     }
 
@@ -157,7 +157,7 @@ bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
 
         // Check that SyncInfo is at least 5 bytes long
         if( notification.size() - pos < 5 ) {
-            LOG_WARNING( "Invalid sync info" );
+            qCWarning(lcSyncML) << "Invalid sync info";
             return false;
         }
 
@@ -179,7 +179,7 @@ bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
             syncInfo.iContentType = WSP_NOTES_MIME;
         }
         else if( contentType != 0 ) {
-            LOG_WARNING( "Unsupported WSP Content type:" << contentType );
+            qCWarning(lcSyncML) << "Unsupported WSP Content type:" << contentType;
         }
 
         char serverURILength = notification[pos++];
@@ -187,7 +187,7 @@ bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
         QByteArray serverURI = notification.mid( pos, serverURILength );
 
         if( serverURI.length() != serverURILength ) {
-            LOG_WARNING( "Invalid server URI");
+            qCWarning(lcSyncML) << "Invalid server URI";
             return false;
         }
 
@@ -205,7 +205,7 @@ bool SANHandler::parseSANMessageDS( const QByteArray &aMessage,
 bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassword,
                                        const QString &aNonce, QByteArray &aMessage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray notification;
 
@@ -225,7 +225,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
     }
     else
     {
-        LOG_WARNING( "Unsupported version: " << aData.iHeader.iVersion );
+        qCWarning(lcSyncML) << "Unsupported version: " << aData.iHeader.iVersion;
         return false;
     }
 
@@ -247,7 +247,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
     }
     else
     {
-        LOG_WARNING( "Unsupported user interaction mode:" << aData.iHeader.iUIMode );
+        qCWarning(lcSyncML) << "Unsupported user interaction mode:" << aData.iHeader.iUIMode;
         return false;
     }
 
@@ -261,7 +261,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
     }
     else
     {
-        LOG_WARNING( "Unsupported initiator of the notification:" << aData.iHeader.iInitiator );
+        qCWarning(lcSyncML) << "Unsupported initiator of the notification:" << aData.iHeader.iInitiator;
         return false;
     }
 
@@ -273,7 +273,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
 
     if( serverIdentifierLength > MAX_SERVERURI_LENGTH )
     {
-        LOG_WARNING( "Server identifier lenght more than 255 characters" );
+        qCWarning(lcSyncML) << "Server identifier lenght more than 255 characters";
         return false;
     }
 
@@ -312,7 +312,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
         }
         else if( !info.iContentType.isEmpty() )
         {
-            LOG_WARNING( "Unsupported WSP Content type:" << info.iContentType );
+            qCWarning(lcSyncML) << "Unsupported WSP Content type:" << info.iContentType;
         }
 
         notification.append( syncType );
@@ -333,23 +333,23 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
 bool SANHandler::parseCommon( const QByteArray& aMessage, QByteArray& aDigest,
                               SANHeader& aHeader, QByteArray& aBody )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     aDigest = aMessage.left( DIGEST_SIZE );
     QByteArray header = aMessage.mid( DIGEST_SIZE, HEADER_SIZE );
 
     if( aDigest.size() != DIGEST_SIZE ) {
-        LOG_WARNING( "Invalid digest" );
+        qCWarning(lcSyncML) << "Invalid digest";
         return false;
     }
 
     if( header.size() != HEADER_SIZE ) {
-        LOG_WARNING( "Invalid header" );
+        qCWarning(lcSyncML) << "Invalid header";
         return false;
     }
 
-    LOG_DEBUG( "SAN digest:" << aDigest.toHex() );
-    LOG_DEBUG( "SAN header:" << header.toHex() );
+    qCDebug(lcSyncML) << "SAN digest:" << aDigest.toHex();
+    qCDebug(lcSyncML) << "SAN header:" << header.toHex();
 
     int version = ( header[0] << 2 ) | ( header[1] >> 6 );
     char uimode = ( header[1] >> 4 ) & 0x03;
@@ -363,7 +363,7 @@ bool SANHandler::parseCommon( const QByteArray& aMessage, QByteArray& aDigest,
         aHeader.iVersion = SYNCML_1_2;
     }
     else {
-        LOG_WARNING( "Unsupported SyncML version" );
+        qCWarning(lcSyncML) << "Unsupported SyncML version";
         return false;
     }
 
@@ -375,7 +375,7 @@ bool SANHandler::parseCommon( const QByteArray& aMessage, QByteArray& aDigest,
     QString serverIdentifier = aMessage.mid( DIGEST_SIZE + HEADER_SIZE, serverIdentifierLength );
 
     if( serverIdentifier.length() != serverIdentifierLength ) {
-        LOG_WARNING( "Invalid server identifier" );
+        qCWarning(lcSyncML) << "Invalid server identifier";
         return false;
     }
 
@@ -392,7 +392,7 @@ QByteArray SANHandler::generateDigest( const QString& aServerIdentifier, const Q
                                        const QString& aNonce, const QByteArray& aNotification )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString colon( ":" );
 

@@ -39,7 +39,7 @@
 #include "AuthenticationPackage.h"
 #include "AuthHelper.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -66,7 +66,7 @@ void SessionAuthentication::setSessionParams( AuthType aAuthType,
                                               const QString& aLocalPassword,
                                               const QString& aLocalNonce )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iAuthType = aAuthType;
     iRemoteUsername = aRemoteUsername;
@@ -116,7 +116,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::analyzeHeader( const 
                                                                           const QString& aRemoteDeviceName,
                                                                           ResponseGenerator& aResponseGenerator )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     HeaderStatus status = HEADER_NOT_HANDLED;
 
@@ -147,7 +147,7 @@ SessionAuthentication::StatusStatus SessionAuthentication::analyzeHeaderStatus( 
                                                                                 const QString& aLocalDeviceName,
                                                                                 const QString& aRemoteDeviceName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StatusStatus status = STATUS_NOT_HANDLED;
 
@@ -215,7 +215,7 @@ void SessionAuthentication::composeAuthentication( ResponseGenerator& aResponseG
                                                    const QString& aLocalDeviceName,
                                                    const QString& aRemoteDeviceName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iAuthType == AUTH_BASIC )
     {
@@ -250,7 +250,7 @@ void SessionAuthentication::composeAuthentication( ResponseGenerator& aResponseG
         {
             // We didn't have a nonce, so authentication will probably fail. We need to hope that
             // remote device challenges us with a nonce, so don't put auth pending flag up.
-            LOG_WARNING( "MD5 authentication requested but no nonce found" );
+            qCWarning(lcSyncML) << "MD5 authentication requested but no nonce found";
         }
 
     }
@@ -268,7 +268,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
                                                                                  const QString& aRemoteDeviceName,
                                                                                  ResponseGenerator& aResponseGenerator )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iAuthType != AUTH_NONE );
 
@@ -310,7 +310,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
         if( md5 == aHeader.cred.data )
         {
             // * Credentials OK, accept authentication
-            LOG_DEBUG( "Authentication accepted" );
+            qCDebug(lcSyncML) << "Authentication accepted";
             iLocalAuthPending = false;
             iRemoteAuthed = true;
 
@@ -321,7 +321,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
         else if( iLocalAuthPending )
         {
             // * Credentials not OK and we have already sent a challenge, fail authentication
-            LOG_WARNING( "Authentication failed" );
+            qCWarning(lcSyncML) << "Authentication failed";
             iLastError = "Authentication failed";
             iLocalAuthPending = false;
             iRemoteAuthed = false;
@@ -332,7 +332,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
         else
         {
             // * Credentials not OK but we haven't yet sent a challenge, so send one
-            LOG_WARNING( "Authentication failed, sending challenge" );
+            qCWarning(lcSyncML) << "Authentication failed, sending challenge";
             iLocalAuthPending = true;
             iRemoteAuthed = false;
 
@@ -354,7 +354,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
             if( iLocalAuthPending )
             {
                 // * Fail authentication as we have already sent a challenge for MD5
-                LOG_WARNING( "Authentication failed" );
+                qCWarning(lcSyncML) << "Authentication failed";
                 iLastError = "Authentication failed";
                 iLocalAuthPending = false;
                 iRemoteAuthed = false;
@@ -365,7 +365,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
             else
             {
                 // * Challenge remote device to use MD5
-                LOG_WARNING( "MD5 authentication required, sending challenge" );
+                qCWarning(lcSyncML) << "MD5 authentication required, sending challenge";
                 iLocalAuthPending = true;
                 iRemoteAuthed = false;
 
@@ -383,7 +383,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
             if( basic == aHeader.cred.data )
             {
                 // * Credentials OK, accept authentication
-                LOG_DEBUG( "Authentication accepted" );
+                qCDebug(lcSyncML) << "Authentication accepted";
                 iLocalAuthPending = false;
                 iRemoteAuthed = true;
 
@@ -393,7 +393,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
             else if( iLocalAuthPending )
             {
                 // * Credentials not OK and we have already sent a challenge, fail authentication
-                LOG_WARNING( "Authentication failed" );
+                qCWarning(lcSyncML) << "Authentication failed";
                 iLastError = "Authentication failed";
                 iLocalAuthPending = false;
                 iRemoteAuthed = false;
@@ -404,7 +404,7 @@ SessionAuthentication::HeaderStatus SessionAuthentication::handleAuthentication(
             else
             {
                 // * Credentials not OK but we haven't yet sent a challenge, so send one
-                LOG_WARNING( "Authentication failed, sending challenge" );
+                qCWarning(lcSyncML) << "Authentication failed, sending challenge";
                 iLocalAuthPending = true;
                 iRemoteAuthed = false;
 
@@ -431,7 +431,7 @@ SessionAuthentication::StatusStatus SessionAuthentication::handleChallenge( cons
                                                                             const QString& aLocalDeviceName,
                                                                             const QString& aRemoteDeviceName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StatusStatus status = STATUS_NOT_HANDLED;
     NonceStorage nonces( aDbHandler.getDbHandle(), aLocalDeviceName, aRemoteDeviceName );
@@ -527,7 +527,7 @@ SessionAuthentication::StatusStatus SessionAuthentication::handleChallenge( cons
 
 QByteArray SessionAuthentication::decodeNonce( const ChalParams& aChallenge ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray nonce;
 
@@ -541,7 +541,7 @@ QByteArray SessionAuthentication::decodeNonce( const ChalParams& aChallenge ) co
     }
     else
     {
-        LOG_WARNING( "Unknown format" << aChallenge.meta.format << "specified for NextNonce, ignoring" );
+        qCWarning(lcSyncML) << "Unknown format" << aChallenge.meta.format << "specified for NextNonce, ignoring";
     }
 
     return nonce;
@@ -549,7 +549,7 @@ QByteArray SessionAuthentication::decodeNonce( const ChalParams& aChallenge ) co
 
 ChalParams SessionAuthentication::generateChallenge()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iAuthType == AUTH_BASIC );
 
@@ -563,7 +563,7 @@ ChalParams SessionAuthentication::generateChallenge()
 
 ChalParams SessionAuthentication::generateChallenge( NonceStorage& aNonces )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iAuthType == AUTH_MD5 );
 

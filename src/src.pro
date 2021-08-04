@@ -58,6 +58,7 @@ SOURCES += SyncItem.cpp \
         NonceStorage.cpp \
         ServerAlertedNotification.cpp \
         RequestListener.cpp \
+        SyncMLLogging.cpp \
     DevInfHandler.cpp \
     SyncItemPrefetcher.cpp \
     CTCap.cpp \
@@ -101,6 +102,7 @@ HEADERS += SyncItem.h \
         StorageProvider.h \
         ServerAlertedNotification.h \
     SyncMLGlobals.h \
+    SyncMLLogging.h \
     RequestListener.h \
     DevInfHandler.h \
     SyncAgentConfigProperties.h \

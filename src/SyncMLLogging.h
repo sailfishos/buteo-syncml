@@ -1,9 +1,7 @@
 /*
 * This file is part of buteo-syncml package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
-*
-* Contact: Sateesh Kavuri <sateesh.kavuri@nokia.com>
+* Copyright (C) 2021 Jolla Ltd.
 *
 * Redistribution and use in source and binary forms, with or without 
 * modification, are permitted provided that the following conditions are met:
@@ -30,49 +28,14 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 * 
 */
+#ifndef SYNCMLLOGGING_H
+#define SYNCMLLOGGING_H
 
-#include "DatabaseHandler.h"
+#include <QLoggingCategory>
+#include <buteosyncfw5/LogMacros.h>
 
-#include "SyncMLLogging.h"
+Q_DECLARE_LOGGING_CATEGORY(lcSyncML)
+Q_DECLARE_LOGGING_CATEGORY(lcSyncMLProtocol)
+Q_DECLARE_LOGGING_CATEGORY(lcSyncMLTrace)
 
-using namespace DataSync;
-
-const QString CONNECTIONNAME( "dbhandler" );
-
-DatabaseHandler::DatabaseHandler( const QString& aDbFilePath )
-{
-    FUNCTION_CALL_TRACE(lcSyncMLTrace);
-
-    static unsigned connectionNumber = 0;
-
-    iConnectionName = CONNECTIONNAME + QString::number( connectionNumber++ );
-    iDb = QSqlDatabase::addDatabase( "QSQLITE", iConnectionName );
-
-    iDb.setDatabaseName( aDbFilePath );
-    if(!iDb.open())
-	    qCCritical(lcSyncML) << "can not open database";
-
-}
-
-
-DatabaseHandler::~DatabaseHandler()
-{
-    FUNCTION_CALL_TRACE(lcSyncMLTrace);
-
-    iDb.close();
-    iDb = QSqlDatabase();
-    QSqlDatabase::removeDatabase( iConnectionName );
-
-}
-
-bool DatabaseHandler::isValid() const
-{
-    FUNCTION_CALL_TRACE(lcSyncMLTrace);
-
-    return iDb.isOpen();
-}
-
-QSqlDatabase& DatabaseHandler::getDbHandle()
-{
-    return iDb;
-}
+#endif  //  SYNCMLLOGGING_H

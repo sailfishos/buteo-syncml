@@ -35,7 +35,7 @@
 #include "SyncMLMessage.h"
 #include "SyncMLMap.h"
 #include "SyncMLMapItem.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -43,7 +43,7 @@ LocalMappingsPackage::LocalMappingsPackage( const QString& aSourceDatabase,
                                             const QString& aTargetDatabase,
                                             const QList<UIDMapping>& aMappings )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iSourceDatabase = aSourceDatabase;
     iTargetDatabase = aTargetDatabase;
@@ -52,12 +52,12 @@ LocalMappingsPackage::LocalMappingsPackage( const QString& aSourceDatabase,
 
 LocalMappingsPackage::~LocalMappingsPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool LocalMappingsPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iMappings.isEmpty() ) {
         int cmdId = aMessage.getNextCmdId();

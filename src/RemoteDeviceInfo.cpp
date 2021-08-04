@@ -33,7 +33,7 @@
 
 #include "RemoteDeviceInfo.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -41,12 +41,12 @@ using namespace DataSync;
 RemoteDeviceInfo::RemoteDeviceInfo()
 : iUTC( false ), iSupportLargeObjs( false ), iSupportNumberOfChanges( false )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 RemoteDeviceInfo::~RemoteDeviceInfo()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 DeviceInfo& RemoteDeviceInfo::deviceInfo()

@@ -38,7 +38,7 @@
 #include "AuthHelper.h"
 #include "datatypes.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -49,19 +49,19 @@ AuthenticationPackage::AuthenticationPackage( const AuthType& aAuthType,
  : iAuthType( aAuthType ), iUsername( aUsername ), iPassword( aPassword ),
    iNonce( aNonce )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 }
 
 AuthenticationPackage::~AuthenticationPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 }
 
 bool AuthenticationPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncMLCred* cred = NULL;
     

@@ -42,7 +42,7 @@
 #include "OBEXServerWorker.h"
 #include "Mock.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -79,7 +79,7 @@ void ServerWorkerTest::init()
 
     QVERIFY( iServer->listen() );
 
-    LOG_DEBUG( "Listening port" << iServer->serverPort() );
+    qCDebug(lcSyncML) << "Listening port" << iServer->serverPort();
 
     iClientThread = new ClientThread( iServer->serverPort() );
     iClientThread->start();
@@ -191,7 +191,7 @@ void ClientThread::run()
 void ClientThread::readData()
 {
     QByteArray response = iClientSocket->readAll();
-    LOG_DEBUG( "Received response:" << response.toHex() );
+    qCDebug(lcSyncML) << "Received response:" << response.toHex();
 
     sendNextRequest();
 }
@@ -201,12 +201,12 @@ void ClientThread::sendNextRequest()
     if( !iRequests.isEmpty() )
     {
         QByteArray request = iRequests.takeFirst();
-        LOG_DEBUG( "Writing request:" << request.toHex() );
+        qCDebug(lcSyncML) << "Writing request:" << request.toHex();
         iClientSocket->write( request );
     }
     else
     {
-        LOG_DEBUG( "No requests, exiting" );
+        qCDebug(lcSyncML) << "No requests, exiting";
         exit();
     }
 }

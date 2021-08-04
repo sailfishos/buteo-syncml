@@ -44,7 +44,7 @@
 #include "StoragePlugin.h"
 #include "ServerAlertedNotification.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -52,18 +52,18 @@ ClientSessionHandler::ClientSessionHandler( const SyncAgentConfig* aConfig, QObj
  : SessionHandler(aConfig, ROLE_CLIENT, aParent),
    iConfig(aConfig)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 
 ClientSessionHandler::~ClientSessionHandler()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 void ClientSessionHandler::initiateSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !prepareSync() )
     {
@@ -77,14 +77,14 @@ void ClientSessionHandler::initiateSync()
 
     if( getStorages().count() != iConfig->getSourceDbs().count() )
     {
-        LOG_CRITICAL( "Could not create all targets, aborting sync" );
+        qCCritical(lcSyncML) << "Could not create all targets, aborting sync";
         abortSync( DATABASE_FAILURE, "Could not create all sync targets" );
         return;
     }
 
     if( !getTransport().init() )
     {
-        LOG_CRITICAL( "Could not initialize transport" );
+        qCCritical(lcSyncML) << "Could not initialize transport";
         abortSync( CONNECTION_ERROR, "Could not initiate transport" );
         return;
     }
@@ -106,7 +106,7 @@ void ClientSessionHandler::initiateSync()
 
 void ClientSessionHandler::handleNotificationXML( QList<Fragment*>& aFragments )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !prepareSync() )
     {
@@ -118,7 +118,7 @@ void ClientSessionHandler::handleNotificationXML( QList<Fragment*>& aFragments )
 
 void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !prepareSync() )
     {
@@ -147,13 +147,13 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
     QString verProto;
 
     if( aData.iHeader.iVersion == SYNCML_1_1 ) {
-        LOG_DEBUG("Setting SyncML 1.1 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.1 protocol version";
         setProtocolVersion( SYNCML_1_1 );
         verDTD = SYNCML_DTD_VERSION_1_1;
         verProto = DS_VERPROTO_1_1;
     }
     else if( aData.iHeader.iVersion == SYNCML_1_2 ) {
-        LOG_DEBUG("Setting SyncML 1.2 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.2 protocol version";
         setProtocolVersion( SYNCML_1_2 );
         verDTD = SYNCML_DTD_VERSION_1_2;
         verProto = DS_VERPROTO_1_2;
@@ -201,22 +201,22 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 
         if( mime.isEmpty() )
         {
-            LOG_CRITICAL( "Could not find MIME for server URI:" << serverURI );
+            qCCritical(lcSyncML) << "Could not find MIME for server URI:" << serverURI;
             continue;
         }
 
-        LOG_DEBUG( "Searching for storage with MIME type" << mime );
+        qCDebug(lcSyncML) << "Searching for storage with MIME type" << mime;
         StoragePlugin* source = createStorageByMIME( mime );
 
         if( !source ) {
-            LOG_CRITICAL( "Could not found matching storage for MIME:" << mime );
+            qCCritical(lcSyncML) << "Could not found matching storage for MIME:" << mime;
             continue;
         }
 
         SyncTarget* target = createSyncTarget( *source, syncMode );
 
         if( !target ) {
-            LOG_CRITICAL( "Could not a target for MIME:" << mime );
+            qCCritical(lcSyncML) << "Could not a target for MIME:" << mime;
             continue;
         }
 
@@ -224,7 +224,7 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 
         // Use slow sync if this is the preferred mode or if we don't have a last anchor
         if( iConfig->getSyncMode().syncType() == TYPE_SLOW || target->getRemoteLastAnchor().isEmpty() ) {
-            LOG_DEBUG( "Did not find last remote anchor or slow sync is forced, using slow sync" );
+            qCDebug(lcSyncML) << "Did not find last remote anchor or slow sync is forced, using slow sync";
             SyncMode* mode = target->getSyncMode();
             mode->toSlowSync();
             target->setSyncMode( *mode );
@@ -235,7 +235,7 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
     }
 
     if( getStorages().count() != aData.iSyncInfo.count() ) {
-        LOG_CRITICAL( "Could not create all targets, aborting" );
+        qCCritical(lcSyncML) << "Could not create all targets, aborting";
         abortSync( DATABASE_FAILURE, "Could not create all sync targets");
         return;
     }
@@ -257,7 +257,7 @@ void ClientSessionHandler::handleNotificationPackage( const SANDS& aData )
 
 void ClientSessionHandler::suspendSync()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// @todo: existing implementation was considered flawed, reimplement to be working
 	// as soon as possible
@@ -267,7 +267,7 @@ void ClientSessionHandler::suspendSync()
 
 void ClientSessionHandler::resumeSync()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// @todo: existing implementation was considered flawed, reimplement to be working
 	// as soon as possible
@@ -276,7 +276,7 @@ void ClientSessionHandler::resumeSync()
 
 void ClientSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	SyncState state = getSyncState();
 
@@ -306,7 +306,7 @@ void ClientSessionHandler::messageReceived( HeaderParams& aHeaderParams )
 ResponseStatusCode ClientSessionHandler::syncAlertReceived( const SyncMode& aSyncMode,
                                                             CommandParams& aAlertParams )
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	ResponseStatusCode status;
 
@@ -351,7 +351,7 @@ ResponseStatusCode ClientSessionHandler::syncAlertReceived( const SyncMode& aSyn
 bool ClientSessionHandler::syncReceived()
 {
 
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	SyncState syncState = getSyncState();
 
@@ -380,7 +380,7 @@ bool ClientSessionHandler::syncReceived()
 bool ClientSessionHandler::mapReceived()
 {
 
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// Client should never receive Map
 	return false;
@@ -388,7 +388,7 @@ bool ClientSessionHandler::mapReceived()
 
 void ClientSessionHandler::finalReceived()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	SyncState syncState = getSyncState();
 
@@ -434,7 +434,7 @@ void ClientSessionHandler::finalReceived()
 
 void ClientSessionHandler::messageParsed()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// if we have 101 for SyncHdr Status in SyncBody
 	// send a result Alert
@@ -468,7 +468,7 @@ void ClientSessionHandler::messageParsed()
             }
             else
             {
-                LOG_DEBUG("Omiting update status package!");
+                qCDebug(lcSyncML) << "Omiting update status package!";
                 finishSync();
             }
             break;
@@ -488,7 +488,7 @@ void ClientSessionHandler::messageParsed()
 
 bool ClientSessionHandler::shouldSendDataUpdateStatus()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     bool shouldSend = true;
 
     if( 0 < getConfig()->getAgentProperty( OMITDATAUPDATESTATUSPROP ).toInt() )
@@ -503,8 +503,8 @@ bool ClientSessionHandler::shouldSendDataUpdateStatus()
                 ( getResponseGenerator().getPackages().count() <= 1 )
           )
         {
-            LOG_DEBUG("There is only one status fragment in response and it's for the sync header,\
-                    so we can omit the update status package");
+            qCDebug(lcSyncML) << "There is only one status fragment in response and it's for the sync header,\
+                    so we can omit the update status package";
             shouldSend = false;
         }
     }
@@ -513,7 +513,7 @@ bool ClientSessionHandler::shouldSendDataUpdateStatus()
 
 void ClientSessionHandler::resendPackage()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	SyncState syncState = getSyncState();
 
@@ -547,11 +547,11 @@ void ClientSessionHandler::resendPackage()
 ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aSyncMode,
                                                               CommandParams& aAlertParams )
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aAlertParams.items.isEmpty() )
     {
-        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert without any items! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -560,7 +560,7 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 
     if( item.source.isEmpty() || meta.type.isEmpty() )
     {
-        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId;
 		return INCOMPLETE_COMMAND;
 	}
 
@@ -568,11 +568,11 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 
 	syncMode.toClientInitiated();
 
-    LOG_DEBUG( "Searching for storage with MIME type" << meta.type );
+    qCDebug(lcSyncML) << "Searching for storage with MIME type" << meta.type;
     StoragePlugin* source = createStorageByMIME( meta.type );
 
 	if( !source ) {
-        LOG_DEBUG( "Could not found matching storage for MIME:" << meta.type );
+        qCDebug(lcSyncML) << "Could not found matching storage for MIME:" << meta.type;
 		return NOT_FOUND;
 	}
 
@@ -595,7 +595,7 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 	else
     {
         //In slow mode, all mappings become invalid
-        LOG_DEBUG("In client mode slow sync, clear all mappings");
+        qCDebug(lcSyncML) << "In client mode slow sync, clear all mappings";
         target->clearUIDMappings();
     }
 
@@ -612,11 +612,11 @@ ResponseStatusCode ClientSessionHandler::setupTargetByServer( const SyncMode& aS
 ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyncMode,
                                                             CommandParams& aAlertParams )
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aAlertParams.items.isEmpty() )
     {
-        LOG_WARNING( "Received alert without any items! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert without any items! Cmd Id:" << aAlertParams.cmdId;
         return INCOMPLETE_COMMAND;
     }
 
@@ -626,7 +626,7 @@ ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyn
 
     if( item.target.isEmpty() || anchors.next.isEmpty() )
     {
-        LOG_WARNING( "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId );
+        qCWarning(lcSyncML) << "Received alert that did not pass validation! Cmd Id:" << aAlertParams.cmdId;
 		return INCOMPLETE_COMMAND;
 	}
 
@@ -651,8 +651,8 @@ ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyn
 	// invalid
 	if( syncMode.syncType() != TYPE_FAST )
 	{
-	    LOG_DEBUG( "Server requested revertion to slow sync for database"
-	                << target->getSourceDatabase() <<", complying and clearing mappings" );
+	    qCDebug(lcSyncML) << "Server requested revertion to slow sync for database"
+	                << target->getSourceDatabase() <<", complying and clearing mappings";
 	    target->revertSyncMode();
         target->clearUIDMappings();
 	}
@@ -666,7 +666,7 @@ ResponseStatusCode ClientSessionHandler::acknowledgeTarget( const SyncMode& aSyn
 
 void ClientSessionHandler::setupSyncTargets()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QList<QString> sources;
 
@@ -688,7 +688,7 @@ void ClientSessionHandler::setupSyncTargets()
             target->setTargetDatabase( targetDb );
             // Use slow sync if this is the preferred mode or if we don't have a last anchor
             if (iConfig->getSyncMode().syncType() == TYPE_SLOW || target->getRemoteLastAnchor().isEmpty()) {
-                LOG_DEBUG( "Did not find last remote anchor, forcing slow sync" );
+                qCDebug(lcSyncML) << "Did not find last remote anchor, forcing slow sync";
                 SyncMode* mode = target->getSyncMode();
                 mode->toSlowSync();
                 target->setSyncMode( *mode );
@@ -704,7 +704,7 @@ void ClientSessionHandler::setupSyncTargets()
 
 void ClientSessionHandler::composeClientInitializationPackage()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// Compose initialization
 	composeClientInitialization();
@@ -721,7 +721,7 @@ void ClientSessionHandler::composeClientInitializationPackage()
 
 void ClientSessionHandler::composeClientModificationsPackage()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	discoverClientLocalChanges();
 	composeLocalChanges();
@@ -732,7 +732,7 @@ void ClientSessionHandler::composeClientModificationsPackage()
 
 void ClientSessionHandler::composeDataUpdateStatusPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Mappings need to be sent in data update status package if we have not
     // yet sent them
@@ -775,7 +775,7 @@ void ClientSessionHandler::composeDataUpdateStatusPackage()
 
 void ClientSessionHandler::composeClientInitialization()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// Authentication
     authentication().composeAuthentication( getResponseGenerator(), getDatabaseHandler(),
@@ -808,7 +808,7 @@ void ClientSessionHandler::composeClientInitialization()
 
 void ClientSessionHandler::composeResultAlert()
 {
-	FUNCTION_CALL_TRACE;
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     AlertPackage* package = new AlertPackage( RESULT_ALERT,
                                               params().localDeviceName(),
@@ -820,7 +820,7 @@ void ClientSessionHandler::composeResultAlert()
 
 void ClientSessionHandler::discoverClientLocalChanges()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 	// @todo: check what we should do if discovering local changes fails. Probably
 	//        internal abort as we can't reliable achieve synchronization?
@@ -830,7 +830,7 @@ void ClientSessionHandler::discoverClientLocalChanges()
 
         foreach (SyncTarget* target, targets) {
             if( target != NULL && !target->discoverLocalChanges(ROLE_CLIENT) ) {
-                LOG_WARNING( "Error in discovering changes for target" << target->getSourceDatabase() );
+                qCWarning(lcSyncML) << "Error in discovering changes for target" << target->getSourceDatabase();
             }
         }
     }
@@ -838,7 +838,7 @@ void ClientSessionHandler::discoverClientLocalChanges()
 
 QString ClientSessionHandler::convertSANURItoMIME( const QString& aServerURI )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QString mime;
     if( getConfig()->extensionEnabled( SANMAPPINGSEXTENSION ) )
@@ -851,7 +851,7 @@ QString ClientSessionHandler::convertSANURItoMIME( const QString& aServerURI )
             if( aServerURI.contains( mappings[i], Qt::CaseInsensitive ) )
             {
                 mime = mappings[i+1];
-                LOG_DEBUG( "Found mapping for server URI" << aServerURI <<":" << mime );
+                qCDebug(lcSyncML) << "Found mapping for server URI" << aServerURI <<":" << mime;
                 break;
             }
         }

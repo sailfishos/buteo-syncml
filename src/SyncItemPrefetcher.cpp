@@ -36,7 +36,7 @@
 #include "SyncItem.h"
 #include "StoragePlugin.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -45,14 +45,14 @@ SyncItemPrefetcher::SyncItemPrefetcher( const QList<SyncItemKey>& aItemIds,
                                         int aInitialBatchSizeHint )
  : iStoragePlugin( aStoragePlugin ), iItemIdList( aItemIds )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iDefaultBatchSizeHint = aInitialBatchSizeHint;
     setBatchSizeHint( aInitialBatchSizeHint );
 }
 
 SyncItemPrefetcher::~SyncItemPrefetcher()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll( iFetchedItems.values() );
     iFetchedItems.clear();
@@ -60,13 +60,13 @@ SyncItemPrefetcher::~SyncItemPrefetcher()
 
 void SyncItemPrefetcher::setBatchSizeHint( int aBatchSizeHint )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iBatchSizeHint = aBatchSizeHint;
 }
 
 SyncItem* SyncItemPrefetcher::getItem( const SyncItemKey& aItemId )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if(!iBatchSizeHint)
     {
@@ -76,13 +76,13 @@ SyncItem* SyncItemPrefetcher::getItem( const SyncItemKey& aItemId )
     if( iFetchedItems.contains( aItemId ) )
     {
         // Prefetch hit: return item immediately
-        LOG_DEBUG( "Item" << aItemId << "found from prefetched items" );
+        qCDebug(lcSyncML) << "Item" << aItemId << "found from prefetched items";
         return iFetchedItems.take( aItemId );
     }
     else
     {
         // Prefetch miss: fetch more items
-        LOG_DEBUG( "Item" << aItemId << "not found from prefetched items" );
+        qCDebug(lcSyncML) << "Item" << aItemId << "not found from prefetched items";
         prefetch();
         return iFetchedItems.take( aItemId );
     }
@@ -90,19 +90,19 @@ SyncItem* SyncItemPrefetcher::getItem( const SyncItemKey& aItemId )
 
 void SyncItemPrefetcher::prefetch()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Item prefetcher waking..." );
+    qCDebug(lcSyncML) << "Item prefetcher waking...";
 
     if( iFetchedItems.count() < iBatchSizeHint )
     {
 
-        LOG_DEBUG( "Prefetch cache not full" );
+        qCDebug(lcSyncML) << "Prefetch cache not full";
         int batchSize = qMin( iBatchSizeHint, iItemIdList.size() );
 
         if( batchSize > 0 )
         {
-            LOG_DEBUG( "Requesting" << batchSize << "items" );
+            qCDebug(lcSyncML) << "Requesting" << batchSize << "items";
             QList<SyncItemKey> nextItemIds = iItemIdList.mid( 0, batchSize );
             QList<SyncItem*> nextItems = iStoragePlugin.getSyncItems( nextItemIds );
 
@@ -110,7 +110,7 @@ void SyncItemPrefetcher::prefetch()
             {
                 // We cannot trust the ordering nor the integrity of the items returned by the backend, so just
                 // free them
-                LOG_WARNING( "Asked for" << nextItemIds.count() << "items, got" << nextItems.count() << "items" );
+                qCWarning(lcSyncML) << "Asked for" << nextItemIds.count() << "items, got" << nextItems.count() << "items";
                 qDeleteAll( nextItems );
                 nextItems.clear();
             }
@@ -136,15 +136,15 @@ void SyncItemPrefetcher::prefetch()
         }
         else
         {
-            LOG_DEBUG( "No more items remaining, skipping item request" );
+            qCDebug(lcSyncML) << "No more items remaining, skipping item request";
         }
     }
     else
     {
-        LOG_DEBUG( "Prefetch cache is already full" );
+        qCDebug(lcSyncML) << "Prefetch cache is already full";
     }
 
-    LOG_DEBUG( iFetchedItems.count() << "items in prefetch cache," << iItemIdList.count() << "items still to fetch" );
+    qCDebug(lcSyncML) << iFetchedItems.count() << "items in prefetch cache," << iItemIdList.count() << "items still to fetch";
 
-    LOG_DEBUG( "Item prefetcher going to sleep...");
+    qCDebug(lcSyncML) << "Item prefetcher going to sleep...";
 }

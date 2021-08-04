@@ -41,7 +41,7 @@
 #include "Fragments.h"
 #include "Mock.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 #include <QtTest>
 
 Q_DECLARE_METATYPE(QIODevice*);

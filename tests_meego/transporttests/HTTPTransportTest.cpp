@@ -42,7 +42,7 @@
 #include "Fragments.h"
 #include "Mock.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 #include <QSignalSpy>
 #include <QtTest>

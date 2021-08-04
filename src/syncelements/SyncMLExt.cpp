@@ -35,7 +35,7 @@
 #include <QXmlStreamReader>
 
 #include "datatypes.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -49,7 +49,7 @@ SyncMLExt::~SyncMLExt()
 
 void SyncMLExt::addExt(const QByteArray &aDescription)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 
     QXmlStreamReader reader( aDescription );
@@ -74,7 +74,7 @@ void SyncMLExt::addExt(const QByteArray &aDescription)
 void SyncMLExt::processElement( QXmlStreamReader& aReader, SyncMLCmdObject* aParent )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncMLCmdObject* obj = new SyncMLCmdObject( aReader.name().toString() );
 

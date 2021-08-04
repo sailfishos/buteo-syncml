@@ -37,7 +37,7 @@
 #include "DatabaseHandler.h"
 #include "SyncMode.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 

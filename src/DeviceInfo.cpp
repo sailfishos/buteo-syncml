@@ -36,7 +36,7 @@
 #include <QXmlStreamReader>
 #include <QFile>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 #include "datatypes.h"
 
 using namespace DataSync;
@@ -53,12 +53,12 @@ const QString XML_KEY_DEVICE_TYPE("DeviceType");
 
 DeviceInfo::DeviceInfo()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 DeviceInfo::~DeviceInfo()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 const QString& DeviceInfo::getManufacturer() const
@@ -143,13 +143,13 @@ void DeviceInfo::setDeviceType(const QString& aDeviceType)
 
 bool DeviceInfo::readFromFile(const QString &aFileName)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QFile file(aFileName);
 
     if( !file.open(QIODevice::ReadOnly) )
     {
-        LOG_WARNING("Failed open file:" << aFileName);
+        qCWarning(lcSyncML) << "Failed open file:" << aFileName;
         return false;
     }
 
@@ -183,7 +183,7 @@ bool DeviceInfo::readFromFile(const QString &aFileName)
                 reader.readNext();
                 setDeviceType(reader.text().toString());
             } else {
-                LOG_WARNING("Ignoring unknown element:" << reader.name() );
+                qCWarning(lcSyncML) << "Ignoring unknown element:" << reader.name();
             }
         }
 

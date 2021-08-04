@@ -42,7 +42,7 @@
 
 #include "OBEXClientWorker.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -311,16 +311,16 @@ void ServerThread::run()
 
     if( !server.listen( QHostAddress::LocalHost, iPort ) )
     {
-        LOG_CRITICAL( "Could not start listening");
+        qCCritical(lcSyncML) << "Could not start listening";
         return;
     }
 
     iPort = server.serverPort();
-    LOG_DEBUG( "Listening port" << iPort );
+    qCDebug(lcSyncML) << "Listening port" << iPort;
 
     if( !server.waitForNewConnection(1000) )
     {
-        LOG_CRITICAL( "No connection received");
+        qCCritical(lcSyncML) << "No connection received";
         return;
     }
 
@@ -329,11 +329,11 @@ void ServerThread::run()
     connect( iServerSocket, SIGNAL( readyRead() ),
              this, SLOT( readData() ), Qt::DirectConnection );
 
-    LOG_DEBUG( "Entering event loop" );
+    qCDebug(lcSyncML) << "Entering event loop";
 
     exec();
 
-    LOG_DEBUG( "Exiting event loop" );
+    qCDebug(lcSyncML) << "Exiting event loop";
 
     delete iServerSocket;
     iServerSocket = 0;
@@ -345,17 +345,17 @@ void ServerThread::run()
 void ServerThread::readData()
 {
     QByteArray request = iServerSocket->readAll();
-    LOG_DEBUG( "Received request:" << request.toHex() );
+    qCDebug(lcSyncML) << "Received request:" << request.toHex();
 
     if( !iResponses.isEmpty() )
     {
         QByteArray response = iResponses.takeFirst();
-        LOG_DEBUG( "Writing response:" << response.toHex() );
+        qCDebug(lcSyncML) << "Writing response:" << response.toHex();
         iServerSocket->write( response );
     }
     else
     {
-        LOG_DEBUG( "No responses, exiting" );
+        qCDebug(lcSyncML) << "No responses, exiting";
         exit();
     }
 

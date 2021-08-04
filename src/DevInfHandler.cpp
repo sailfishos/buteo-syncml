@@ -38,7 +38,7 @@
 #include "ResponseGenerator.h"
 #include "Fragments.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -46,12 +46,12 @@ DevInfHandler::DevInfHandler( const DeviceInfo& aDeviceInfo )
  : iLocalDeviceInfo( aDeviceInfo ), iLocalDevInfSent( false ),
    iRemoteDevInfReceived( false )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 DevInfHandler::~DevInfHandler()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 const DeviceInfo& DevInfHandler::getLocalDeviceInfo() const
@@ -68,7 +68,7 @@ void DevInfHandler::composeLocalInitiatedDevInfExchange(
     const QList<StoragePlugin*>& aDataStores, const ProtocolVersion& aVersion,
     const Role& aRole, ResponseGenerator& aResponseGenerator )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iLocalDevInfSent )
     {
@@ -88,7 +88,7 @@ ResponseStatusCode DevInfHandler::handleGet( const CommandParams& aGet,
                                              const Role& aRole,
                                              ResponseGenerator& aResponseGenerator )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status = NOT_IMPLEMENTED;
 
@@ -135,7 +135,7 @@ ResponseStatusCode DevInfHandler::handleGet( const CommandParams& aGet,
 ResponseStatusCode DevInfHandler::handlePut( const PutParams& aPut,
                                              const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status = NOT_IMPLEMENTED;
 
@@ -166,7 +166,7 @@ ResponseStatusCode DevInfHandler::handlePut( const PutParams& aPut,
 ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aResults,
                                                  const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status = NOT_IMPLEMENTED;
 
@@ -197,7 +197,7 @@ ResponseStatusCode DevInfHandler::handleResults( const ResultsParams& aResults,
 
 void DevInfHandler::reset()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iLocalDevInfSent = false;
     iRemoteDevInfReceived = false;

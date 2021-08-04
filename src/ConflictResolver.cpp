@@ -35,7 +35,7 @@
 
 #include "SyncAgentConsts.h"
 #include "LocalChanges.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 
 using namespace DataSync;
@@ -44,19 +44,19 @@ ConflictResolver::ConflictResolver( LocalChanges& aLocalChanges,
                                     ConflictResolutionPolicy aPolicy )
  : iLocalChanges( aLocalChanges ), iPolicy( aPolicy )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 ConflictResolver::~ConflictResolver()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 
 bool ConflictResolver::isConflict( const SyncItemKey& aKey,
                                    bool aDelete ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     
      if (aKey.isEmpty())
 	    return false; 
@@ -73,7 +73,7 @@ bool ConflictResolver::isConflict( const SyncItemKey& aKey,
 
 bool ConflictResolver::localSideWins() const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iPolicy == PREFER_LOCAL_CHANGES )
     {
@@ -88,25 +88,25 @@ bool ConflictResolver::localSideWins() const
 
 void ConflictResolver::removeLocalChange( const SyncItemKey& aLocalKey ) 
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool retval = false;
     if (iLocalChanges.removed.contains( aLocalKey ))    
         retval = iLocalChanges.removed.removeOne( aLocalKey );   
     else
-        retval = iLocalChanges.modified.removeOne( aLocalKey ) ;
+        retval = iLocalChanges.modified.removeOne( aLocalKey );
 }
     
 void ConflictResolver::changeLocalModifyToLocalAdd( const SyncItemKey& aLocalKey )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     /* Reason for this is that in the case of a conflict scenario if the remote is delete and local is
      * modify and if remote wins the mapping is lost in remote side so a replace returns with an error*/	    
     for (int i = 0; i < iLocalChanges.modified.size(); ++i) {
-        LOG_DEBUG ("Key :" << aLocalKey << "Remote" << iLocalChanges.modified.at(i));  
+        qCDebug(lcSyncML) << "Key :" << aLocalKey << "Remote" << iLocalChanges.modified.at(i);
         if (iLocalChanges.modified.at(i) == aLocalKey){
-            LOG_DEBUG ("Change from replace to add ");  
+            qCDebug(lcSyncML) << "Change from replace to add ";
 	    iLocalChanges.modified.removeAt(i);
 	    iLocalChanges.added.append(aLocalKey);
 	    break;
@@ -116,7 +116,7 @@ void ConflictResolver::changeLocalModifyToLocalAdd( const SyncItemKey& aLocalKey
     
 void ConflictResolver::revertLocalChange( const SyncItemKey& aLocalKey, ConflictRevertPolicy policy ) 
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     switch (policy) {
         case CR_REMOVE_LOCAL:
 	    removeLocalChange ( aLocalKey );	
@@ -125,7 +125,7 @@ void ConflictResolver::revertLocalChange( const SyncItemKey& aLocalKey, Conflict
 	    changeLocalModifyToLocalAdd ( aLocalKey );	
 	break;
 	default:
-	    LOG_WARNING ("Wrong ConflictRevertPolicy");
+	    qCWarning(lcSyncML) << "Wrong ConflictRevertPolicy";
 	break;
     }
 }

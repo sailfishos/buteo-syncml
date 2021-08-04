@@ -33,65 +33,65 @@
 
 #include "SyncResults.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 SyncResults::SyncResults() : iState( NOT_PREPARED )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 DataSync::SyncResults::~SyncResults()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 void SyncResults::reset()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iResults.clear();
 }
 
 SyncState SyncResults::getState() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return iState;
 }
 
 void SyncResults::setState( const SyncState& aState )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iState = aState;
 }
 
 QString SyncResults::getErrorString() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return iErrorString;
 }
 
 void SyncResults::setErrorString( const QString& aErrorString )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iErrorString = aErrorString;
 }
 
 void SyncResults::setRemoteDeviceId( const QString& aDeviceId )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iRemoteId = aDeviceId;
 }
 
 QString SyncResults::getRemoteDeviceId( ) const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return iRemoteId;
 }
 
 const QMap<QString, DatabaseResults>* SyncResults::getDatabaseResults() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return &iResults;
 }
 
@@ -99,7 +99,7 @@ void SyncResults::addProcessedItem( DataSync::ModificationType aModificationType
                                     DataSync::ModifiedDatabase aModifiedDatabase,
                                     const QString& aDatabase )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     DatabaseResults& results = iResults[aDatabase];
 

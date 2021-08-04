@@ -33,7 +33,7 @@
 
 #include "SuspendLog.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -42,18 +42,18 @@ SuspendLog::SuspendLog( QSqlDatabase& aDbHandle, const QString& aRemoteDevice,
  : iDbHandle( aDbHandle ), iRemoteDevice( aRemoteDevice ),
    iSourceDbURI( aSourceDbURI ), iTargetDbURI( aTargetDbURI )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 SuspendLog::~SuspendLog()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 /*
 bool DataSync::ChangeLogHandler::createItemTrackingTable()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "CREATE TABLE if not exists localchanges(id integer primary key autoincrement, remote_device varchar(512), local_database varchar(512), remote_database varchar(512), syncitemkey varchar(512), syncitemcmd integer)";
 
@@ -63,7 +63,7 @@ bool DataSync::ChangeLogHandler::createItemTrackingTable()
     bool success = true;
 
     if (query.lastError().isValid()) {
-        LOG_WARNING("Error found: " << query.lastError());
+        qCWarning(lcSyncML) << "Error found: " << query.lastError();
         success = false;
     }
 
@@ -72,7 +72,7 @@ bool DataSync::ChangeLogHandler::createItemTrackingTable()
 
 bool DataSync::ChangeLogHandler::createMappingTrackingTable()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "CREATE TABLE if not exists localmappings(id integer primary key autoincrement, remote_device varchar(512), local_database varchar(512), remote_database varchar(512), localkey varchar(512), remotekey varchar(512), msgref integer, cmdref  interger)";
 
@@ -82,7 +82,7 @@ bool DataSync::ChangeLogHandler::createMappingTrackingTable()
     bool success = true;
 
     if (query.lastError().isValid()) {
-        LOG_WARNING("Error found: " << query.lastError());
+        qCWarning(lcSyncML) << "Error found: " << query.lastError();
         success = false;
     }
 
@@ -94,7 +94,7 @@ void DataSync::ChangeLog::addPendingSyncItem(QString aRemoteDevice,
                                              SyncItemKey aSyncItemKey,
                                              SyncMLCommand aSyncCmd)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "INSERT INTO localchanges(remote_device, local_database, remote_database, syncitemkey, syncitemcmd) VALUES (:remote_device, :local_database, :remote_database, :syncitemkey, :syncitemcmd)";
     QSqlQuery query(iDbHandle);
@@ -107,7 +107,7 @@ void DataSync::ChangeLog::addPendingSyncItem(QString aRemoteDevice,
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
     }
 }
 
@@ -116,7 +116,7 @@ void DataSync::ChangeLog::removePendingSyncItem(QString aRemoteDevice,
                                                 QString aRemoteDatabase,
                                                 SyncItemKey aSyncItemKey)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "DELETE FROM localchanges WHERE remote_device = :remote_device AND local_database = :local_database AND remote_database = :remote_database AND syncitemkey = :syncitemkey";
     QSqlQuery query(iDbHandle);
@@ -128,7 +128,7 @@ void DataSync::ChangeLog::removePendingSyncItem(QString aRemoteDevice,
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
     }
 }
 
@@ -137,7 +137,7 @@ QList<SyncItemKey> DataSync::ChangeLog::getPendingLocalChanges(QString aRemoteDe
                                                                QString aRemoteDatabase,
                                                                SyncMLCommand aSyncCmd)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "SELECT syncitemkey FROM localchanges WHERE remote_device = :remote_device AND local_database = :local_database AND remote_database = :remote_database AND syncitemcmd = :syncitemcmd" );
     QSqlQuery query( iDbHandle );
@@ -150,7 +150,7 @@ QList<SyncItemKey> DataSync::ChangeLog::getPendingLocalChanges(QString aRemoteDe
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG(query.lastError());
+        qCDebug(lcSyncML) << query.lastError();
     }
 
     SyncItemKey syncItemKey = "";
@@ -166,7 +166,7 @@ QList<SyncItemKey> DataSync::ChangeLog::getPendingLocalChanges(QString aRemoteDe
 
 int DataSync::ChangeLog::getLastSyncMode()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "SELECT sync_mode FROM change_logs WHERE id=:id" );
     QSqlQuery query( iDbHandle );
@@ -178,14 +178,14 @@ int DataSync::ChangeLog::getLastSyncMode()
     int syncMode;
 
     if( query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
         syncMode = 0;
     }
     else if (query.next()) {
         syncMode = query.value(0).toInt();
     }
     else {
-        LOG_DEBUG( "Could not find sync mode" );
+        qCDebug(lcSyncML) << "Could not find sync mode";
         syncMode = 0;
     }
 
@@ -200,7 +200,7 @@ void DataSync::ChangeLog::addPendingMapping(QString aRemoteDevice,
                                             int aMsgRef,
                                             int aCmdRef)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "INSERT INTO localmappings(remote_device, local_database, remote_database, localkey, remotekey, msgref, cmdref) VALUES (:remote_device, :local_database, :remote_database, :localkey, :remotekey, :msgref, :cmdref)";
     QSqlQuery query(iDbHandle);
@@ -215,7 +215,7 @@ void DataSync::ChangeLog::addPendingMapping(QString aRemoteDevice,
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
     }
 }
 
@@ -225,7 +225,7 @@ void DataSync::ChangeLog::removePendingMappings(QString aRemoteDevice,
                                                 int aMsgRef,
                                                 int aCmdRef)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "DELETE FROM localmappings WHERE remote_device = :remote_device AND local_database = :local_database AND remote_database = :remote_database AND msgref = :msgref AND cmdref = :cmdref";
 
@@ -239,7 +239,7 @@ void DataSync::ChangeLog::removePendingMappings(QString aRemoteDevice,
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
     }
 }
 
@@ -247,7 +247,7 @@ QList<UIDMapping> DataSync::ChangeLog::getPendingLocalMappings(QString aRemoteDe
                                                                QString aLocalDatabase,
                                                                QString aRemoteDatabase)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "SELECT localkey, remotekey FROM localmappings WHERE remote_device = :remote_device AND local_database = :local_database AND remote_database = :remote_database" );
     QSqlQuery query( iDbHandle );
@@ -259,7 +259,7 @@ QList<UIDMapping> DataSync::ChangeLog::getPendingLocalMappings(QString aRemoteDe
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG(query.lastError());
+        qCDebug(lcSyncML) << query.lastError();
     }
 
     SyncItemKey localKey;
@@ -278,7 +278,7 @@ QList<UIDMapping> DataSync::ChangeLog::getPendingLocalMappings(QString aRemoteDe
 
 bool DataSync::ChangeLog::getIntentionallySuspended() const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool intentionalSuspension = false;
 
@@ -290,7 +290,7 @@ bool DataSync::ChangeLog::getIntentionallySuspended() const
     query.exec();
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG("Query Error" << query.lastError());
+        qCDebug(lcSyncML) << "Query Error" << query.lastError();
     }
     else {
         if (query.next()) {
@@ -303,7 +303,7 @@ bool DataSync::ChangeLog::getIntentionallySuspended() const
 
 void ChangeLog::setIntentionallySuspended( bool aIntentionallySuspended)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "UPDATE change_logs SET intentional_suspension=:intentional_suspension WHERE id =:id" );
 
@@ -316,7 +316,7 @@ void ChangeLog::setIntentionallySuspended( bool aIntentionallySuspended)
 
 
     if (query.lastError().isValid()) {
-        LOG_DEBUG(query.lastError());
+        qCDebug(lcSyncML) << query.lastError();
     }
 
 }

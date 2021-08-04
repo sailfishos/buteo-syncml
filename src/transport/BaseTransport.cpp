@@ -41,7 +41,7 @@
 #include "QtEncoder.h"
 #include "datatypes.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -49,12 +49,12 @@ BaseTransport::BaseTransport( const ProtocolContext& aContext, QObject* aParent 
  : Transport( aParent ), iContext( aContext ), iHandleIncomingData( false ),
    iWbXml( false )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 BaseTransport::~BaseTransport()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iIODevice.close();
 }
@@ -71,14 +71,14 @@ bool BaseTransport::usesWbXML()
 
 bool BaseTransport::sendSyncML( SyncMLMessage* aMessage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !aMessage ) {
         return false;
     }
 
     if( !prepareSend() ) {
-        LOG_CRITICAL( "prepareSend() failed, cannot send message" );
+        qCCritical(lcSyncML) << "prepareSend() failed, cannot send message";
         return false;
     }
 
@@ -121,10 +121,10 @@ bool BaseTransport::sendSyncML( SyncMLMessage* aMessage )
 
 bool BaseTransport::sendSAN( const QByteArray& aMessage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 #ifndef QT_NO_DEBUG
-    LOG_PROTOCOL( "\nSending SAN message:\n=========\n" << aMessage.toHex() << "\n=========");
+    qCDebug(lcSyncMLProtocol) << "\nSending SAN message:\n=========\n" << aMessage.toHex() << "\n=========";
 #endif  //  QT_NO_DEBUG
 
     return doSend( aMessage, SYNCML_CONTTYPE_SAN_DS );
@@ -132,7 +132,7 @@ bool BaseTransport::sendSAN( const QByteArray& aMessage )
 
 bool BaseTransport::receive()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIncomingData.size() > 0 ) {
         emitReadSignal();
@@ -179,7 +179,7 @@ bool BaseTransport::receive()
 
 void BaseTransport::receive( const QByteArray& aData, const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iIODevice.close();
 
@@ -220,7 +220,7 @@ const QString& BaseTransport::getRemoteLocURI() const
 
 bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -233,7 +233,7 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
                                    aMessage.getProtocolVersion(),
                                    aData ) )
         {
-            LOG_DEBUG( "WbXML encoding successful" );
+            qCDebug(lcSyncML) << "WbXML encoding successful";
 
 #ifndef QT_NO_DEBUG
 
@@ -242,11 +242,11 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
                                      aMessage.getProtocolVersion(),
                                      xml, true ) )
             {
-                LOG_PROTOCOL( "\nSending message:\n=========\n" << xml << "\n=========size:"<<xml.size());
+                qCDebug(lcSyncMLProtocol) << "\nSending message:\n=========\n" << xml << "\n=========size:"<<xml.size();
             }
             else
             {
-                LOG_PROTOCOL( "Failed to print request" );
+                qCDebug(lcSyncMLProtocol) << "Failed to print request" ;
             }
 
 #endif  //  QT_NO_DEBUG
@@ -255,7 +255,7 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
         }
         else
         {
-            LOG_CRITICAL( "WbXML encoding failed!" );
+            qCCritical(lcSyncML) << "WbXML encoding failed!";
         }
 
     }
@@ -266,15 +266,15 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
 
         if( encoder.encodeToXML( aMessage, aData, false ) )
         {
-            LOG_DEBUG( "XML encoding successful" );
+            qCDebug(lcSyncML) << "XML encoding successful";
 
 #ifndef QT_NO_DEBUG
 
             QByteArray xml;
             if( encoder.encodeToXML( aMessage, xml, true ) ) {
-                LOG_PROTOCOL( "\nSending message:\n=========\n" << xml << "\n=========");
+                qCDebug(lcSyncMLProtocol) << "\nSending message:\n=========\n" << xml << "\n=========";
             } else {
-                LOG_PROTOCOL( "Failed to print request" );
+                qCDebug(lcSyncMLProtocol) << "Failed to print request" ;
             }
 
 #endif  //  QT_NO_DEBUG
@@ -282,7 +282,7 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
         }
         else
         {
-            LOG_CRITICAL( "XML encoding failed!" );
+            qCCritical(lcSyncML) << "XML encoding failed!";
         }
     }
 
@@ -291,7 +291,7 @@ bool BaseTransport::encodeMessage( const SyncMLMessage& aMessage, QByteArray& aD
 
 void BaseTransport::emitReadSignal()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iIODevice.close();
 
@@ -326,7 +326,7 @@ bool BaseTransport::useWbXml() const
 
 void BaseTransport::receiveWbXMLData( const QByteArray& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     setWbXml( true );
 
@@ -344,8 +344,8 @@ void BaseTransport::receiveWbXMLData( const QByteArray& aData )
     }
     else {
 
-        LOG_WARNING( "WbXML to XML conversion failed!" );
-        LOG_WARNING( "Presuming SAN package sent with wrong content type..." );
+        qCWarning(lcSyncML) << "WbXML to XML conversion failed!";
+        qCWarning(lcSyncML) << "Presuming SAN package sent with wrong content type...";
         receiveSANData( aData );
     }
 
@@ -353,7 +353,7 @@ void BaseTransport::receiveWbXMLData( const QByteArray& aData )
 
 void BaseTransport::receiveXMLData( const QByteArray& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iContext == CONTEXT_DM )
     {
@@ -366,7 +366,7 @@ void BaseTransport::receiveXMLData( const QByteArray& aData )
     iIncomingData = aData;
 
 #ifndef QT_NO_DEBUG
-    LOG_PROTOCOL( "\nReceived XML message:\n=========\n" << iIncomingData << "\n=========");
+    qCDebug(lcSyncMLProtocol) << "\nReceived XML message:\n=========\n" << iIncomingData << "\n=========";
 #endif  //  QT_NO_DEBUG
 
 }
@@ -380,14 +380,14 @@ void BaseTransport::receiveSANData( const QByteArray& aData )
     iIncomingData = aData;
 
 #ifndef QT_NO_DEBUG
-    LOG_PROTOCOL( "\nReceived SAN message:\n=========\n" << iIncomingData.toHex() << "\n=========");
+    qCDebug(lcSyncMLProtocol) << "\nReceived SAN message:\n=========\n" << iIncomingData.toHex() << "\n=========";
 #endif  //  QT_NO_DEBUG
 
 }
 
 void BaseTransport::purgeAndResendBuffer()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     if(iIODeviceData.size() > 0)
     {
         QString dataString = QString::fromUtf8(iIODeviceData, iIODeviceData.size());
@@ -398,7 +398,7 @@ void BaseTransport::purgeAndResendBuffer()
         iIODeviceData = dataString.toUtf8();
 
 #ifndef QT_NO_DEBUG
-        LOG_PROTOCOL( "\nPurged XML message:\n=========\n" << iIODeviceData << "\n=========");
+        qCDebug(lcSyncMLProtocol) << "\nPurged XML message:\n=========\n" << iIODeviceData << "\n=========";
 #endif  //  QT_NO_DEBUG
 
         // Put the new buffer into the IO device

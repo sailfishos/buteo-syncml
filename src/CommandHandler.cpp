@@ -34,7 +34,7 @@
 #include "CommandHandler.h"
 #include "StorageHandler.h"
 #include "SyncTarget.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 #include "SyncAgentConfig.h"
 #include "ResponseGenerator.h"
 #include "ConflictResolver.h"
@@ -49,17 +49,17 @@ using namespace DataSync;
 CommandHandler::CommandHandler( const Role& aRole )
  : iRole( aRole )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 CommandHandler::~CommandHandler()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 ResponseStatusCode CommandHandler::handleMap( const MapParams& aMapParams, SyncTarget& aTarget )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     UIDMapping mapping;
     for( int i = 0; i < aMapParams.mapItems.count(); ++i ) {
@@ -79,7 +79,7 @@ void CommandHandler::handleSync( const SyncParams& aSyncParams,
                                  ConflictResolver& aConflictResolver,
                                  bool aFastMapsSend )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !aSyncParams.noResp ) {
         aResponseGenerator.addStatus( aSyncParams, SUCCESS );
@@ -100,7 +100,7 @@ void CommandHandler::handleSync( const SyncParams& aSyncParams,
 void CommandHandler::rejectSync( const SyncParams& aSyncParams, ResponseGenerator& aResponseGenerator,
                                  ResponseStatusCode aResponseCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !aSyncParams.noResp )
     {
@@ -117,7 +117,7 @@ void CommandHandler::rejectSync( const SyncParams& aSyncParams, ResponseGenerato
 void CommandHandler::rejectCommand( const CommandParams& aCommand, ResponseGenerator& aResponseGenerator,
                                     ResponseStatusCode aResponseCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !aCommand.noResp )
     {
@@ -132,7 +132,7 @@ void CommandHandler::rejectCommand( const CommandParams& aCommand, ResponseGener
 
 void CommandHandler::handleStatus(StatusParams* aStatusParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode statusCode;
     StatusCodeType statusType;
@@ -173,7 +173,7 @@ void CommandHandler::handleStatus(StatusParams* aStatusParams )
         default:
         {
             // Unknown code
-            LOG_DEBUG("Found unknown code: " << statusCode);
+            qCDebug(lcSyncML) << "Found unknown code: " << statusCode;
             break;
         }
     }
@@ -188,7 +188,7 @@ void CommandHandler::handleStatus(StatusParams* aStatusParams )
 
 void CommandHandler::handleError( ResponseStatusCode aErrorCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StatusCodeType statusType = getStatusType( aErrorCode );
 
@@ -222,7 +222,7 @@ void CommandHandler::handleError( ResponseStatusCode aErrorCode )
 
 StatusCodeType CommandHandler::getStatusType(ResponseStatusCode aStatus)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const int informationalLowBound        = 100;
     const int informationalHighBound       = 199;
@@ -261,7 +261,7 @@ StatusCodeType CommandHandler::getStatusType(ResponseStatusCode aStatus)
 
 bool CommandHandler::resolveConflicts()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iRole == ROLE_CLIENT ) {
 
@@ -280,7 +280,7 @@ bool CommandHandler::resolveConflicts()
 
 ResponseStatusCode CommandHandler::handleRedirection(ResponseStatusCode /*aRedirectionCode*/)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     return NOT_IMPLEMENTED;
 }
@@ -289,7 +289,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                                      StorageHandler& aStorageHandler, ResponseGenerator& aResponseGenerator,
                                      QMap<ItemId, ResponseStatusCode>& aResponses )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Batch updates
     for( int i = 0; i < aSyncParams.commands.count(); ++i ) {
@@ -357,7 +357,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // no else
 
-                LOG_DEBUG( "Processing ADD with item URL:" << remoteKey );
+                qCDebug(lcSyncML) << "Processing ADD with item URL:" << remoteKey;
 
                 // Large object chunk
                 if( item.moreData ) {
@@ -367,8 +367,8 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                         // Size needs to be specified for first chunk
                         if( item.meta.size == 0 ) {
-                            LOG_WARNING( "No size found for large object:" << id.iCmdId
-                                          <<"/" << id.iItemIndex );
+                            qCWarning(lcSyncML) << "No size found for large object:" << id.iCmdId
+                                          <<"/" << id.iItemIndex;
                         }
                         if( !aStorageHandler.startLargeObjectAdd( *aTarget.getPlugin(), remoteKey, 
                                                                        parentKey, type, format,
@@ -454,7 +454,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                 }
                 // no else
 
-                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
+                qCDebug(lcSyncML) << "Processing REPLACE with item URL:" << localKey;
 
                 // Large object chunk
                 if( item.moreData ) {
@@ -464,8 +464,8 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
 
                         // Size needs to be specified for first chunk
                         if( item.meta.size == 0 ) {
-                            LOG_WARNING( "No size found for large object:" << id.iCmdId
-                                           <<"/" << id.iItemIndex );
+                            qCDebug(lcSyncML) << "No size found for large object:" << id.iCmdId
+                                           <<"/" << id.iItemIndex;
                         }
                         if( !aStorageHandler.startLargeObjectReplace( *aTarget.getPlugin(), localKey,
                                                                            parentKey, type, format,
@@ -530,7 +530,7 @@ void CommandHandler::composeBatches( const SyncParams& aSyncParams, SyncTarget& 
                     localKey = aTarget.mapToLocalUID( item.source );
                 }
 
-                LOG_DEBUG( "Processing REPLACE with item URL:" << localKey );
+                qCDebug(lcSyncML) << "Processing REPLACE with item URL:" << localKey;
 
                 if( !aStorageHandler.deleteItem( id, localKey ) ) {
                     aResponses.insert( id, COMMAND_FAILED );
@@ -554,7 +554,7 @@ void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictRes
                                     QMap<ItemId, ResponseStatusCode>& aResponses,
                                     QList<UIDMapping>& aNewMappings )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Commit batches
 
@@ -713,7 +713,7 @@ void CommandHandler::commitBatches( StorageHandler& aStorageHandler, ConflictRes
 void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<ItemId, ResponseStatusCode>& aResponses,
                                      ResponseGenerator& aResponseGenerator )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Process result codes and write corresponding status elements
     for( int i = 0; i < aSyncParams.commands.count(); ++i )
@@ -765,7 +765,7 @@ void CommandHandler::processResults( const SyncParams& aSyncParams, const QMap<I
 void CommandHandler::manageNewMappings( SyncTarget& aTarget, const QList<UIDMapping>& aNewMappings,
                                         ResponseGenerator& aResponseGenerator, bool aFastMapsSend )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Manage new mappings: Save them to persistent storage. Also if we are acting as a client
     // and we have been configured to fast-send mappings, compose LocalMappingsPackage

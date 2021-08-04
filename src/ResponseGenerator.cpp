@@ -40,7 +40,7 @@
 #include "SyncMLStatus.h"
 #include "SyncMLAlert.h"
 #include "datatypes.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -50,12 +50,12 @@ ResponseGenerator::ResponseGenerator()
    iRemoteMsgId( 0 ),
    iIgnoreStatuses( false )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 ResponseGenerator::~ResponseGenerator()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll( iStatuses );
     iStatuses.clear();
@@ -85,10 +85,10 @@ int ResponseGenerator::getRemoteMsgId() const
 SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const ProtocolVersion& aVersion,
                                                        bool aWbXML )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     bool useWbXml = false;
 
-    LOG_DEBUG("MaxMsg size"<<aMaxSize);
+    qCDebug(lcSyncML) << "MaxMsg size"<<aMaxSize;
     if( aMaxSize <= MSGSIZETHRESHOLD)
     {
         useWbXml = aWbXML;
@@ -98,7 +98,7 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
     SyncMLMessage* message = new SyncMLMessage( iHeaderParams, aVersion );
     int messageSize = message->calculateSize(useWbXml, aVersion);
 
-    LOG_DEBUG("useWbxml"<<useWbXml);
+    qCDebug(lcSyncML) << "useWbxml"<<useWbXml;
 
     int overhead = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * aMaxSize), MINMSGOVERHEADBYTES );
     int messageSizeThreshold = aMaxSize - overhead;
@@ -136,12 +136,12 @@ SyncMLMessage* ResponseGenerator::generateNextMessage( int aMaxSize, const Proto
             break;
         }
     }
-    LOG_DEBUG( "MessageSize:"<<message->calculateSize(useWbXml, aVersion));
-    LOG_DEBUG( "Message generated with following parameters:" );
-    LOG_DEBUG( "Maximum size reported by remote device:" << aMaxSize );
-    LOG_DEBUG( "Estimated overhead:" << overhead );
-    LOG_DEBUG( "Message size threshold value was:" << messageSizeThreshold );
-    LOG_DEBUG( "Remaining bytes was:" << remainingBytes );
+    qCDebug(lcSyncML) << "MessageSize:"<<message->calculateSize(useWbXml, aVersion);
+    qCDebug(lcSyncML) << "Message generated with following parameters:";
+    qCDebug(lcSyncML) << "Maximum size reported by remote device:" << aMaxSize;
+    qCDebug(lcSyncML) << "Estimated overhead:" << overhead;
+    qCDebug(lcSyncML) << "Message size threshold value was:" << messageSizeThreshold;
+    qCDebug(lcSyncML) << "Remaining bytes was:" << remainingBytes;
 
     return message;
 
@@ -154,7 +154,7 @@ void ResponseGenerator::addPackage( Package* aPackage )
 
 void ResponseGenerator::clearPackageQueue()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll( iPackages );
     iPackages.clear();
@@ -177,7 +177,7 @@ void ResponseGenerator::ignoreStatuses( bool aIgnore )
 
 void ResponseGenerator::addStatus( StatusParams* aParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iIgnoreStatuses )
     {
@@ -200,7 +200,7 @@ void ResponseGenerator::addStatus( StatusParams* aParams )
 
 void ResponseGenerator::addStatus( const HeaderParams& aParams, ResponseStatusCode aStatusCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Bypass iIgnoreStatuses flag: Status for SyncHdr should always be written
 
@@ -220,7 +220,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
                                    ResponseStatusCode aStatusCode )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Bypass iIgnoreStatuses flag: Status for SyncHdr should always be written
 
@@ -240,7 +240,7 @@ void ResponseGenerator::addStatus( const HeaderParams& aParams, const ChalParams
 void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
                                    bool aWriteItemRefs )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {
@@ -332,7 +332,7 @@ void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusC
 void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusCode aStatusCode,
                                    const QList<int>& aItemIndexes )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {
@@ -419,7 +419,7 @@ void ResponseGenerator::addStatus( const CommandParams& aParams, ResponseStatusC
 
 void ResponseGenerator::addStatus( const SyncParams& aParams, ResponseStatusCode aStatusCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {
@@ -440,7 +440,7 @@ void ResponseGenerator::addStatus( const SyncParams& aParams, ResponseStatusCode
 
 void ResponseGenerator::addStatus( const MapParams& aParams, ResponseStatusCode aStatusCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {
@@ -460,7 +460,7 @@ void ResponseGenerator::addStatus( const MapParams& aParams, ResponseStatusCode 
 
 void ResponseGenerator::addStatus( const ResultsParams& aParams, ResponseStatusCode aStatusCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {
@@ -478,7 +478,7 @@ void ResponseGenerator::addStatus( const ResultsParams& aParams, ResponseStatusC
 
 void ResponseGenerator::addStatus( const PutParams& aParams, ResponseStatusCode aStatusCode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iIgnoreStatuses )
     {

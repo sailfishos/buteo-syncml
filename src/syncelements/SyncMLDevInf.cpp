@@ -42,7 +42,7 @@
 #include "SyncMLCTCap.h"
 #include "SyncMLExt.h"
 #include "datatypes.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -193,7 +193,7 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
             newRoot.appendChild( root );
             root = newRoot;
         }
-        LOG_DEBUG(Q_FUNC_INFO << "Ext Root generated");
+        qCDebug(lcSyncML) << Q_FUNC_INFO << "Ext Root generated";
 
         for ( ; !root.isNull(); root = root.nextSiblingElement( SYNCML_ELEMENT_EXT ) )
         {
@@ -203,7 +203,7 @@ SyncMLDevInf::SyncMLDevInf( const QList<StoragePlugin*> &aDataStores,
             SyncMLExt* ext_dom = new SyncMLExt();
             ext_dom->addExt(ext_data );
             devInfObject->addChild( ext_dom );
-            LOG_DEBUG(Q_FUNC_INFO << "Added child generated" << ext_data);
+            qCDebug(lcSyncML) << Q_FUNC_INFO << "Added child generated" << ext_data;
         }
     }
 
@@ -221,7 +221,7 @@ SyncMLDevInf::~SyncMLDevInf()
 SyncMLCmdObject* SyncMLDevInf::generateDataStore( const StoragePlugin& aPlugin,
                                                   const Role& aRole )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncMLCmdObject* dataStoreObject = new SyncMLCmdObject(SYNCML_ELEMENT_DATASTORE);
 

@@ -34,7 +34,7 @@
 #include "StorageHandlerTest.h"
 #include "Mock.h"
 #include "ConflictResolver.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 
 using namespace DataSync;

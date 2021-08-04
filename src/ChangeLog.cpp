@@ -35,7 +35,7 @@
 
 #include <QtSql>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -44,30 +44,30 @@ ChangeLog::ChangeLog( const QString& aRemoteDevice, const QString& aSourceDbURI,
 : iRemoteDevice( aRemoteDevice ), iSourceDbURI( aSourceDbURI ), iSyncDirection( aSyncDirection )
 
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 ChangeLog::~ChangeLog()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool ChangeLog::load( QSqlDatabase& aDbHandle )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Loading changelog information:");
-    LOG_DEBUG( "Remote device:" << iRemoteDevice );
-    LOG_DEBUG( "Database URI:" << iSourceDbURI );
-    LOG_DEBUG( "Sync direction:" << iSyncDirection );
+    qCDebug(lcSyncML) << "Loading changelog information:";
+    qCDebug(lcSyncML) << "Remote device:" << iRemoteDevice;
+    qCDebug(lcSyncML) << "Database URI:" << iSourceDbURI;
+    qCDebug(lcSyncML) << "Sync direction:" << iSyncDirection;
 
     return ( loadAnchors( aDbHandle ) && loadMaps( aDbHandle ) );
 }
 
 bool ChangeLog::load( const QString& aDbName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -82,7 +82,7 @@ bool ChangeLog::load( const QString& aDbName )
     }
     else
     {
-        LOG_CRITICAL( "Could not open database!" );
+        qCCritical(lcSyncML) << "Could not open database!";
     }
 
     database = QSqlDatabase();
@@ -93,12 +93,12 @@ bool ChangeLog::load( const QString& aDbName )
 
 bool ChangeLog::save( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Saving changelog information:");
-    LOG_DEBUG( "Remote device:" << iRemoteDevice );
-    LOG_DEBUG( "Database URI:" << iSourceDbURI );
-    LOG_DEBUG( "Sync direction:" << iSyncDirection );
+    qCDebug(lcSyncML) << "Saving changelog information:";
+    qCDebug(lcSyncML) << "Remote device:" << iRemoteDevice;
+    qCDebug(lcSyncML) << "Database URI:" << iSourceDbURI;
+    qCDebug(lcSyncML) << "Sync direction:" << iSyncDirection;
 
     if( !ensureAnchorDatabase( aDbHandle ) || !ensureMapsDatabase( aDbHandle ) )
     {
@@ -120,7 +120,7 @@ bool ChangeLog::save( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::save( const QString& aDbName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -135,7 +135,7 @@ bool ChangeLog::save( const QString& aDbName )
     }
     else
     {
-        LOG_CRITICAL( "Could not open database!" );
+        qCCritical(lcSyncML) << "Could not open database!";
     }
 
     database = QSqlDatabase();
@@ -146,19 +146,19 @@ bool ChangeLog::save( const QString& aDbName )
 
 bool ChangeLog::remove( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Removing changelog information:");
-    LOG_DEBUG( "Remote device:" << iRemoteDevice );
-    LOG_DEBUG( "Database URI:" << iSourceDbURI );
-    LOG_DEBUG( "Sync direction:" << iSyncDirection );
+    qCDebug(lcSyncML) << "Removing changelog information:";
+    qCDebug(lcSyncML) << "Remote device:" << iRemoteDevice;
+    qCDebug(lcSyncML) << "Database URI:" << iSourceDbURI;
+    qCDebug(lcSyncML) << "Sync direction:" << iSyncDirection;
 
     return ( removeAnchors( aDbHandle ) && removeMaps( aDbHandle ) );
 }
 
 bool ChangeLog::remove( const QString& aDbName )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -173,7 +173,7 @@ bool ChangeLog::remove( const QString& aDbName )
     }
     else
     {
-        LOG_CRITICAL( "Could not open database!" );
+        qCCritical(lcSyncML) << "Could not open database!";
     }
 
     database = QSqlDatabase();
@@ -224,7 +224,7 @@ void ChangeLog::setMaps( const QList<UIDMapping>& aMaps )
 
 QString ChangeLog::generateConnectionName()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString CONNECTIONNAME( "changelog" );
 
@@ -236,7 +236,7 @@ QString ChangeLog::generateConnectionName()
 
 bool ChangeLog::ensureAnchorDatabase( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "CREATE TABLE if not exists change_logs(id integer primary key autoincrement, remote_device varchar(512), source_db_uri varchar(512), sync_direction INTEGER, local_sync_anchor varchar(128), remote_sync_anchor varchar(128),  last_sync_time timestamp)" );
 
@@ -246,7 +246,7 @@ bool ChangeLog::ensureAnchorDatabase( QSqlDatabase& aDbHandle )
         return true;
     }
     else {
-        LOG_CRITICAL("Could not ensure anchor database table:" << query.lastError() );
+        qCCritical(lcSyncML) << "Could not ensure anchor database table:" << query.lastError();
         return false;
     }
 
@@ -255,7 +255,7 @@ bool ChangeLog::ensureAnchorDatabase( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::ensureMapsDatabase( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString( "CREATE TABLE IF NOT EXISTS id_maps(id integer primary key autoincrement, remote_device varchar(512), source_db_uri varchar(512), sync_direction INTEGER, local_id varchar(128), remote_id varchar(128))" );
 
@@ -265,7 +265,7 @@ bool ChangeLog::ensureMapsDatabase( QSqlDatabase& aDbHandle )
         return true;
     }
     else {
-        LOG_CRITICAL("Could not ensure ID maps database table:" << query.lastError() );
+        qCCritical(lcSyncML) << "Could not ensure ID maps database table:" << query.lastError();
         return false;
     }
 
@@ -273,7 +273,7 @@ bool ChangeLog::ensureMapsDatabase( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::loadAnchors( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool loaded = false;
 
@@ -292,21 +292,21 @@ bool ChangeLog::loadAnchors( QSqlDatabase& aDbHandle )
             iLastRemoteAnchor = query.value(1).toString();
             iLastSyncTime = query.value(2).toDateTime();
 
-            LOG_DEBUG( "Found anchor information:" );
-            LOG_DEBUG( "Last local anchor:" << iLastLocalAnchor );
-            LOG_DEBUG( "Last remote anchor:" << iLastRemoteAnchor );
-            LOG_DEBUG( "Sync session end time:" << iLastSyncTime );
+            qCDebug(lcSyncML) << "Found anchor information:";
+            qCDebug(lcSyncML) << "Last local anchor:" << iLastLocalAnchor;
+            qCDebug(lcSyncML) << "Last remote anchor:" << iLastRemoteAnchor;
+            qCDebug(lcSyncML) << "Sync session end time:" << iLastSyncTime;
 
             loaded = true;
 
         }
         else {
-            LOG_DEBUG( "No existing anchor entry found from database, creating new" );
+            qCDebug(lcSyncML) << "No existing anchor entry found from database, creating new";
         }
 
     }
     else {
-        LOG_WARNING( "Could not load anchors:" << query.lastError() );
+        qCWarning(lcSyncML) << "Could not load anchors:" << query.lastError();
     }
 
     return loaded;
@@ -314,7 +314,7 @@ bool ChangeLog::loadAnchors( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::saveAnchors( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -332,20 +332,20 @@ bool ChangeLog::saveAnchors( QSqlDatabase& aDbHandle )
         query.bindValue( ":last_sync_time", iLastSyncTime );
 
         if( query.exec() ) {
-            LOG_DEBUG( "Anchor information saved:" );
-            LOG_DEBUG( "Last local anchor:" << iLastLocalAnchor );
-            LOG_DEBUG( "Last remote anchor:" << iLastRemoteAnchor );
-            LOG_DEBUG( "Sync session end time:" << iLastSyncTime );
+            qCDebug(lcSyncML) << "Anchor information saved:";
+            qCDebug(lcSyncML) << "Last local anchor:" << iLastLocalAnchor;
+            qCDebug(lcSyncML) << "Last remote anchor:" << iLastRemoteAnchor;
+            qCDebug(lcSyncML) << "Sync session end time:" << iLastSyncTime;
 
             success = true;
         }
         else {
-            LOG_CRITICAL( "Could not save anchors:" << query.lastError() );
+            qCCritical(lcSyncML) << "Could not save anchors:" << query.lastError();
         }
 
     }
     else {
-        LOG_CRITICAL( "Could not save anchors as database cleaning failed" );
+        qCCritical(lcSyncML) << "Could not save anchors as database cleaning failed";
     }
 
     return success;
@@ -354,14 +354,14 @@ bool ChangeLog::saveAnchors( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::removeAnchors( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
     QStringList tables = aDbHandle.tables();
 
     if( !tables.contains("change_logs") ) {
-        LOG_DEBUG("Change logs table not present. Considering anchors as removed");
+        qCDebug(lcSyncML) << "Change logs table not present. Considering anchors as removed";
         success = true;
     }
     else {
@@ -378,7 +378,7 @@ bool ChangeLog::removeAnchors( QSqlDatabase& aDbHandle )
             success = true;
         }
         else {
-            LOG_WARNING( "Could not remove anchors:" << query.lastError() );
+            qCWarning(lcSyncML) << "Could not remove anchors:" << query.lastError();
         }
     }
     return success;
@@ -386,7 +386,7 @@ bool ChangeLog::removeAnchors( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::loadMaps( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool loaded = false;
 
@@ -414,7 +414,7 @@ bool ChangeLog::loadMaps( QSqlDatabase& aDbHandle )
     }
     else
     {
-        LOG_CRITICAL( "Could not load ID maps:" << query.lastError() );
+        qCCritical(lcSyncML) << "Could not load ID maps:" << query.lastError();
     }
 
     return loaded;
@@ -423,7 +423,7 @@ bool ChangeLog::loadMaps( QSqlDatabase& aDbHandle )
 bool ChangeLog::saveMaps( QSqlDatabase& aDbHandle )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
@@ -455,16 +455,16 @@ bool ChangeLog::saveMaps( QSqlDatabase& aDbHandle )
         query.addBindValue( remoteId );
 
         if( query.execBatch() ) {
-            LOG_DEBUG( "ID maps information saved" );
+            qCDebug(lcSyncML) << "ID maps information saved";
             success = true;
         }
         else {
-            LOG_WARNING( "Query failed: " << query.lastError() );
+            qCWarning(lcSyncML) << "Query failed: " << query.lastError();
         }
     }
     else
     {
-        LOG_CRITICAL( "Could not save ID maps as database cleaning failed" );
+        qCCritical(lcSyncML) << "Could not save ID maps as database cleaning failed";
     }
 
     return success;
@@ -472,14 +472,14 @@ bool ChangeLog::saveMaps( QSqlDatabase& aDbHandle )
 
 bool ChangeLog::removeMaps( QSqlDatabase& aDbHandle )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool success = false;
 
     QStringList tables = aDbHandle.tables();
 
     if( !tables.contains("id_maps") ) {
-        LOG_DEBUG("id maps table not present");
+        qCDebug(lcSyncML) << "id maps table not present";
         success = true;
     }
     else {
@@ -495,7 +495,7 @@ bool ChangeLog::removeMaps( QSqlDatabase& aDbHandle )
             success = true;
         }
         else {
-            LOG_WARNING( "Could not remove ID maps:" << query.lastError() );
+            qCWarning(lcSyncML) << "Could not remove ID maps:" << query.lastError();
         }
     }
 
