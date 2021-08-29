@@ -33,19 +33,19 @@
 
 #include "RequestListener.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 RequestListener::RequestListener( QObject* aParent )
  : QObject( aParent ), iTransport( 0 )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 RequestListener::~RequestListener()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll( iRequestData.iFragments);
     iRequestData.iFragments.clear();
@@ -53,7 +53,7 @@ RequestListener::~RequestListener()
 
 bool RequestListener::start( Transport* aTransport )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !aTransport )
     {
@@ -82,7 +82,7 @@ bool RequestListener::start( Transport* aTransport )
 
 void RequestListener::stop()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     disconnect( &iParser, 0, this, 0 );
     disconnect( iTransport, SIGNAL(readXMLData(QIODevice *, bool)) ,
@@ -107,7 +107,7 @@ RequestListener::RequestData RequestListener::takeRequestData()
 
 void RequestListener::transportEvent( DataSync::TransportStatusEvent aEvent, QString aErrorString )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     stop();
 
@@ -135,7 +135,7 @@ void RequestListener::transportEvent( DataSync::TransportStatusEvent aEvent, QSt
         }
         default:
         {
-            LOG_DEBUG( "Unknown transport status code: " << aEvent );
+            qCDebug(lcSyncML) << "Unknown transport status code: " << aEvent;
             emit error( INTERNAL_ERROR, aErrorString );
             break;
         }
@@ -144,13 +144,13 @@ void RequestListener::transportEvent( DataSync::TransportStatusEvent aEvent, QSt
 
 void RequestListener::parsingComplete( bool aLastMessageInPackage )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_UNUSED( aLastMessageInPackage );
 
     stop();
 
-    LOG_DEBUG( "SyncAgent: Received XML data, analyzing..." );
+    qCDebug(lcSyncML) << "SyncAgent: Received XML data, analyzing...";
 
     QList<DataSync::Fragment*> fragments = iParser.takeFragments();
 
@@ -182,24 +182,24 @@ void RequestListener::parsingComplete( bool aLastMessageInPackage )
 
         if( syncModes[0].syncInitiator() == INIT_CLIENT )
         {
-            LOG_DEBUG( "SyncAgent: XML data recognized as sent by client");
+            qCDebug(lcSyncML) << "SyncAgent: XML data recognized as sent by client";
             iRequestData.iType = REQUEST_CLIENT;
             isValid = true;
         }
         else if( syncModes[0].syncInitiator() == INIT_SERVER )
         {
-            LOG_DEBUG( "SyncAgent: XML data recognized as sent by server");
+            qCDebug(lcSyncML) << "SyncAgent: XML data recognized as sent by server";
             iRequestData.iType = REQUEST_SAN_XML;
             isValid = true;
         }
         else
         {
-            LOG_CRITICAL( "Could not recognize alert code" );
+            qCCritical(lcSyncML) << "Could not recognize alert code";
         }
     }
     else
     {
-        LOG_CRITICAL( "Could not find any alerts from received XML data!" );
+        qCCritical(lcSyncML) << "Could not find any alerts from received XML data!";
     }
 
     if( isValid )
@@ -218,7 +218,7 @@ void RequestListener::parsingComplete( bool aLastMessageInPackage )
 
 void RequestListener::parserError( DataSync::ParserError aError )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     stop();
 
@@ -249,9 +249,9 @@ void RequestListener::parserError( DataSync::ParserError aError )
 
 void RequestListener::SANPackageReceived( QIODevice* aDevice )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "SyncAgent: Received SAN data, processing..." );
+    qCDebug(lcSyncML) << "SyncAgent: Received SAN data, processing...";
 
     QByteArray package = aDevice->readAll();
 
@@ -263,12 +263,12 @@ void RequestListener::SANPackageReceived( QIODevice* aDevice )
 
     if( parser.parseSANMessageDS( package, iRequestData.iSANData ) )
     {
-        LOG_DEBUG( "SyncAgent: SAN package processed" );
+        qCDebug(lcSyncML) << "SyncAgent: SAN package processed";
         emit newPendingRequest();
     }
     else
     {
-        LOG_CRITICAL( "Parsing of SAN package failed" );
+        qCCritical(lcSyncML) << "Parsing of SAN package failed";
         emit error( INVALID_SYNCML_MESSAGE, "Parsing of 1.2 SAN package failed" );
     }
 

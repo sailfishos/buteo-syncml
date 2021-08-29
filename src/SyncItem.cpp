@@ -31,7 +31,7 @@
 * 
 */
 #include "SyncItem.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 

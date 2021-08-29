@@ -35,7 +35,7 @@
 
 #include "OBEXDataHandler.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 #define SYNCMLTARGET "SYNCML-SYNC"
 
@@ -55,23 +55,23 @@ OBEXServerWorker::~OBEXServerWorker()
 
 void OBEXServerWorker::waitForConnect()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_DEBUG( "Already connected, ignoring connect attempt" );
+        qCDebug(lcSyncML) << "Already connected, ignoring connect attempt";
         return;
     }
 
     if( !setupOpenOBEX( iFd, iMTU, OBEXServerWorker::handleEvent ) )
     {
-        LOG_CRITICAL( "Could not set up OBEX link, aborting CONNECT" );
+        qCCritical(lcSyncML) << "Could not set up OBEX link, aborting CONNECT";
         return;
     }
 
     OBEX_SetUserData( getHandle(), this );
 
-    LOG_DEBUG("Waiting for OBEX CONNECT");
+    qCDebug(lcSyncML) << "Waiting for OBEX CONNECT";
 
     process( STATE_CONNECT );
 
@@ -79,16 +79,16 @@ void OBEXServerWorker::waitForConnect()
 
 void OBEXServerWorker::waitForDisconnect()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_DEBUG( "Waiting for OBEX DISCONNECT" );
+        qCDebug(lcSyncML) << "Waiting for OBEX DISCONNECT";
         process( STATE_DISCONNECT );
     }
     else
     {
-        LOG_DEBUG( "Not connected, ignoring disconnect attempt" );
+        qCDebug(lcSyncML) << "Not connected, ignoring disconnect attempt";
     }
 
     closeOpenOBEX();
@@ -96,16 +96,16 @@ void OBEXServerWorker::waitForDisconnect()
 
 void OBEXServerWorker::waitForPut()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_DEBUG( "Waiting for OBEX PUT" );
+        qCDebug(lcSyncML) << "Waiting for OBEX PUT";
         process( STATE_PUT );
     }
     else
     {
-        LOG_WARNING( "Connection not established, cannot wait for PUT" );
+        qCWarning(lcSyncML) << "Connection not established, cannot wait for PUT";
         emit connectionFailed();
     }
 
@@ -113,16 +113,16 @@ void OBEXServerWorker::waitForPut()
 
 void OBEXServerWorker::waitForGet()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_DEBUG( "Waiting for OBEX GET" );
+        qCDebug(lcSyncML) << "Waiting for OBEX GET";
         process( STATE_GET );
     }
     else
     {
-        LOG_WARNING( "Connection not established, cannot wait for GET" );
+        qCWarning(lcSyncML) << "Connection not established, cannot wait for GET";
         emit connectionFailed();
     }
 
@@ -130,7 +130,7 @@ void OBEXServerWorker::waitForGet()
 
 void OBEXServerWorker::process( State aNextState )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int result = 0;
 
@@ -151,14 +151,14 @@ void OBEXServerWorker::process( State aNextState )
         }
         else if( result < 0 )
         {
-            LOG_WARNING( "OBEX operation failed" );
+            qCWarning(lcSyncML) << "OBEX operation failed";
             iState = STATE_IDLE;
             iProcessing = false;
             emit connectionError();
         }
         else if( result == 0 )
         {
-            LOG_WARNING( "OBEX timeout" );
+            qCWarning(lcSyncML) << "OBEX timeout";
             iState = STATE_IDLE;
             iProcessing = false;
             emit connectionTimeout();
@@ -171,10 +171,10 @@ void OBEXServerWorker::process( State aNextState )
 void OBEXServerWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int aMode,
                                     int aEvent, int aObexCmd, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     OBEXServerWorker* worker= (OBEXServerWorker*)OBEX_GetUserData( aHandle );
-    LOG_DEBUG("OBEX Event: " << aEvent <<" Mode: " << aMode <<" Cmd: " << aObexCmd << " Resp: " << aObexRsp);
+    qCDebug(lcSyncML) << "OBEX Event: " << aEvent <<" Mode: " << aMode <<" Cmd: " << aObexCmd << " Resp: " << aObexRsp;
 
     switch( aEvent )
     {
@@ -188,7 +188,7 @@ void OBEXServerWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
             }
             else
             {
-                LOG_WARNING( "Ignoring command related to unimplemented service" );
+                qCWarning(lcSyncML) << "Ignoring command related to unimplemented service";
                 OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_IMPLEMENTED,
                                             OBEX_RSP_NOT_IMPLEMENTED );
             }
@@ -216,7 +216,7 @@ void OBEXServerWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
 
 void OBEXServerWorker::linkError()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iState = STATE_IDLE;
     iProcessing = false;
@@ -228,7 +228,7 @@ void OBEXServerWorker::linkError()
         emit connectionError();
     }
 
-    LOG_CRITICAL( "Link error occurred" );
+    qCCritical(lcSyncML) << "Link error occurred";
 
     closeOpenOBEX();
     setConnected( false );
@@ -237,7 +237,7 @@ void OBEXServerWorker::linkError()
 
 void OBEXServerWorker::requestReceived( obex_object_t *aObject, int aMode, int aObexCmd )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_UNUSED(aMode);
 
@@ -285,7 +285,7 @@ void OBEXServerWorker::requestReceived( obex_object_t *aObject, int aMode, int a
         }
         default:
         {
-            LOG_WARNING( "Ignoring command related to unimplemented service" );
+            qCWarning(lcSyncML) << "Ignoring command related to unimplemented service";
             OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_IMPLEMENTED,
                                         OBEX_RSP_NOT_IMPLEMENTED );
             break;
@@ -295,11 +295,11 @@ void OBEXServerWorker::requestReceived( obex_object_t *aObject, int aMode, int a
 
 void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_WARNING( "Already connected, ignoring CONNECT");
+        qCWarning(lcSyncML) << "Already connected, ignoring CONNECT";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
                                     OBEX_RSP_SERVICE_UNAVAILABLE );
         return;
@@ -309,34 +309,34 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
     OBEXDataHandler::ConnectCmdData cmdData;
 
     if( !handler.parseConnectCmd( getHandle(), aObject, cmdData ) ) {
-        LOG_WARNING( "Could not parse CONNECT request, ignoring");
+        qCWarning(lcSyncML) << "Could not parse CONNECT request, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
     }
 
     if( cmdData.iTarget != SYNCMLTARGET )
     {
-        LOG_WARNING( "CONNECT request not directed to SyncML, ignoring");
+        qCWarning(lcSyncML) << "CONNECT request not directed to SyncML, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_FOUND, OBEX_RSP_NOT_FOUND );
         return;
     }
 
 
-    LOG_DEBUG("Assigning connection id: " << iConnectionId);
+    qCDebug(lcSyncML) << "Assigning connection id: " << iConnectionId;
     OBEXDataHandler::ConnectRspData rspData;
     rspData.iConnectionId = iConnectionId;
     rspData.iWho = cmdData.iTarget;
 
     if( !handler.createConnectRsp( getHandle(), aObject, rspData ) )
     {
-        LOG_CRITICAL( "Internal error when creating CONNECT response" );
+        qCCritical(lcSyncML) << "Internal error when creating CONNECT response";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_INTERNAL_SERVER_ERROR, OBEX_RSP_INTERNAL_SERVER_ERROR );
         return;
     }
 
     OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
 
-    LOG_DEBUG("OBEX session established as server");
+    qCDebug(lcSyncML) << "OBEX session established as server";
     setConnected( true );
 
     iProcessing = false;
@@ -346,11 +346,11 @@ void OBEXServerWorker::ConnectRequest( obex_object_t *aObject )
 
 void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !isConnected() )
     {
-        LOG_WARNING( "Not connected, ignoring DISCONNECT");
+        qCWarning(lcSyncML) << "Not connected, ignoring DISCONNECT";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
                                     OBEX_RSP_SERVICE_UNAVAILABLE );
         return;
@@ -361,14 +361,14 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
 
     if( !handler.parseDisconnectCmd( getHandle(), aObject, data ) )
     {
-        LOG_WARNING( "Could not parse DISCONNECT request, ignoring");
+        qCWarning(lcSyncML) << "Could not parse DISCONNECT request, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
     }
 
     if( data.iConnectionId != iConnectionId )
     {
-        LOG_WARNING( "Received DISCONNECT request not matching the session, ignoring");
+        qCWarning(lcSyncML) << "Received DISCONNECT request not matching the session, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_FOUND, OBEX_RSP_NOT_FOUND );
         return;
     }
@@ -377,11 +377,11 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
 
     if( iState != STATE_DISCONNECT )
     {
-        LOG_WARNING( "Unexpected OBEX DISCONNECT received, presuming connection error");
+        qCWarning(lcSyncML) << "Unexpected OBEX DISCONNECT received, presuming connection error";
         emit connectionError();
     }
 
-    LOG_DEBUG("OBEX session disconnected as server");
+    qCDebug(lcSyncML) << "OBEX session disconnected as server";
     setConnected( false );
 
     iProcessing = false;
@@ -391,11 +391,11 @@ void OBEXServerWorker::DisconnectRequest( obex_object_t *aObject )
 
 void OBEXServerWorker::PutRequest( obex_object_t *aObject )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !isConnected() )
     {
-        LOG_WARNING( "Not connected, ignoring PUT");
+        qCWarning(lcSyncML) << "Not connected, ignoring PUT";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
                                     OBEX_RSP_SERVICE_UNAVAILABLE );
         return;
@@ -405,28 +405,28 @@ void OBEXServerWorker::PutRequest( obex_object_t *aObject )
     OBEXDataHandler::PutCmdData data;
 
     if( !handler.parsePutCmd( getHandle(), aObject, data ) ) {
-        LOG_WARNING( "Could not parse PUT request, ignoring");
+        qCWarning(lcSyncML) << "Could not parse PUT request, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
     }
 
     if( data.iUnsupportedHeaders )
     {
-        LOG_WARNING( "PUT request included unsupported headers, ignoring" );
+        qCWarning(lcSyncML) << "PUT request included unsupported headers, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
         return;
     }
 
     if( data.iConnectionId != iConnectionId )
     {
-        LOG_WARNING( "Received PUT request not matching the session, ignoring");
+        qCWarning(lcSyncML) << "Received PUT request not matching the session, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_FOUND, OBEX_RSP_NOT_FOUND );
         return;
     }
 
     OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
 
-    LOG_DEBUG( "Received PUT with body size of:" << data.iBody.size() <<", content type:" << data.iContentType );
+    qCDebug(lcSyncML) << "Received PUT with body size of:" << data.iBody.size() <<", content type:" << data.iContentType;
 
     iProcessing = false;
     iState = STATE_IDLE;
@@ -437,11 +437,11 @@ void OBEXServerWorker::PutRequest( obex_object_t *aObject )
 
 void OBEXServerWorker::GetRequest( obex_object_t *aObject )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !isConnected() )
     {
-        LOG_WARNING( "Not connected, ignoring GET");
+        qCWarning(lcSyncML) << "Not connected, ignoring GET";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_SERVICE_UNAVAILABLE,
                                     OBEX_RSP_SERVICE_UNAVAILABLE );
         return;
@@ -451,14 +451,14 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
     OBEXDataHandler::GetCmdData cmdData;
 
     if( !handler.parseGetCmd( getHandle(), aObject, cmdData ) ) {
-        LOG_WARNING( "Could not parse GET request, ignoring");
+        qCWarning(lcSyncML) << "Could not parse GET request, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_BAD_REQUEST, OBEX_RSP_BAD_REQUEST );
         return;
     }
 
     if( cmdData.iConnectionId != iConnectionId )
     {
-        LOG_WARNING( "Received GET request not matching the session, ignoring");
+        qCWarning(lcSyncML) << "Received GET request not matching the session, ignoring";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_NOT_FOUND, OBEX_RSP_NOT_FOUND );
         return;
     }
@@ -475,11 +475,11 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
         if( handler.createGetRsp( getHandle(), aObject, rspData ) )
         {
             OBEX_ObjectSetRsp( aObject, OBEX_RSP_CONTINUE, OBEX_RSP_SUCCESS );
-            LOG_DEBUG( "Responded to GET request for content type" << cmdData.iContentType << "with response of" << data.length() << "bytes" );
+            qCDebug(lcSyncML) << "Responded to GET request for content type" << cmdData.iContentType << "with response of" << data.length() << "bytes";
         }
         else
         {
-            LOG_CRITICAL( "Error when generating OBEX GET response" );
+            qCCritical(lcSyncML) << "Error when generating OBEX GET response";
             OBEX_ObjectSetRsp( aObject, OBEX_RSP_INTERNAL_SERVER_ERROR,
                                         OBEX_RSP_INTERNAL_SERVER_ERROR );
         }
@@ -487,7 +487,7 @@ void OBEXServerWorker::GetRequest( obex_object_t *aObject )
     }
     else
     {
-        LOG_CRITICAL( "Could not retrieve response data for GET!");
+        qCCritical(lcSyncML) << "Could not retrieve response data for GET!";
         OBEX_ObjectSetRsp( aObject, OBEX_RSP_INTERNAL_SERVER_ERROR, OBEX_RSP_INTERNAL_SERVER_ERROR );
     }
 

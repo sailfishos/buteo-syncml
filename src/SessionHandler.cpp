@@ -46,7 +46,7 @@
 #include "AuthHelper.h"
 #include "StorageProvider.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -68,7 +68,7 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
     iRole( aRole )
 
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT(iConfig != NULL);
 
@@ -85,7 +85,7 @@ SessionHandler::SessionHandler( const SyncAgentConfig* aConfig,
 
 SessionHandler::~SessionHandler()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Make sure that all allocated objects are released.
     releaseStoragesAndTargets();
@@ -94,7 +94,7 @@ SessionHandler::~SessionHandler()
 
 bool SessionHandler::prepareSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iDatabaseHandler.isValid() ) {
         abortSync( INTERNAL_ERROR, "Could not open database file" );
@@ -106,7 +106,7 @@ bool SessionHandler::prepareSync()
     if( iConfig->getAuthType() != AUTH_NONE &&
         iConfig->getUsername().isEmpty() )
     {
-        LOG_CRITICAL( "Authentication requested to be used, but no credentials provided" );
+        qCCritical(lcSyncML) << "Authentication requested to be used, but no credentials provided";
         abortSync( AUTHENTICATION_FAILURE, "Authentication requested to be used, but no credentials provided" );
         return false;
     }
@@ -161,11 +161,11 @@ bool SessionHandler::prepareSync()
 
 void SessionHandler::abortSync( SyncState aSyncState, const QString& aDescription )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iSessionClosed )
     {
-        LOG_DEBUG("Aborting sync with state" << aSyncState << ", Reason:" << aDescription);
+        qCDebug(lcSyncML) << "Aborting sync with state" << aSyncState << ", Reason:" << aDescription;
 
         iSyncState = aSyncState;
         iSyncFinished = true;
@@ -187,11 +187,11 @@ bool SessionHandler::syncFinished()
 
 void SessionHandler::setSyncState( SyncState aSyncState )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iSyncState != aSyncState ) {
         iSyncState = aSyncState;
-        LOG_DEBUG("Sync state changed to " << iSyncState);
+        qCDebug(lcSyncML) << "Sync state changed to " << iSyncState;
         emit syncStateChanged( iSyncState );
     }
 }
@@ -204,9 +204,9 @@ SyncState SessionHandler::getSyncState() const
 void SessionHandler::finishSync()
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG("Finishing sync");
+    qCDebug(lcSyncML) << "Finishing sync";
 
     iSyncState = SYNC_FINISHED;
     iSyncFinished = true;
@@ -214,7 +214,7 @@ void SessionHandler::finishSync()
 }
 
 void SessionHandler::setTransportStatus(DataSync::TransportStatusEvent aEvent , QString aErrorString ) {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     switch (aEvent) {
 
@@ -238,7 +238,7 @@ void SessionHandler::setTransportStatus(DataSync::TransportStatusEvent aEvent , 
         }
         case TRANSPORT_CONNECTION_ABORTED:
         {
-            LOG_DEBUG( "Connection Error" );
+            qCDebug(lcSyncML) << "Connection Error";
             abortSync( CONNECTION_ERROR , aErrorString );
             break;
         }
@@ -247,19 +247,19 @@ void SessionHandler::setTransportStatus(DataSync::TransportStatusEvent aEvent , 
             // Remote aborted after receiving the first message from us, likely
             // candidate for unsupported sync type.
             if( cmdRespMap.isEmpty() ) {
-                LOG_DEBUG( "Unsupported sync type" );
+                qCDebug(lcSyncML) << "Unsupported sync type";
                 abortSync( UNSUPPORTED_SYNC_TYPE , "Unsupported sync type" );
             }
             else
             {
-                LOG_DEBUG( "Connection Error" );
+                qCDebug(lcSyncML) << "Connection Error";
                 abortSync( CONNECTION_ERROR , aErrorString );
             }
             break;
         }
         default:
         {
-            LOG_DEBUG( "Unknown transport status code: " << aEvent );
+            qCDebug(lcSyncML) << "Unknown transport status code: " << aEvent;
             abortSync( INTERNAL_ERROR, aErrorString );
             break;
         }
@@ -267,7 +267,7 @@ void SessionHandler::setTransportStatus(DataSync::TransportStatusEvent aEvent , 
 }
 void SessionHandler::handleParsingComplete( bool aLastMessageInPackage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QList<DataSync::Fragment*> fragments = iParser.takeFragments();
 
@@ -276,9 +276,9 @@ void SessionHandler::handleParsingComplete( bool aLastMessageInPackage )
 
 void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMessageInPackage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Beginning to process received message..." );
+    qCDebug(lcSyncML) << "Beginning to process received message...";
     iProcessing = true;
 
     while( !aFragments.isEmpty() )
@@ -329,7 +329,7 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
             }
             else
             {
-                LOG_WARNING( "Unsupported command. Command Id:" << command->cmdId );
+                qCWarning(lcSyncML) << "Unsupported command. Command Id:" << command->cmdId;
                 iCommandHandler.rejectCommand( *command, getResponseGenerator(), NOT_IMPLEMENTED );
                 delete command;
                 command = 0;
@@ -347,7 +347,7 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
     }
 
     iProcessing = false;
-    LOG_DEBUG( "Received message processed" );
+    qCDebug(lcSyncML) << "Received message processed";
 
     handleEndOfMessage();
 
@@ -355,7 +355,7 @@ void SessionHandler::processMessage( QList<Fragment*>& aFragments, bool aLastMes
 
 void SessionHandler::handleParserErrors( DataSync::ParserError aError )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     switch (aError) {
         case PARSER_ERROR_INCOMPLETE_DATA:
@@ -390,20 +390,20 @@ void SessionHandler::handleParserErrors( DataSync::ParserError aError )
 
 void SessionHandler::SANPackageReceived( QIODevice* aDevice )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_UNUSED( aDevice );
 
     // SAN packages should never be received in-session! They are allowed
     // only when listening for request, which is before any session has been
     // established.
-    LOG_CRITICAL( "Received unexpected 1.2 SAN message, aborting..." );
+    qCCritical(lcSyncML) << "Received unexpected 1.2 SAN message, aborting...";
     abortSync( INVALID_SYNCML_MESSAGE, "Received unexpected 1.2 SAN message" );
 }
 
 void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Common handling for header parameters
 
@@ -461,14 +461,14 @@ void SessionHandler::handleHeaderElement( DataSync::HeaderParams* aHeaderParams 
 
 void SessionHandler::handleStatusElement( StatusParams* aStatusParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Add the response from this status to the command we sent to our map
     // cmd here corresponds to the syncml command for which we are handling this
     // status element sent by the remote device, which would have the response.
     QString cmd = (aStatusParams->cmd).toLower();
     cmdRespMap[cmd] = aStatusParams->data;
-    LOG_DEBUG( "Remote device responded with " << aStatusParams->data << " for cmd " << cmd );
+    qCDebug(lcSyncML) << "Remote device responded with " << aStatusParams->data << " for cmd " << cmd;
 
     // Common status handling
     if( aStatusParams->cmdRef == 0 )
@@ -540,7 +540,7 @@ void SessionHandler::handleStatusElement( StatusParams* aStatusParams )
 
 void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QSharedPointer<SyncParams> params( aSyncParams );
 
@@ -563,7 +563,7 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
     }
 
     if( !target->discoverLocalChanges( iRole ) ) {
-        LOG_CRITICAL( "Failed to discover local changes for source db" << target->getSourceDatabase() );
+        qCCritical(lcSyncML) << "Failed to discover local changes for source db" << target->getSourceDatabase();
         iCommandHandler.rejectSync( *aSyncParams, iResponseGenerator, COMMAND_FAILED );
         return;
     }
@@ -597,7 +597,7 @@ void SessionHandler::handleSyncElement( SyncParams* aSyncParams )
 
 void SessionHandler::handleAlertElement( CommandParams* aAlertParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status;
 
@@ -628,7 +628,7 @@ void SessionHandler::handleAlertElement( CommandParams* aAlertParams )
 
 void SessionHandler::handleGetElement( DataSync::CommandParams* aGetParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
@@ -661,7 +661,7 @@ void SessionHandler::handleGetElement( DataSync::CommandParams* aGetParams )
 
 void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
@@ -691,7 +691,7 @@ void SessionHandler::handlePutElement( DataSync::PutParams* aPutParams )
 
 void SessionHandler::handleResultsElement(DataSync::ResultsParams* aResults)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode code = NOT_IMPLEMENTED;
 
@@ -718,7 +718,7 @@ void SessionHandler::handleResultsElement(DataSync::ResultsParams* aResults)
 
 void SessionHandler::handleMapElement( DataSync::MapParams* aMapParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status = NOT_FOUND;
     SyncTarget* target = NULL;
@@ -746,7 +746,7 @@ void SessionHandler::handleMapElement( DataSync::MapParams* aMapParams )
 
 void SessionHandler::handleFinal()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( authentication().authedToRemote() ) {
         finalReceived();
@@ -756,7 +756,7 @@ void SessionHandler::handleFinal()
 
 void SessionHandler::handleEndOfMessage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     messageParsed();
     if( iSyncFinished ) {
@@ -767,9 +767,9 @@ void SessionHandler::handleEndOfMessage()
 
 void SessionHandler::sendNextMessage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Sending next message...");
+    qCDebug(lcSyncML) << "Sending next message...";
 
     // If have nothing to send in response other than status codes, we must
     // request remote side to send data by using alert 222 ( NEXT MESSAGE )
@@ -799,7 +799,7 @@ void SessionHandler::sendNextMessage()
         clearEMITags();
     }
 
-    LOG_DEBUG( "Next message sent" );
+    qCDebug(lcSyncML) << "Next message sent";
 
 }
 
@@ -825,7 +825,7 @@ void SessionHandler::setLocalNextAnchor( const QString& aLocalNextAnchor )
 
 void SessionHandler::exitSync()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if(!iSessionClosed) {
 
@@ -855,7 +855,7 @@ void SessionHandler::exitSync()
 
 void SessionHandler::releaseStoragesAndTargets()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StorageProvider* provider = NULL;
 
@@ -880,7 +880,7 @@ void SessionHandler::releaseStoragesAndTargets()
 
 void DataSync::SessionHandler::connectSignals()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     connect( &iParser, SIGNAL(parsingComplete(bool)),
              this, SLOT(handleParsingComplete(bool)), Qt::QueuedConnection );
@@ -898,7 +898,7 @@ void DataSync::SessionHandler::connectSignals()
 
 ResponseStatusCode SessionHandler::handleInformativeAlert( const CommandParams& aAlertParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResponseStatusCode status;
 
@@ -931,33 +931,33 @@ ResponseStatusCode SessionHandler::handleInformativeAlert( const CommandParams& 
 bool SessionHandler::anchorMismatch( const SyncMode& aSyncMode, const SyncTarget& aTarget,
                                      const QString& aRemoteLastAnchor ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aSyncMode.syncType() != TYPE_FAST )
     {
-        LOG_DEBUG( "Slow sync mode, not checking anchors of remote database" << aTarget.getTargetDatabase() );
+        qCDebug(lcSyncML) << "Slow sync mode, not checking anchors of remote database" << aTarget.getTargetDatabase();
         return false;
     }
 
-    LOG_DEBUG( "Fast sync mode, checking anchors of remote database" << aTarget.getTargetDatabase() );
-    LOG_DEBUG( "Stored LAST anchor:" << aTarget.getRemoteLastAnchor() );
-    LOG_DEBUG( "LAST anchor reported by remote device:" << aRemoteLastAnchor );
+    qCDebug(lcSyncML) << "Fast sync mode, checking anchors of remote database" << aTarget.getTargetDatabase();
+    qCDebug(lcSyncML) << "Stored LAST anchor:" << aTarget.getRemoteLastAnchor();
+    qCDebug(lcSyncML) << "LAST anchor reported by remote device:" << aRemoteLastAnchor;
 
     if( aRemoteLastAnchor.isEmpty() || aTarget.getRemoteLastAnchor() != aRemoteLastAnchor )
     {
-        LOG_DEBUG( "Anchor mismatch!" );
+        qCDebug(lcSyncML) << "Anchor mismatch!";
         return true;
     }
     else
     {
-        LOG_DEBUG( "Anchors match" );
+        qCDebug(lcSyncML) << "Anchors match";
         return false;
     }
 }
 
 void SessionHandler::composeLocalChanges()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int maxChangesPerMessage = DEFAULT_MAX_CHANGES_TO_SEND;
 
@@ -967,7 +967,7 @@ void SessionHandler::composeLocalChanges()
         maxChangesPerMessage = configValue;
     }
 
-    LOG_DEBUG( "Setting number of changes to send per message to" << maxChangesPerMessage );
+    qCDebug(lcSyncML) << "Setting number of changes to send per message to" << maxChangesPerMessage;
 
     int largeObjectThreshold = qMax( static_cast<int>( MAXMSGOVERHEADRATIO * params().remoteMaxMsgSize()), MINMSGOVERHEADBYTES );
 
@@ -990,7 +990,7 @@ void SessionHandler::composeLocalChanges()
 
 void SessionHandler::setupSession( HeaderParams& aHeaderParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     params().setSessionId( aHeaderParams.sessionID );
 
@@ -1012,13 +1012,13 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
     QString verProto;
 
     if( aHeaderParams.verDTD == SYNCML_DTD_VERSION_1_1 ) {
-        LOG_DEBUG("Setting SyncML 1.1 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.1 protocol version";
         setProtocolVersion( SYNCML_1_1 );
         verDTD = SYNCML_DTD_VERSION_1_1;
         verProto = DS_VERPROTO_1_1;
     }
     else if( aHeaderParams.verDTD == SYNCML_DTD_VERSION_1_2 ) {
-        LOG_DEBUG("Setting SyncML 1.2 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.2 protocol version";
         setProtocolVersion( SYNCML_1_2 );
         verDTD = SYNCML_DTD_VERSION_1_2;
         verProto = DS_VERPROTO_1_2;
@@ -1043,7 +1043,7 @@ void SessionHandler::setupSession( HeaderParams& aHeaderParams )
 
 void SessionHandler::setupSession( const QString& aSessionId )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     params().setSessionId( aSessionId );
 
@@ -1072,13 +1072,13 @@ void SessionHandler::setupSession( const QString& aSessionId )
 
     if( getProtocolVersion() == SYNCML_1_1 )
     {
-        LOG_DEBUG("Setting SyncML 1.1 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.1 protocol version";
         verDTD = SYNCML_DTD_VERSION_1_1;
         verProto = DS_VERPROTO_1_1;
     }
     else if( getProtocolVersion() == SYNCML_1_2 )
     {
-        LOG_DEBUG("Setting SyncML 1.2 protocol version");
+        qCDebug(lcSyncML) << "Setting SyncML 1.2 protocol version";
         verDTD = SYNCML_DTD_VERSION_1_2;
         verProto = DS_VERPROTO_1_2;
     }
@@ -1102,7 +1102,7 @@ void SessionHandler::setupSession( const QString& aSessionId )
 
 void SessionHandler::saveSession()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Store last sync time with accuracy of 1 second, ceiling it to the
     // next full second.
@@ -1122,7 +1122,7 @@ void SessionHandler::saveSession()
 
 StoragePlugin* SessionHandler::createStorageByURI( const QString& aURI )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StoragePlugin* plugin = NULL;
 
@@ -1157,7 +1157,7 @@ StoragePlugin* SessionHandler::createStorageByURI( const QString& aURI )
 
 StoragePlugin* SessionHandler::createStorageByMIME( const QString& aMIME )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StoragePlugin* plugin = NULL;
 
@@ -1187,7 +1187,7 @@ const QList<StoragePlugin*>& SessionHandler::getStorages() const
 
 SyncTarget* SessionHandler::createSyncTarget( StoragePlugin& aPlugin, const SyncMode& aSyncMode )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncTarget* target = getSyncTarget( aPlugin.getSourceURI() );
 
@@ -1198,7 +1198,7 @@ SyncTarget* SessionHandler::createSyncTarget( StoragePlugin& aPlugin, const Sync
                                               aSyncMode.syncDirection() );
 
         if( !changelog->load( getDatabaseHandler().getDbHandle() ) ) {
-            LOG_WARNING( "Could not load change log information" );
+            qCWarning(lcSyncML) << "Could not load change log information";
         }
 
         target = new SyncTarget( changelog, &aPlugin, aSyncMode, getLocalNextAnchor() );
@@ -1211,7 +1211,7 @@ SyncTarget* SessionHandler::createSyncTarget( StoragePlugin& aPlugin, const Sync
 
 void SessionHandler::addSyncTarget( SyncTarget* aTarget )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iSyncTargets.contains( aTarget ) ) {
         iSyncTargets.append( aTarget );
@@ -1221,7 +1221,7 @@ void SessionHandler::addSyncTarget( SyncTarget* aTarget )
 
 SyncTarget* SessionHandler::getSyncTarget( const QString& aSourceURI ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncTarget* target = NULL;
 
@@ -1292,7 +1292,7 @@ void SessionHandler::newItemReference( int aMsgId, int aCmdId, SyncItemKey aKey,
                                        QString aLocalDatabase, QString aRemoteDatabase,
                                        QString aMimeType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ItemReference reference;
 
@@ -1306,12 +1306,12 @@ void SessionHandler::newItemReference( int aMsgId, int aCmdId, SyncItemKey aKey,
 
     iItemReferences.append( reference );
 
-    LOG_DEBUG("Adding reference to item:" << aKey );
+    qCDebug(lcSyncML) << "Adding reference to item:" << aKey;
 }
 
 void SessionHandler::processItemStatus( int aMsgRef, int aCmdRef, SyncItemKey aKey )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     quint32 count = iItemReferences.count();
 
@@ -1352,13 +1352,13 @@ DevInfHandler& SessionHandler::getDevInfHandler()
 
 void SessionHandler::insertEMITagsToken( HeaderParams& aLocalHeader )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
 
     QStringList tags = data.toStringList();
 
-    LOG_DEBUG( "EMI tags extension: adding token" << tags[0] );
+    qCDebug(lcSyncML) << "EMI tags extension: adding token" << tags[0];
 
     aLocalHeader.meta.EMI.append( tags[0] );
 
@@ -1367,7 +1367,7 @@ void SessionHandler::insertEMITagsToken( HeaderParams& aLocalHeader )
 
 void SessionHandler::handleEMITags( const HeaderParams& aRemoteHeader, HeaderParams& aLocalHeader )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
 
@@ -1375,7 +1375,7 @@ void SessionHandler::handleEMITags( const HeaderParams& aRemoteHeader, HeaderPar
 
     if( aRemoteHeader.meta.EMI.contains( tags[0] ) )
     {
-        LOG_DEBUG( "EMI tags extension: responding to" << tags[0] << "with" << tags[1] );
+        qCDebug(lcSyncML) << "EMI tags extension: responding to" << tags[0] << "with" << tags[1];
         aLocalHeader.meta.EMI.append( tags[1] );
     }
 
@@ -1383,7 +1383,7 @@ void SessionHandler::handleEMITags( const HeaderParams& aRemoteHeader, HeaderPar
 
 void SessionHandler::clearEMITags()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QVariant data = getConfig()->getExtensionData( EMITAGSEXTENSION );
 

@@ -45,7 +45,7 @@
 #include "SyncMLDelete.h"
 #include "SyncMLItem.h"
 #include "SyncAgentConsts.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -65,7 +65,7 @@ LocalChangesPackage::LocalChangesPackage( const SyncTarget& aSyncTarget,
                  *aSyncTarget.getPlugin(),
                  aMaxChangesPerMessage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iNumberOfChanges = iLocalChanges.added.count() +
                        iLocalChanges.modified.count() +
@@ -75,7 +75,7 @@ LocalChangesPackage::LocalChangesPackage( const SyncTarget& aSyncTarget,
 
 LocalChangesPackage::~LocalChangesPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     delete iLargeObjectState.iItem;
     iLargeObjectState.iItem = 0;
@@ -83,7 +83,7 @@ LocalChangesPackage::~LocalChangesPackage()
 
 bool LocalChangesPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     bool allWritten = false;
 
     int remainingBytes = aSizeThreshold;
@@ -132,7 +132,7 @@ bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
                                              bool aWBXML,
                                              const ProtocolVersion& aVersion)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int remainingBytes = aSizeThreshold;
 
@@ -171,7 +171,7 @@ bool LocalChangesPackage::processAddedItems( SyncMLMessage& aMessage,
 
     if( iLocalChanges.added.count() == 0 )
     {
-        LOG_DEBUG("Processed all added items");
+        qCDebug(lcSyncML) << "Processed all added items";
         processed = true;
 
     }
@@ -187,7 +187,7 @@ bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
                                                 bool aWBXML,
                                                 const ProtocolVersion& aVersion)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int remainingBytes = aSizeThreshold;
 
@@ -225,7 +225,7 @@ bool LocalChangesPackage::processModifiedItems( SyncMLMessage& aMessage,
 
     if( iLocalChanges.modified.count() == 0 )
     {
-        LOG_DEBUG("Processed all modified items");
+        qCDebug(lcSyncML) << "Processed all modified items";
         processed = true;
 
     }
@@ -240,7 +240,7 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
                                                bool aWBXML,
                                                const ProtocolVersion& aVersion)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int remainingBytes = aSizeThreshold;
 
@@ -278,7 +278,7 @@ bool LocalChangesPackage::processRemovedItems( SyncMLMessage& aMessage,
 
     if( iLocalChanges.removed.count() == 0 )
     {
-        LOG_DEBUG("Processed all deleted items");
+        qCDebug(lcSyncML) << "Processed all deleted items";
         processed = true;
 
     }
@@ -292,7 +292,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                                        SyncMLCommand aCommand,
                                        QString& aMimeType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool processed = false;
 
@@ -312,7 +312,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                 itemObject->insertTarget( remoteKey );
             }
             else {
-                LOG_WARNING("Could not find mapping to for local uid: " << aItemKey);
+                qCWarning(lcSyncML) << "Could not find mapping to for local uid: " << aItemKey;
             }
         }
         else {
@@ -384,13 +384,13 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
 
                 if(iLargeObjectState.iItem) {
                     // Item is large and needs to be sent using multiple messages
-                    LOG_DEBUG( "Writing item" << aItemKey << "as large object, size:" << size );
+                    qCDebug(lcSyncML) << "Writing item" << aItemKey << "as large object, size:" << size;
                     QByteArray data;
                     qint64 dataLeft = iLargeObjectState.iSize - iLargeObjectState.iOffset;
 
                     if( dataLeft > aSizeThreshold )
                     {
-                        LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
+                        qCDebug(lcSyncML) << "Writing chunk of" << aSizeThreshold << "bytes";
                         // Need to send more chunks after this one
                         item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
                         // syncml-ds-tool from libsyncml complains that
@@ -403,7 +403,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                     }
                     else
                     {
-                        LOG_DEBUG( "Writing last chunk of" << dataLeft << "bytes" );
+                        qCDebug(lcSyncML) << "Writing last chunk of" << dataLeft << "bytes";
                         // This is the last chunk
                         item->read( iLargeObjectState.iOffset, dataLeft, data );
                         itemObject->insertData( data );
@@ -418,7 +418,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                     }
                 }
                 else if( size <= aSizeThreshold) {
-                    LOG_DEBUG( "Writing item" << aItemKey << "as normal object, size:" << size );
+                    qCDebug(lcSyncML) << "Writing item" << aItemKey << "as normal object, size:" << size;
                     QByteArray data;
                     item->read( 0, size, data );
                     itemObject->insertData( data );
@@ -432,12 +432,12 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
                 {
                     // If no chunks of the item has yet been sent, prepare tracking
                     // data
-                    LOG_DEBUG( "Setting up largeObject data" );
+                    qCDebug(lcSyncML) << "Setting up largeObject data";
                     iLargeObjectState.iItem = item;
                     iLargeObjectState.iSize = size;
                     iLargeObjectState.iOffset = 0;
 
-                    LOG_DEBUG( "Writing chunk of" << aSizeThreshold << "bytes" );
+                    qCDebug(lcSyncML) << "Writing chunk of" << aSizeThreshold << "bytes";
                     // Need to send more chunks after this one
                     QByteArray data;
                     item->read( iLargeObjectState.iOffset, aSizeThreshold, data );
@@ -450,7 +450,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
             }
             else //(size <= aSizeThreshold )
             {
-                LOG_DEBUG( "Writing item" << aItemKey << "as normal object, size:" << size );
+                qCDebug(lcSyncML) << "Writing item" << aItemKey << "as normal object, size:" << size;
                 QByteArray data;
                 item->read( 0, size, data );
                 itemObject->insertData( data );
@@ -463,7 +463,7 @@ bool LocalChangesPackage::processItem( const SyncItemKey& aItemKey,
         }
         else
         {
-            LOG_WARNING( "Could not retrieve item data:" << aItemKey );
+            qCWarning(lcSyncML) << "Could not retrieve item data:" << aItemKey;
             processed = true;
         }
     }

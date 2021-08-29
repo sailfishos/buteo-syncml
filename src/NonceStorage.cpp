@@ -35,7 +35,7 @@
 
 #include <QtSql>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -55,13 +55,13 @@ QByteArray NonceStorage::generateNonce() const
 {
     // @todo:
     QByteArray nonce = QByteArray::number( QDateTime::currentDateTime().toTime_t() );
-    LOG_DEBUG( "Generated nonce:" << nonce );
+    qCDebug(lcSyncML) << "Generated nonce:" << nonce;
     return nonce;
 }
 
 QByteArray NonceStorage::nonce()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray nonce;
 
@@ -79,7 +79,7 @@ QByteArray NonceStorage::nonce()
 
         if( query.lastError().isValid() )
         {
-            LOG_WARNING("Query failed:" << query.lastError() );
+            qCWarning(lcSyncML) << "Query failed:" << query.lastError();
         }
         else
         {
@@ -97,7 +97,7 @@ QByteArray NonceStorage::nonce()
 
 void NonceStorage::setNonce( const QByteArray& aNonce )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !createNonceTable() )
     {
@@ -118,14 +118,14 @@ void NonceStorage::setNonce( const QByteArray& aNonce )
 
     if( query.lastError().isValid() )
     {
-        LOG_WARNING("Query failed: " << query.lastError());
+        qCWarning(lcSyncML) << "Query failed: " << query.lastError();
     }
 
 }
 
 void NonceStorage::clearNonce()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !createNonceTable() )
     {
@@ -144,13 +144,13 @@ void NonceStorage::clearNonce()
 
     if( query.lastError().isValid() )
     {
-        LOG_WARNING("Query failed: " << query.lastError());
+        qCWarning(lcSyncML) << "Query failed: " << query.lastError();
     }
 }
 
 bool NonceStorage::createNonceTable()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString queryString = "CREATE TABLE IF NOT EXISTS nonces(id integer primary key autoincrement, local_device varchar(512), remote_device varchar(512), nonce varchar(512))";
     QSqlQuery query( iDbHandle );
@@ -162,7 +162,7 @@ bool NonceStorage::createNonceTable()
 
     if (query.lastError().isValid()) {
         success = false;
-        LOG_WARNING("Query failed: " << query.lastError());
+        qCWarning(lcSyncML) << "Query failed: " << query.lastError();
     }
 
     return success;

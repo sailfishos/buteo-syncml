@@ -38,7 +38,7 @@
 #include "SyncAgentConfigProperties.h"
 #include "OBEXConnection.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 // Default MTU, recommended by OpenOBEX
 #define DEFAULT_MTU     1024
@@ -56,41 +56,41 @@ OBEXTransport::OBEXTransport( OBEXConnection& aConnection, Mode aOpMode,
   iWorker( 0 ), iMTU( DEFAULT_MTU ), iMessage( 0 )
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 OBEXTransport::~OBEXTransport()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     close();
 }
 
 void OBEXTransport::setProperty( const QString& aProperty, const QString& aValue )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     //obex-mtu-bt:
     if( aProperty == OBEXMTUBTPROP && iTypeHint == TYPEHINT_BT )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         iMTU = aValue.toInt();
     }
     //obex-mtu-usb:
     else if( aProperty == OBEXMTUUSBPROP&& iTypeHint == TYPEHINT_USB )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         iMTU = aValue.toInt();
     }
     //obex-mtu-other:
     else if( aProperty == OBEXMTUOTHERPROP && iTypeHint == TYPEHINT_OTHER )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         iMTU = aValue.toInt();
     }
     else if( aProperty == OBEXTIMEOUTPROP )
     {
-        LOG_DEBUG( "Setting property" << aProperty <<":" << aValue );
+        qCDebug(lcSyncML) << "Setting property" << aProperty <<":" << aValue;
         iTimeOut = aValue.toInt();
     }
 
@@ -99,7 +99,7 @@ void OBEXTransport::setProperty( const QString& aProperty, const QString& aValue
 
 bool OBEXTransport::init()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     int fd = iConnection.connect();
 
@@ -127,7 +127,7 @@ bool OBEXTransport::init()
 
 void OBEXTransport::close()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iWorkerThread && iWorkerThread->isRunning() )
     {
@@ -173,7 +173,7 @@ void OBEXTransport::close()
 
 void OBEXTransport::setupClient( int aFd )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     OBEXClientWorker* worker = new OBEXClientWorker( aFd, iMTU, iTimeOut );
 
@@ -196,7 +196,7 @@ void OBEXTransport::setupClient( int aFd )
 
 void OBEXTransport::setupServer( int aFd )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     OBEXServerWorker* worker = new OBEXServerWorker( *this, aFd, iMTU, iTimeOut );
 
@@ -217,7 +217,7 @@ void OBEXTransport::setupServer( int aFd )
 
 bool OBEXTransport::sendSyncML( SyncMLMessage* aMessage )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // Normally when sending a SyncML message, the message is pushed
     // to the remote device. When in OBEX server mode, the message is
@@ -246,7 +246,7 @@ bool OBEXTransport::sendSyncML( SyncMLMessage* aMessage )
 
 bool OBEXTransport::getData( const QString& aContentType, QByteArray& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iMessage )
     {
@@ -271,7 +271,7 @@ bool OBEXTransport::getData( const QString& aContentType, QByteArray& aData )
     }
     else
     {
-        LOG_CRITICAL( "Unsupported content type:" << aContentType );
+        qCCritical(lcSyncML) << "Unsupported content type:" << aContentType;
     }
 
     delete iMessage;
@@ -282,7 +282,7 @@ bool OBEXTransport::getData( const QString& aContentType, QByteArray& aData )
 
 bool OBEXTransport::prepareSend()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iMode == MODE_OBEX_CLIENT )
     {
@@ -308,7 +308,7 @@ bool OBEXTransport::prepareSend()
 
 bool OBEXTransport::doSend( const QByteArray& aData, const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iMode == MODE_OBEX_CLIENT )
     {
@@ -330,7 +330,7 @@ bool OBEXTransport::doSend( const QByteArray& aData, const QString& aContentType
 
 bool OBEXTransport::doReceive( const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iMode == MODE_OBEX_CLIENT )
     {
@@ -393,12 +393,12 @@ OBEXWorkerThread::~OBEXWorkerThread()
 
 void OBEXWorkerThread::run()
 {
-    LOG_DEBUG( "Starting OBEX thread..." );
+    qCDebug(lcSyncML) << "Starting OBEX thread...";
 
     exec();
 
     delete iWorker;
     iWorker = 0;
 
-    LOG_DEBUG( "Stopping OBEX thread..." );
+    qCDebug(lcSyncML) << "Stopping OBEX thread...";
 }

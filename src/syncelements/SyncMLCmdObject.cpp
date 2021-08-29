@@ -32,7 +32,7 @@
 */
 
 #include "SyncMLCmdObject.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 #include "LibWbXML2Encoder.h"
 #include "QtEncoder.h"
 #include "datatypes.h"

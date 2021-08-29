@@ -42,14 +42,14 @@
 #include "ServerSessionHandler.h"
 #include "RequestListener.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 SyncAgent::SyncAgent(QObject* aParent)
 : QObject(aParent), iListener(0), iHandler(0), iConfig(0)
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     // Register the struct as a type for the signals
     qRegisterMetaType<DataSync::SyncState>("DataSync::SyncState");
     qRegisterMetaType<DataSync::ModificationType>("DataSync::ModificationType");
@@ -59,7 +59,7 @@ SyncAgent::SyncAgent(QObject* aParent)
 
 SyncAgent::~SyncAgent()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     abortListen();
 
@@ -85,13 +85,13 @@ void destroySyncAgent(SyncAgent* aObj)
 
 bool SyncAgent::startSync( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iHandler && !iListener) {
         return initiateSession( aConfig );
     }
     else {
-        LOG_CRITICAL( "SyncAgent: Listening for requests, or synchronization in progress" );
+        qCCritical(lcSyncML) << "SyncAgent: Listening for requests, or synchronization in progress";
         return false;
     }
 
@@ -109,13 +109,13 @@ bool SyncAgent::isSyncing() const
 
 bool SyncAgent::listen( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iHandler && !iListener ) {
         return initiateListen( aConfig );
     }
     else {
-        LOG_CRITICAL( "SyncAgent: Already listening for requests, or synchronization in progress" );
+        qCCritical(lcSyncML) << "SyncAgent: Already listening for requests, or synchronization in progress";
         return false;
     }
 }
@@ -132,14 +132,14 @@ bool SyncAgent::isListening() const
 
 bool SyncAgent::pauseSync()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iHandler ) {
         QTimer::singleShot( 0, iHandler, SLOT(suspendSync()) );
         return true;
     }
     else {
-        LOG_CRITICAL( "SyncAgent: Nothing to pause!");
+        qCCritical(lcSyncML) << "SyncAgent: Nothing to pause!";
         return false;
     }
 
@@ -147,14 +147,14 @@ bool SyncAgent::pauseSync()
 
 bool SyncAgent::resumeSync()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iHandler ) {
         QTimer::singleShot( 0, iHandler, SLOT(resumeSync()) );
         return true;
     }
     else {
-        LOG_CRITICAL( "SyncAgent: Nothing to resume!" );
+        qCCritical(lcSyncML) << "SyncAgent: Nothing to resume!";
         return false;
     }
 
@@ -162,7 +162,7 @@ bool SyncAgent::resumeSync()
 
 bool SyncAgent::abort(DataSync::SyncState aState)
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iHandler ) {
         abortSession(aState);
@@ -173,20 +173,20 @@ bool SyncAgent::abort(DataSync::SyncState aState)
         return true;
     }
     else {
-        LOG_CRITICAL( "SyncAgent: Nothing to abort!");
+        qCCritical(lcSyncML) << "SyncAgent: Nothing to abort!";
         return false;
     }
 }
 
 const SyncResults& SyncAgent::getResults() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return iResults;
 }
 
 bool  SyncAgent::cleanUp(const SyncAgentConfig* aConfig)
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QList<QString> sourceDBs = aConfig->getSourceDbs();
     sourceDBs.append (aConfig->getDisabledSourceDbs());
@@ -195,23 +195,23 @@ bool  SyncAgent::cleanUp(const SyncAgentConfig* aConfig)
     const QString remoteId = aConfig->getRemoteDeviceName();
     QString dbPath = aConfig->getDatabaseFilePath();
 
-    LOG_DEBUG("SyncAgent: Remote Id: " << remoteId);
-    LOG_DEBUG("SyncAgent: DB Path : " << dbPath);
+    qCDebug(lcSyncML) << "SyncAgent: Remote Id: " << remoteId;
+    qCDebug(lcSyncML) << "SyncAgent: DB Path : " << dbPath;
 
     if (remoteId.isEmpty() || dbPath.isEmpty()) {
 	 return false;
     }
 
-    LOG_DEBUG("SyncAgent: Sync Direction: " << iDirection);
+    qCDebug(lcSyncML) << "SyncAgent: Sync Direction: " << iDirection;
 
 
     bool success = true;
     for (int i = 0; i < sourceDBs.size(); ++i) {
-	   LOG_DEBUG("SyncAgent: Removing anchors for source DB: " << sourceDBs.at(i));
+	   qCDebug(lcSyncML) << "SyncAgent: Removing anchors for source DB: " << sourceDBs.at(i);
 	   ChangeLog changeLog(remoteId, sourceDBs.at(i), iDirection);
     	   success = changeLog.remove (dbPath);
 	   if (!success){
-	   	LOG_WARNING("SyncAgent: Error Removing anchors for source DB: " << sourceDBs.at(i));
+           qCWarning(lcSyncML) << "SyncAgent: Error Removing anchors for source DB: " << sourceDBs.at(i);
 	   }
     }
 
@@ -220,9 +220,9 @@ bool  SyncAgent::cleanUp(const SyncAgentConfig* aConfig)
 
 void SyncAgent::receiveStateChanged( DataSync::SyncState aState )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "SyncAgent: Synchronization status changed to:" << aState );
+    qCDebug(lcSyncML) << "SyncAgent: Synchronization status changed to:" << aState;
 
     iResults.setState( aState );
 
@@ -233,7 +233,7 @@ void SyncAgent::receiveSyncFinished( const QString& aDevId,
                                      DataSync::SyncState aState,
                                      const QString& aErrorString )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iResults.setRemoteDeviceId( aDevId );
 
@@ -245,9 +245,9 @@ void SyncAgent::receiveSyncFinished( const QString& aDevId,
 
 void SyncAgent::accquiredStorage( const QString& aStorageMimeType )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG("SyncAgent:Mime Type acquired : " << aStorageMimeType);
+    qCDebug(lcSyncML) << "SyncAgent:Mime Type acquired : " << aStorageMimeType;
 
     emit storageAccquired(aStorageMimeType );
 }
@@ -257,9 +257,9 @@ void SyncAgent::receiveItemProcessed( DataSync::ModificationType aModificationTy
                                       const QString aLocalDatabase,
                                       const QString aMimeType, int aCommittedItems )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG("SyncAgent: Item processed");
+    qCDebug(lcSyncML) << "SyncAgent: Item processed";
 
     if( (aModifiedDatabase == MOD_LOCAL_DATABASE) || ( aModifiedDatabase == MOD_REMOTE_DATABASE )) {
         iResults.addProcessedItem( aModificationType, aModifiedDatabase, aLocalDatabase );
@@ -274,38 +274,38 @@ void SyncAgent::receiveItemProcessed( DataSync::ModificationType aModificationTy
 
 void SyncAgent::finishSync( DataSync::SyncState aState, const QString& aErrorString )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iResults.setState( aState );
     iResults.setErrorString( aErrorString );
 
-    LOG_DEBUG("SyncAgent: Synchronization finished with state:" << aState );
+    qCDebug(lcSyncML) << "SyncAgent: Synchronization finished with state:" << aState;
 
     emit syncFinished( aState );
 }
 
 bool SyncAgent::initiateSession( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( !iHandler );
 
-    LOG_DEBUG( "SyncAgent: Preparing for synchronization..." );
+    qCDebug(lcSyncML) << "SyncAgent: Preparing for synchronization...";
 
     // * Validate critical configuration
 
     if( !aConfig.getTransport() ) {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, transport is NULL");
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, transport is NULL";
         return false;
     }
 
     if( !aConfig.getStorageProvider() ) {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, storage provider is NULL");
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, storage provider is NULL";
         return false;
     }
 
     if( aConfig.getSourceDbs().isEmpty() ) {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, could not find any source databases to sync" );
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, could not find any source databases to sync";
         return false;
     }
 
@@ -327,7 +327,7 @@ bool SyncAgent::initiateSession( const SyncAgentConfig& aConfig )
     }
     else
     {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, could not interpret SyncMode" );
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, could not interpret SyncMode";
         return false;
     }
 
@@ -335,7 +335,7 @@ bool SyncAgent::initiateSession( const SyncAgentConfig& aConfig )
 
 bool SyncAgent::startClientInitiatedSession( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( !iHandler );
 
@@ -359,7 +359,7 @@ bool SyncAgent::startClientInitiatedSession( const SyncAgentConfig& aConfig )
              DataSync::ModifiedDatabase,QString,QString,int ) ),
              Qt::QueuedConnection );
 
-    LOG_DEBUG( "SyncAgent: Everything OK, starting synchronization..." );
+    qCDebug(lcSyncML) << "SyncAgent: Everything OK, starting synchronization...";
 
     // * Begin synchronization session
     QTimer::singleShot(0, handler, SLOT(initiateSync()));
@@ -372,7 +372,7 @@ bool SyncAgent::startClientInitiatedSession( const SyncAgentConfig& aConfig )
 
 bool SyncAgent::startServerInitiatedSession( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( !iHandler );
 
@@ -396,7 +396,7 @@ bool SyncAgent::startServerInitiatedSession( const SyncAgentConfig& aConfig )
              DataSync::ModifiedDatabase,QString,QString,int ) ),
              Qt::QueuedConnection );
 
-    LOG_DEBUG( "SyncAgent: Everything OK, starting synchronization..." );
+    qCDebug(lcSyncML) << "SyncAgent: Everything OK, starting synchronization...";
 
     // * Begin synchronization session
     QTimer::singleShot(0, handler, SLOT(initiateSync()));
@@ -409,7 +409,7 @@ bool SyncAgent::startServerInitiatedSession( const SyncAgentConfig& aConfig )
 
 void SyncAgent::abortSession(DataSync::SyncState aState)
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iHandler );
 
@@ -419,7 +419,7 @@ void SyncAgent::abortSession(DataSync::SyncState aState)
 
 void SyncAgent::cleanSession()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     delete iHandler;
     iHandler = NULL;
@@ -427,27 +427,27 @@ void SyncAgent::cleanSession()
 
 bool SyncAgent::initiateListen( const SyncAgentConfig& aConfig )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( !iListener );
 
-    LOG_DEBUG( "SyncAgent: Preparing for listening requests..." );
+    qCDebug(lcSyncML) << "SyncAgent: Preparing for listening requests...";
 
     // * Validate critical configuration
 
     if( !aConfig.getTransport() ) {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, transport is NULL");
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, transport is NULL";
         return false;
     }
 
     if( !aConfig.getStorageProvider() ) {
-        LOG_CRITICAL( "SyncAgent: Invalid configuration, storage provider is NULL");
+        qCCritical(lcSyncML) << "SyncAgent: Invalid configuration, storage provider is NULL";
         return false;
     }
 
     if( !aConfig.getTransport()->init() )
     {
-        LOG_CRITICAL( "SyncAgent: Could not initiate transport" );
+        qCCritical(lcSyncML) << "SyncAgent: Could not initiate transport";
         return false;
     }
 
@@ -462,14 +462,14 @@ bool SyncAgent::initiateListen( const SyncAgentConfig& aConfig )
 
     if( listener->start( aConfig.getTransport() ) )
     {
-        LOG_DEBUG( "SyncAgent: Now listening for requests" );
+        qCDebug(lcSyncML) << "SyncAgent: Now listening for requests";
         iListener = listener;
         iConfig = &aConfig;
         return true;
     }
     else
     {
-        LOG_CRITICAL( "SyncAgent: Could not start listening for requests" );
+        qCCritical(lcSyncML) << "SyncAgent: Could not start listening for requests";
         delete listener;
         listener = 0;
         return false;
@@ -479,11 +479,11 @@ bool SyncAgent::initiateListen( const SyncAgentConfig& aConfig )
 
 void SyncAgent::listenEvent()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iListener );
 
-    LOG_DEBUG( "SyncAgent: Processing incoming request..." );
+    qCDebug(lcSyncML) << "SyncAgent: Processing incoming request...";
 
     RequestListener::RequestData data = iListener->takeRequestData();
 
@@ -492,7 +492,7 @@ void SyncAgent::listenEvent()
 
     if( data.iType == RequestListener::REQUEST_CLIENT )
     {
-        LOG_DEBUG( "SyncAgent: Remote client requesting session with server");
+        qCDebug(lcSyncML) << "SyncAgent: Remote client requesting session with server";
 
         ServerSessionHandler* handler = new ServerSessionHandler( iConfig, this );
 
@@ -514,7 +514,7 @@ void SyncAgent::listenEvent()
                  DataSync::ModifiedDatabase,QString,QString,int ) ),
                  Qt::QueuedConnection );
 
-        LOG_DEBUG( "SyncAgent: Everything OK, starting synchronization..." );
+        qCDebug(lcSyncML) << "SyncAgent: Everything OK, starting synchronization...";
 
         // * Begin synchronization session
         handler->serveRequest( data.iFragments );
@@ -523,7 +523,7 @@ void SyncAgent::listenEvent()
     }
     else if( data.iType == RequestListener::REQUEST_SAN_XML )
     {
-        LOG_DEBUG( "SyncAgent: Remote server notifying client with OMA DS XML message");
+        qCDebug(lcSyncML) << "SyncAgent: Remote server notifying client with OMA DS XML message";
 
         ClientSessionHandler* handler = new ClientSessionHandler( iConfig, this );
 
@@ -545,7 +545,7 @@ void SyncAgent::listenEvent()
                  DataSync::ModifiedDatabase,QString,QString,int ) ),
                  Qt::QueuedConnection );
 
-        LOG_DEBUG( "SyncAgent: Everything OK, starting synchronization..." );
+        qCDebug(lcSyncML) << "SyncAgent: Everything OK, starting synchronization...";
 
         // * Begin synchronization session
         handler->handleNotificationXML( data.iFragments );
@@ -554,7 +554,7 @@ void SyncAgent::listenEvent()
     }
     else if( data.iType == RequestListener::REQUEST_SAN_PACKAGE )
     {
-        LOG_DEBUG( "SyncAgent: Remote server notifying client with OMA DS SAN package");
+        qCDebug(lcSyncML) << "SyncAgent: Remote server notifying client with OMA DS SAN package";
 
         ClientSessionHandler* handler = new ClientSessionHandler( iConfig, this );
 
@@ -576,7 +576,7 @@ void SyncAgent::listenEvent()
                  DataSync::ModifiedDatabase,QString,QString,int ) ),
                  Qt::QueuedConnection );
 
-        LOG_DEBUG( "SyncAgent: Everything OK, starting synchronization..." );
+        qCDebug(lcSyncML) << "SyncAgent: Everything OK, starting synchronization...";
 
         // * Begin synchronization session
         handler->handleNotificationPackage( data.iSANData );
@@ -585,27 +585,27 @@ void SyncAgent::listenEvent()
     }
     else
     {
-        LOG_CRITICAL( "SyncAgent: Unknown listen event" );
+        qCCritical(lcSyncML) << "SyncAgent: Unknown listen event";
         finishSync( INTERNAL_ERROR, "Unknown listen event" );
     }
 }
 
 void SyncAgent::listenError( DataSync::SyncState aState, QString aErrorString )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_ASSERT( iListener );
 
     abortListen();
 
-    LOG_CRITICAL( "SyncAgent: Error while listening for incoming requests" );
+    qCCritical(lcSyncML) << "SyncAgent: Error while listening for incoming requests";
 
     finishSync( aState, aErrorString );
 }
 
 void SyncAgent::abortListen()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iListener )
     {
@@ -617,7 +617,7 @@ void SyncAgent::abortListen()
 
 void SyncAgent::cleanListen()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     delete iListener;
     iListener = NULL;
@@ -625,7 +625,7 @@ void SyncAgent::cleanListen()
 
 void SyncAgent::cleanListenLater()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iListener->deleteLater();
     iListener = NULL;

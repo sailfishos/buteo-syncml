@@ -39,7 +39,7 @@
 #include "SyncMLMessage.h"
 #include "datatypes.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -50,7 +50,7 @@ DevInfPackage::DevInfPackage( const QList<StoragePlugin*>& aDataStores,
 : iMsgRef(0), iCmdRef(0), iDataStores( aDataStores ), iDeviceInfo( aDeviceInfo ),
   iVersion( aVersion ), iRole( aRole ), iType( PUTGET )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 DevInfPackage::DevInfPackage( int aMsgRef, int aCmdRef,
@@ -62,7 +62,7 @@ DevInfPackage::DevInfPackage( int aMsgRef, int aCmdRef,
 : iMsgRef( aMsgRef ), iCmdRef( aCmdRef ), iDataStores( aDataStores ),
   iDeviceInfo( aDeviceInfo ),iVersion( aVersion ), iRole( aRole )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aRetrieveRemoteDevInf )
     {
@@ -76,12 +76,12 @@ DevInfPackage::DevInfPackage( int aMsgRef, int aCmdRef,
 
 DevInfPackage::~DevInfPackage()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool DevInfPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iType == PUTGET )
     {

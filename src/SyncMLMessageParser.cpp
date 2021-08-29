@@ -36,7 +36,7 @@
 #include <QXmlStreamWriter>
 
 #include "RemoteDeviceInfo.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -46,7 +46,7 @@ SyncMLMessageParser::SyncMLMessageParser()
    iSyncHdrFound( false ), iSyncBodyFound( false ),
    iIsNewPacket( false )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qRegisterMetaType<DataSync::ParserError>("DataSync::ParserError");
 
@@ -58,7 +58,7 @@ SyncMLMessageParser::SyncMLMessageParser()
 
 SyncMLMessageParser::~SyncMLMessageParser()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll(iFragments);
     iFragments.clear();
@@ -67,7 +67,7 @@ SyncMLMessageParser::~SyncMLMessageParser()
 
 QList<DataSync::Fragment*> SyncMLMessageParser::takeFragments()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QList<DataSync::Fragment*> fragments = iFragments;
     iFragments.clear();
@@ -77,23 +77,23 @@ QList<DataSync::Fragment*> SyncMLMessageParser::takeFragments()
 
 void SyncMLMessageParser::parseResponse( QIODevice *aDevice, bool aIsNewPacket )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iIsNewPacket = aIsNewPacket;
     if( aDevice->bytesAvailable() == 0 ) {
-        LOG_CRITICAL( "Zero-sized message detected, aborting parsing");
+        qCCritical(lcSyncML) << "Zero-sized message detected, aborting parsing";
         emit parsingError( PARSER_ERROR_INVALID_DATA );
     }
     else
     {
 
-        LOG_DEBUG( "Beginning to parse incoming message..." );
+        qCDebug(lcSyncML) << "Beginning to parse incoming message...";
 
         iReader.setDevice( aDevice );
         iReader.setNamespaceProcessing( false );
         startParsing();
 
-        LOG_DEBUG( "Incoming message parsed");
+        qCDebug(lcSyncML) << "Incoming message parsed";
     }
 
 }
@@ -101,7 +101,7 @@ void SyncMLMessageParser::parseResponse( QIODevice *aDevice, bool aIsNewPacket )
 void SyncMLMessageParser::startParsing()
 {
 
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll(iFragments);
     iFragments.clear();
@@ -135,7 +135,7 @@ void SyncMLMessageParser::startParsing()
                 } else if( name == SYNCML_ELEMENT_SYNCBODY ) {
                     readBody();
                 } else if( name != SYNCML_ELEMENT_SYNCML ){
-                    LOG_CRITICAL("Unexpected element in SyncML message:" << name );
+                    qCCritical(lcSyncML) << "Unexpected element in SyncML message:" << name;
                     iError = PARSER_ERROR_UNEXPECTED_DATA;
                 }
                 break;
@@ -153,7 +153,7 @@ void SyncMLMessageParser::startParsing()
             case QXmlStreamReader::EntityReference:
             case QXmlStreamReader::ProcessingInstruction:
             {
-                LOG_CRITICAL("Unexpected token in SyncML message" << iReader.tokenType());
+                qCCritical(lcSyncML) << "Unexpected token in SyncML message" << iReader.tokenType();
                 iError = PARSER_ERROR_UNEXPECTED_DATA;
                 break;
             }
@@ -162,7 +162,7 @@ void SyncMLMessageParser::startParsing()
 
     if( iError != PARSER_ERROR_LAST )
     {
-        LOG_CRITICAL( "Error while parsing SyncML document:" << iError );
+        qCCritical(lcSyncML) << "Error while parsing SyncML document:" << iError;
         // Check if the parsing error happened due to invalid XML characters
         if( iIsNewPacket && ( QXmlStreamReader::PrematureEndOfDocumentError  == iReader.error()
                 || QXmlStreamReader::NotWellFormedError == iReader.error() ) )
@@ -176,7 +176,7 @@ void SyncMLMessageParser::startParsing()
     }
     else if( !iSyncHdrFound || !iSyncBodyFound )
     {
-        LOG_CRITICAL( "Malformed SyncML document, missing either SyncHdr or SyncBody" );
+        qCCritical(lcSyncML) << "Malformed SyncML document, missing either SyncHdr or SyncBody";
         emit parsingError( PARSER_ERROR_INCOMPLETE_DATA );
     }
     else
@@ -188,11 +188,11 @@ void SyncMLMessageParser::startParsing()
 
 void SyncMLMessageParser::readBody()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iSyncBodyFound )
     {
-        LOG_CRITICAL( "Invalid SyncML message, multiple SyncBody elements found" );
+        qCCritical(lcSyncML) << "Invalid SyncML message, multiple SyncBody elements found";
         iError = PARSER_ERROR_INVALID_DATA;
         return;
     }
@@ -231,7 +231,7 @@ void SyncMLMessageParser::readBody()
                 else {
                     delete command;
                     command = 0;
-                    LOG_WARNING("UNKNOWN  TOKEN TYPE in BODY:NOT HANDLED BY PARSER" << name );
+                    qCWarning(lcSyncML) << "UNKNOWN  TOKEN TYPE in BODY:NOT HANDLED BY PARSER" << name;
                 }
 
             }
@@ -241,7 +241,7 @@ void SyncMLMessageParser::readBody()
     }
 
     if( iReader.atEnd() ) {
-        LOG_CRITICAL( "Incomplete SyncML message" );
+        qCCritical(lcSyncML) << "Incomplete SyncML message";
         iError = PARSER_ERROR_INCOMPLETE_DATA;
     }
 
@@ -249,11 +249,11 @@ void SyncMLMessageParser::readBody()
 
 void SyncMLMessageParser::readHeader()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iSyncHdrFound )
     {
-        LOG_CRITICAL( "Invalid SyncML message, multiple SyncHdr elements found" );
+        qCCritical(lcSyncML) << "Invalid SyncML message, multiple SyncHdr elements found";
         iError = PARSER_ERROR_INVALID_DATA;
         return;
     }
@@ -304,7 +304,7 @@ void SyncMLMessageParser::readHeader()
                 readMeta( header->meta );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in HEADER:NOT HANDLED BY PARSER" << name );
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in HEADER:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -312,7 +312,7 @@ void SyncMLMessageParser::readHeader()
     iFragments.append(header);
 
     if( iReader.atEnd() ) {
-        LOG_CRITICAL( "Incomplete SyncML message" );
+        qCCritical(lcSyncML) << "Incomplete SyncML message";
         iError = PARSER_ERROR_INCOMPLETE_DATA;
     }
 
@@ -320,7 +320,7 @@ void SyncMLMessageParser::readHeader()
 
 void SyncMLMessageParser::readChal( ChalParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -335,7 +335,7 @@ void SyncMLMessageParser::readChal( ChalParams& aParams )
                 readMeta( aParams.meta );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in CHAL:NOT HANDLED BY PARSER" << iReader.name() );
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in CHAL:NOT HANDLED BY PARSER" << iReader.name();
             }
         }
     }
@@ -344,7 +344,7 @@ void SyncMLMessageParser::readChal( ChalParams& aParams )
 
 void SyncMLMessageParser::readStatus()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     StatusParams *status = new StatusParams();
 
@@ -380,7 +380,7 @@ void SyncMLMessageParser::readStatus()
             }
             else if (name == SYNCML_ELEMENT_DATA) {
                 status->data = (ResponseStatusCode)readInt();
-                LOG_DEBUG( iStatusCodeMap[status->data] << ":" << status->data );
+                qCDebug(lcSyncML) << iStatusCodeMap[status->data] << ":" << status->data;
             }
             else if (name == SYNCML_ELEMENT_ITEM) {
                 ItemParams item;
@@ -392,7 +392,7 @@ void SyncMLMessageParser::readStatus()
                 readChal( status->chal );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in STATUS:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in STATUS:NOT HANDLED BY PARSER" << name;
             }
 
          }
@@ -404,7 +404,7 @@ void SyncMLMessageParser::readStatus()
 
 void SyncMLMessageParser::readSync()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncParams *sync = new SyncParams();
 
@@ -444,7 +444,7 @@ void SyncMLMessageParser::readSync()
                     sync->commands.append(command);
                 }
                 else {
-                    LOG_WARNING("UNKNOWN TOKEN TYPE in SYNC:NOT HANDLED BY PARSER" << name);
+                    qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in SYNC:NOT HANDLED BY PARSER" << name;
                 }
 
             }
@@ -459,7 +459,7 @@ void SyncMLMessageParser::readSync()
 
 void SyncMLMessageParser::readMap()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     MapParams *map = new MapParams();
 
@@ -492,7 +492,7 @@ void SyncMLMessageParser::readMap()
                 map->mapItems.append( item );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in MAP:NOT HANDLED BY PARSER" << name );
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in MAP:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -505,7 +505,7 @@ void SyncMLMessageParser::readMap()
 
 void SyncMLMessageParser::readMapItem( MapItemParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -524,7 +524,7 @@ void SyncMLMessageParser::readMapItem( MapItemParams& aParams )
                 aParams.source = readURI();
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in MAPITEM:NOT HANDLED BY PARSER" << name );
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in MAPITEM:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -535,7 +535,7 @@ void SyncMLMessageParser::readMapItem( MapItemParams& aParams )
 
 void SyncMLMessageParser::readPut()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     PutParams* put = new PutParams;
 
@@ -571,7 +571,7 @@ void SyncMLMessageParser::readPut()
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in PUT:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in PUT:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -589,7 +589,7 @@ void SyncMLMessageParser::readPut()
 
 void SyncMLMessageParser::readResults()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     ResultsParams *results = new ResultsParams();
 
@@ -627,7 +627,7 @@ void SyncMLMessageParser::readResults()
                 readDevInfItem( results->devInf );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in RESULTS:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in RESULTS:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -648,7 +648,7 @@ void SyncMLMessageParser::readResults()
 
 bool SyncMLMessageParser::readCommand( const QStringRef& aName, CommandParams& aCommand )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     bool found = true;
 
@@ -701,7 +701,7 @@ bool SyncMLMessageParser::readCommand( const QStringRef& aName, CommandParams& a
 
 void SyncMLMessageParser::readLeafCommand( CommandParams& aParams, const QString& aCommand )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -736,7 +736,7 @@ void SyncMLMessageParser::readLeafCommand( CommandParams& aParams, const QString
                 aParams.items.append( item );
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -747,7 +747,7 @@ void SyncMLMessageParser::readLeafCommand( CommandParams& aParams, const QString
 
 void SyncMLMessageParser::readContainerCommand( CommandParams& aParams, const QString& aCommand )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -778,7 +778,7 @@ void SyncMLMessageParser::readContainerCommand( CommandParams& aParams, const QS
                     aParams.subCommands.append(command);
                 }
                 else {
-                    LOG_WARNING("UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name);
+                    qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in COMMAND:NOT HANDLED BY PARSER" << name;
                 }
 
             }
@@ -791,7 +791,7 @@ void SyncMLMessageParser::readContainerCommand( CommandParams& aParams, const QS
 
 void SyncMLMessageParser::readCred( CredParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -811,7 +811,7 @@ void SyncMLMessageParser::readCred( CredParams& aParams )
                 aParams.data = readString();
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in CRED:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in CRED:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -820,7 +820,7 @@ void SyncMLMessageParser::readCred( CredParams& aParams )
 
 void SyncMLMessageParser::readMeta( MetaParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -864,7 +864,7 @@ void SyncMLMessageParser::readMeta( MetaParams& aParams )
                 aParams.mark = readString();
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in META:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in META:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -875,7 +875,7 @@ void SyncMLMessageParser::readMeta( MetaParams& aParams )
 
 void SyncMLMessageParser::readAnchor( AnchorParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -895,7 +895,7 @@ void SyncMLMessageParser::readAnchor( AnchorParams& aParams )
                 aParams.last = readString();
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in ANCHOR:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in ANCHOR:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -905,7 +905,7 @@ void SyncMLMessageParser::readAnchor( AnchorParams& aParams )
 
 void SyncMLMessageParser::readDevInfItem( DevInfItemParams& aParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 
     while( shouldContinue() )
@@ -931,7 +931,7 @@ void SyncMLMessageParser::readDevInfItem( DevInfItemParams& aParams )
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
         }
 
@@ -941,7 +941,7 @@ void SyncMLMessageParser::readDevInfItem( DevInfItemParams& aParams )
 
 void SyncMLMessageParser::readDevInf( DevInfItemParams& aParams )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QString dtd;
 
@@ -965,7 +965,7 @@ void SyncMLMessageParser::readDevInf( DevInfItemParams& aParams )
                 if( dtd != SYNCML_DTD_VERSION_1_1 &&
                     dtd != SYNCML_DTD_VERSION_1_2 )
                 {
-                    LOG_CRITICAL( "Unrecognized DevInf verDTD:" << dtd );
+                    qCCritical(lcSyncML) << "Unrecognized DevInf verDTD:" << dtd;
                     iError = PARSER_ERROR_INVALID_DATA;
                 }
 
@@ -1030,12 +1030,12 @@ void SyncMLMessageParser::readDevInf( DevInfItemParams& aParams )
                 }
                 else
                 {
-                    LOG_CRITICAL( SYNCML_ELEMENT_CTCAP << "under DevInf allowed only for DS 1.1" );
+                    qCCritical(lcSyncML) << SYNCML_ELEMENT_CTCAP << "under DevInf allowed only for DS 1.1";
                     iError = PARSER_ERROR_INVALID_DATA;
                 }
             }
             else{
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -1043,7 +1043,7 @@ void SyncMLMessageParser::readDevInf( DevInfItemParams& aParams )
 
 void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& aDTD )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
 
     while( shouldContinue() )
@@ -1061,7 +1061,7 @@ void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& a
             if( name == SYNCML_ELEMENT_SOURCEREF )
             {
                 QString URI = readString();
-                LOG_DEBUG( "URI of the new datastore instance:" << URI );
+                qCDebug(lcSyncML) << "URI of the new datastore instance:" << URI;
                 aDatastore.setSourceURI( URI );
             }
             else if( name == SYNCML_ELEMENT_RX_PREF )
@@ -1104,13 +1104,13 @@ void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& a
                 }
                 else
                 {
-                    LOG_CRITICAL( SYNCML_ELEMENT_SUPPORTHIERARCHICALSYNC << "under DevInf allowed only for DS 1.2" );
+                    qCCritical(lcSyncML) << SYNCML_ELEMENT_SUPPORTHIERARCHICALSYNC << "under DevInf allowed only for DS 1.2";
                     iError = PARSER_ERROR_INVALID_DATA;
                 }
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
         }
 
@@ -1120,7 +1120,7 @@ void SyncMLMessageParser::readDataStore( Datastore& aDatastore, const QString& a
 
 void SyncMLMessageParser::readContentFormat( ContentFormat& aFormat, const QString& aEndElement )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() )
     {
@@ -1144,7 +1144,7 @@ void SyncMLMessageParser::readContentFormat( ContentFormat& aFormat, const QStri
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -1155,7 +1155,7 @@ void SyncMLMessageParser::readContentFormat( ContentFormat& aFormat, const QStri
 
 void SyncMLMessageParser::readSyncCaps( Datastore& aDatastore )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() )
     {
@@ -1176,7 +1176,7 @@ void SyncMLMessageParser::readSyncCaps( Datastore& aDatastore )
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -1184,7 +1184,7 @@ void SyncMLMessageParser::readSyncCaps( Datastore& aDatastore )
 
 void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QList<CTCap> caps;
 
@@ -1219,7 +1219,7 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
 
                 if( !currentCap )
                 {
-                    LOG_DEBUG( "Creating new CTCap instance with type" << type );
+                    qCDebug(lcSyncML) << "Creating new CTCap instance with type" << type;
                     CTCap newCap;
                     ContentFormat format;
                     format.iType = type;
@@ -1233,7 +1233,7 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
             {
                 if( !currentCap )
                 {
-                    LOG_CRITICAL( "Cannot process" << name <<"as no" << SYNCML_ELEMENT_CTTYPE << "was found!" );
+                    qCCritical(lcSyncML) << "Cannot process" << name <<"as no" << SYNCML_ELEMENT_CTTYPE << "was found!";
                     iError = PARSER_ERROR_INVALID_DATA;
                 }
                 else if( name == SYNCML_ELEMENT_PROPNAME )
@@ -1283,7 +1283,7 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
                 }
                 else
                 {
-                    LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                    qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
                 }
 
             }
@@ -1309,7 +1309,7 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
             {
                 if( interestedFormats[b].iType == caps[i].getFormat().iType )
                 {
-                    LOG_DEBUG( "Datastore" << aDataStores[a].getSourceURI() << "is interested in CTType" << caps[i].getFormat().iType );
+                    qCDebug(lcSyncML) << "Datastore" << aDataStores[a].getSourceURI() << "is interested in CTType" << caps[i].getFormat().iType;
                     aDataStores[a].ctCaps().append( caps[i] );
                     break;
                 }
@@ -1324,7 +1324,7 @@ void SyncMLMessageParser::readCTCap11( QList<Datastore>& aDataStores )
 
 void SyncMLMessageParser::readCTCap12( Datastore& aDatastore )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     CTCap cap;
 
@@ -1362,7 +1362,7 @@ void SyncMLMessageParser::readCTCap12( Datastore& aDatastore )
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
         }
 
@@ -1373,7 +1373,7 @@ void SyncMLMessageParser::readCTCap12( Datastore& aDatastore )
 
 void SyncMLMessageParser::readCTCap12Property( CTCapProperty& aProperty )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() )
     {
@@ -1423,7 +1423,7 @@ void SyncMLMessageParser::readCTCap12Property( CTCapProperty& aProperty )
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -1434,7 +1434,7 @@ void SyncMLMessageParser::readCTCap12Property( CTCapProperty& aProperty )
 
 void SyncMLMessageParser::readCTCap12Parameter( CTCapParameter& aParameter )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() )
     {
@@ -1467,7 +1467,7 @@ void SyncMLMessageParser::readCTCap12Parameter( CTCapParameter& aParameter )
             }
             else
             {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in DEVINF:NOT HANDLED BY PARSER" << name;
             }
 
         }
@@ -1478,7 +1478,7 @@ void SyncMLMessageParser::readCTCap12Parameter( CTCapParameter& aParameter )
 
 void SyncMLMessageParser::readItem( ItemParams& aParams )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     while( shouldContinue() ) {
 
@@ -1513,7 +1513,7 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
                 aParams.moreData = true;
             }
             else {
-                LOG_WARNING("UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name);
+                qCWarning(lcSyncML) << "UNKNOWN TOKEN TYPE in ITEM:NOT HANDLED BY PARSER" << name;
             }
         }
     }
@@ -1522,7 +1522,7 @@ void SyncMLMessageParser::readItem( ItemParams& aParams )
 
 QString SyncMLMessageParser::readURI()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QString uri;
 
@@ -1581,7 +1581,7 @@ QString SyncMLMessageParser::readString()
 
 QString SyncMLMessageParser::readMixed()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     QString text;
     QString xml;
 
@@ -1622,12 +1622,12 @@ QString SyncMLMessageParser::readMixed()
 
     if( xml.isEmpty() )
     {
-        LOG_DEBUG( "Text was found:" << text.size() << "bytes" );
+        qCDebug(lcSyncML) << "Text was found:" << text.size() << "bytes";
         return text;
     }
     else
     {
-        LOG_DEBUG( "XML data was found:" << xml.size() << "bytes" );
+        qCDebug(lcSyncML) << "XML data was found:" << xml.size() << "bytes";
         return xml;
     }
 }
@@ -1646,7 +1646,7 @@ bool SyncMLMessageParser::shouldContinue() const
 
 void SyncMLMessageParser::initMaps() {
 
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // for debugging alert codes
     iAlertCodeMap[100] = "Alert for DISPLAY";

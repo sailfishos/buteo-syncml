@@ -37,18 +37,18 @@
 #include "datatypes.h"
 #include <wbxml/wbxml_encoder.h>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 LibWbXML2Encoder::LibWbXML2Encoder()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 LibWbXML2Encoder::~LibWbXML2Encoder()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool LibWbXML2Encoder::encodeToXML( const SyncMLCmdObject& aRootObject,
@@ -56,21 +56,21 @@ bool LibWbXML2Encoder::encodeToXML( const SyncMLCmdObject& aRootObject,
                                     QByteArray& aXMLDocument,
                                     bool aPrettyPrint ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Encoding to XML" );
+    qCDebug(lcSyncML) << "Encoding to XML";
 
     WBXMLTree* tree = generateTree( aRootObject, aVersion );
 
     if( !tree ) {
-        LOG_CRITICAL( "Could not generate WBXMLTree" );
+        qCCritical(lcSyncML) << "Could not generate WBXMLTree";
         return false;
     }
 
     WBXMLEncoder* encoder = wbxml_encoder_create();
 
     if( !encoder ) {
-        LOG_CRITICAL( "Could not create WBXMLEncoder" );
+        qCCritical(lcSyncML) << "Could not create WBXMLEncoder";
         wbxml_tree_destroy( tree );
         return false;
     }
@@ -99,12 +99,12 @@ bool LibWbXML2Encoder::encodeToXML( const SyncMLCmdObject& aRootObject,
         aXMLDocument.append( (char *)xml, xml_len );
         wbxml_free( xml );
         success = true;
-        LOG_DEBUG( "Encoding successful" );
-        LOG_DEBUG( "XML buffer size:" << xml_len );
+        qCDebug(lcSyncML) << "Encoding successful";
+        qCDebug(lcSyncML) << "XML buffer size:" << xml_len;
     }
     else {
         success = false;
-        LOG_CRITICAL( "XML conversion failed:" << (const char* )wbxml_errors_string( error ) );
+        qCCritical(lcSyncML) << "XML conversion failed:" << (const char* )wbxml_errors_string( error );
     }
 
     wbxml_tree_destroy( tree );
@@ -118,14 +118,14 @@ bool LibWbXML2Encoder::encodeToWbXML( const SyncMLCmdObject& aRootObject,
                                       ProtocolVersion aVersion,
                                       QByteArray& aWbXMLDocument ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Encoding to wbXML" );
+    qCDebug(lcSyncML) << "Encoding to wbXML";
 
     WBXMLTree* tree = generateTree( aRootObject, aVersion );
 
     if( !tree ) {
-        LOG_CRITICAL( "Could not generate WBXMLTree" );
+        qCCritical(lcSyncML) << "Could not generate WBXMLTree";
         return false;
     }
    
@@ -133,7 +133,7 @@ bool LibWbXML2Encoder::encodeToWbXML( const SyncMLCmdObject& aRootObject,
     WBXMLEncoder* encoder = wbxml_encoder_create();
 
     if( !encoder ) {
-        LOG_CRITICAL( "Could not create WBXMLEncoder" );
+        qCCritical(lcSyncML) << "Could not create WBXMLEncoder";
         wbxml_tree_destroy( tree );
         return false;
     }
@@ -153,11 +153,11 @@ bool LibWbXML2Encoder::encodeToWbXML( const SyncMLCmdObject& aRootObject,
         aWbXMLDocument.append( (char *)wbxml, wbxml_len );
         wbxml_free( wbxml );
         success = true;
-        LOG_DEBUG( "Encoding successful" );
-        LOG_DEBUG( "wbXML buffer size:" << wbxml_len );
+        qCDebug(lcSyncML) << "Encoding successful";
+        qCDebug(lcSyncML) << "wbXML buffer size:" << wbxml_len;
     }
     else {
-        LOG_CRITICAL( "wbXML conversion failed:" << (const char* )wbxml_errors_string( error ) );
+        qCCritical(lcSyncML) << "wbXML conversion failed:" << (const char* )wbxml_errors_string( error );
         success = false;
     }
 
@@ -171,16 +171,16 @@ bool LibWbXML2Encoder::encodeToWbXML( const SyncMLCmdObject& aRootObject,
 bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteArray& aXMLDocument,
                                         bool aPrettyPrint ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG("Converting WbXML to XML");
+    qCDebug(lcSyncML) << "Converting WbXML to XML";
 
     WBXMLError error = WBXML_OK;
     WBXMLConvWBXML2XML *conv = NULL;
 
     error = wbxml_conv_wbxml2xml_create( &conv );
     if (error != WBXML_OK) {
-        LOG_DEBUG("WbXML to XML conversion failed: " << (const char* )wbxml_errors_string( error ) );
+        qCDebug(lcSyncML) << "WbXML to XML conversion failed: " << (const char* )wbxml_errors_string( error );
         return false;
     }
 
@@ -204,7 +204,7 @@ bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteA
     WB_UTINY* xml;
     WB_ULONG xml_len;
 
-    LOG_DEBUG( "WbXML buffer size: " << wbxml_len );
+    qCDebug(lcSyncML) << "WbXML buffer size: " << wbxml_len;
 
     error = wbxml_conv_wbxml2xml_run( conv, const_cast<WB_UTINY*>( wbxml ), wbxml_len,
                                                        &xml, &xml_len);
@@ -213,14 +213,14 @@ bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteA
     QByteArray data;
 
     if( error == WBXML_OK ) {
-        LOG_DEBUG("WbXML to XML conversion succeeded");
-        LOG_DEBUG( "XML buffer size: " << xml_len );
+        qCDebug(lcSyncML) << "WbXML to XML conversion succeeded";
+        qCDebug(lcSyncML) << "XML buffer size: " << xml_len;
         aXMLDocument.append( reinterpret_cast<char*>( xml ), xml_len );
         wbxml_free( xml );
         return true;
     }
     else {
-        LOG_DEBUG("WbXML to XML conversion failed: " << (const char* )wbxml_errors_string( error ) );
+        qCDebug(lcSyncML) << "WbXML to XML conversion failed: " << (const char* )wbxml_errors_string( error );
         return false;
     }
 
@@ -229,7 +229,7 @@ bool LibWbXML2Encoder::decodeFromWbXML( const QByteArray& aWbXMLDocument, QByteA
 WBXMLTree* LibWbXML2Encoder::generateTree( const SyncMLCmdObject& aRootObject,
                                             ProtocolVersion aVersion ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     WBXMLTree* tree = createTree( aRootObject, aVersion );
 
@@ -249,12 +249,12 @@ WBXMLTree* LibWbXML2Encoder::createTree( const SyncMLCmdObject& aObject,
                                          ProtocolVersion aVersion ) const
 {
 
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     WBXMLLanguage language = namespaceToLanguage( aObject, aVersion );
 
     if( language == WBXML_LANG_UNKNOWN ) {
-        LOG_CRITICAL( "Cannot create tree, unknown language!" );
+        qCCritical(lcSyncML) << "Cannot create tree, unknown language!";
         return NULL;
     }
     else {
@@ -265,7 +265,7 @@ WBXMLTree* LibWbXML2Encoder::createTree( const SyncMLCmdObject& aObject,
 
 void LibWbXML2Encoder::destroyTree( WBXMLTree* aTree ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     wbxml_tree_destroy( aTree );
 }
@@ -281,7 +281,7 @@ bool LibWbXML2Encoder::createNode( const SyncMLCmdObject& aObject,
     WBXMLTreeNode* node = wbxml_tree_add_xml_elt( aTree, aParent, (unsigned char*)name.constData() );
 
     if( !node ) {
-        LOG_CRITICAL( "Could not create tree node for element" << aObject.getName() );
+        qCCritical(lcSyncML) << "Could not create tree node for element" << aObject.getName();
         return false;
     }
 
@@ -300,7 +300,7 @@ bool LibWbXML2Encoder::createNode( const SyncMLCmdObject& aObject,
                                                          (unsigned char*)attrValue.constData() );
 
         if( error != WBXML_OK ) {
-            LOG_CRITICAL( "Could not add attribute" << attrName << "for element" << name );
+            qCCritical(lcSyncML) << "Could not add attribute" << attrName << "for element" << name;
             attributesOk = false;
             break;
         }
@@ -323,13 +323,13 @@ bool LibWbXML2Encoder::createNode( const SyncMLCmdObject& aObject,
 
             if( !cdata || !wbxml_tree_add_text( aTree, cdata,
                                                 (unsigned char*)value.constData(), value.length() ) ) {
-                LOG_CRITICAL( "Could not add CDATA for element" << aObject.getName() );
+                qCCritical(lcSyncML) << "Could not add CDATA for element" << aObject.getName();
                 valueOk = false;
             }
 
         }
         else if( !wbxml_tree_add_text( aTree, node, (unsigned char*)value.constData(), value.length() ) ) {
-            LOG_CRITICAL( "Could not add TEXT for element" << aObject.getName() );
+            qCCritical(lcSyncML) << "Could not add TEXT for element" << aObject.getName();
             valueOk = false;
         }
 
@@ -352,25 +352,25 @@ bool LibWbXML2Encoder::createNode( const SyncMLCmdObject& aObject,
         if( language != WBXML_LANG_UNKNOWN &&
             language != aTree->lang->langID ) {
 
-            LOG_DEBUG( "Children using language" << language << "while parent is using"
-                       << aTree->lang->langID );
-            LOG_DEBUG( "Creating subtree for children" );
+            qCDebug(lcSyncML) << "Children using language" << language << "while parent is using"
+                       << aTree->lang->langID;
+            qCDebug(lcSyncML) << "Creating subtree for children";
 
             WBXMLTree* subTree = createTree( *child, aVersion );
 
             if( !subTree ) {
-                LOG_CRITICAL( "Could not create subtree for" << child->getName() );
+                qCCritical(lcSyncML) << "Could not create subtree for" << child->getName();
                 return false;
             }
 
             if( !createNode( *child, subTree, NULL, aVersion ) ) {
-                LOG_CRITICAL( "Could not add child to subtree" << child->getName() << "for element" << name );
+                qCCritical(lcSyncML) << "Could not add child to subtree" << child->getName() << "for element" << name;
                 return false;
             }
 
             if( !wbxml_tree_add_tree( aTree, node, subTree ) ) {
                 destroyTree( subTree );
-                LOG_CRITICAL( "Could not add subtree for" << child->getName() );
+                qCCritical(lcSyncML) << "Could not add subtree for" << child->getName();
                 return false;
             }
 
@@ -379,7 +379,7 @@ bool LibWbXML2Encoder::createNode( const SyncMLCmdObject& aObject,
         else {
 
             if( !createNode( *child, aTree, node, aVersion ) ) {
-                LOG_CRITICAL( "Could not add child" << child->getName() << "for element" << name );
+                qCCritical(lcSyncML) << "Could not add child" << child->getName() << "for element" << name;
                 return false;
             }
         }

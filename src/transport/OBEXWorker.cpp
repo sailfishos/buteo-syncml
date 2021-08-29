@@ -33,7 +33,7 @@
 
 #include "OBEXWorker.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -51,35 +51,35 @@ OBEXWorker::~OBEXWorker()
 
 bool OBEXWorker::setupOpenOBEX( int aFd, qint32 aMTU, obex_event_t aEventHandler )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iTransportHandle )
     {
 
-        LOG_DEBUG( "Initializing OpenOBEX..." );
+        qCDebug(lcSyncML) << "Initializing OpenOBEX...";
 
         obex_t* handle = OBEX_Init( OBEX_TRANS_FD, aEventHandler, 0);
 
         if( handle )
         {
 
-            LOG_DEBUG( "Using MTU: " << aMTU );
+            qCDebug(lcSyncML) << "Using MTU: " << aMTU;
             OBEX_SetTransportMTU( handle, aMTU, aMTU );
             if( FdOBEX_TransportSetup(handle, aFd, aFd, aMTU ) >= 0 )
             {
-                LOG_DEBUG("OpenOBEX initialized");
+                qCDebug(lcSyncML) << "OpenOBEX initialized";
                 iTransportHandle = handle;
                 return true;
             }
             else
             {
-                LOG_DEBUG("OpenOBEX transport setup failed");
+                qCDebug(lcSyncML) << "OpenOBEX transport setup failed";
                 return false;
             }
 
         }
         else {
-            LOG_DEBUG("OpenOBEX initialization failed");
+            qCDebug(lcSyncML) << "OpenOBEX initialization failed";
             return false;
         }
     }
@@ -91,7 +91,7 @@ bool OBEXWorker::setupOpenOBEX( int aFd, qint32 aMTU, obex_event_t aEventHandler
 
 void OBEXWorker::closeOpenOBEX()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iTransportHandle ) {
         OBEX_TransportDisconnect( iTransportHandle );
@@ -123,6 +123,6 @@ bool OBEXWorker::isLinkError() const
 
 void OBEXWorker::setLinkError( bool aLinkError )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iLinkError = aLinkError;
 }

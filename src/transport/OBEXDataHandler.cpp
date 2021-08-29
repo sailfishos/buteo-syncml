@@ -33,7 +33,7 @@
 
 #include "OBEXDataHandler.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -47,7 +47,7 @@ OBEXDataHandler:: ~OBEXDataHandler()
 
 obex_object_t* OBEXDataHandler::createConnectCmd( obex_t* aHandle, const ConnectCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
 
@@ -73,7 +73,7 @@ obex_object_t* OBEXDataHandler::createConnectCmd( obex_t* aHandle, const Connect
 
 bool OBEXDataHandler::parseConnectCmd( obex_t* aHandle, obex_object_t* aObject, ConnectCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -89,12 +89,12 @@ bool OBEXDataHandler::parseConnectCmd( obex_t* aHandle, obex_object_t* aObject, 
             {
                 aData.iTarget = QByteArray( (char *)header.bs, len );
                 targetFound = true;
-                LOG_DEBUG("Found target: " << aData.iTarget);
+                qCDebug(lcSyncML) << "Found target: " << aData.iTarget;
                 break;
             }
             default:
             {
-                LOG_DEBUG("Unknown header: " << headertype);
+                qCDebug(lcSyncML) << "Unknown header: " << headertype;
                 break;
             }
         }
@@ -111,7 +111,7 @@ bool OBEXDataHandler::parseConnectCmd( obex_t* aHandle, obex_object_t* aObject, 
 
 bool OBEXDataHandler::createConnectRsp( obex_t* aHandle, obex_object_t* aObject, const ConnectRspData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
     header.bq4 = aData.iConnectionId;
@@ -134,7 +134,7 @@ bool OBEXDataHandler::createConnectRsp( obex_t* aHandle, obex_object_t* aObject,
 
 bool OBEXDataHandler::parseConnectRsp( obex_t* aHandle, obex_object_t* aObject, ConnectRspData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -151,7 +151,7 @@ bool OBEXDataHandler::parseConnectRsp( obex_t* aHandle, obex_object_t* aObject, 
             {
                 aData.iConnectionId = header.bq4;
                 connIdFound = true;
-                LOG_DEBUG("Found connection id: " << aData.iConnectionId);
+                qCDebug(lcSyncML) << "Found connection id: " << aData.iConnectionId;
 
                 break;
             }
@@ -159,12 +159,12 @@ bool OBEXDataHandler::parseConnectRsp( obex_t* aHandle, obex_object_t* aObject, 
             {
                 aData.iWho = QByteArray( (char *)header.bs, len );
                 whoFound = true;
-                LOG_DEBUG("Found who: " << aData.iWho);
+                qCDebug(lcSyncML) << "Found who: " << aData.iWho;
                 break;
             }
             default:
             {
-                LOG_DEBUG("Unknown header: " << headertype);
+                qCDebug(lcSyncML) << "Unknown header: " << headertype;
                 break;
             }
         }
@@ -180,7 +180,7 @@ bool OBEXDataHandler::parseConnectRsp( obex_t* aHandle, obex_object_t* aObject, 
 
 obex_object_t* OBEXDataHandler::createDisconnectCmd( obex_t* aHandle, const DisconnectCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
     obex_object_t* object = OBEX_ObjectNew( aHandle, OBEX_CMD_DISCONNECT );
@@ -205,7 +205,7 @@ obex_object_t* OBEXDataHandler::createDisconnectCmd( obex_t* aHandle, const Disc
 
 bool OBEXDataHandler::parseDisconnectCmd( obex_t* aHandle, obex_object_t* aObject, DisconnectCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -221,13 +221,13 @@ bool OBEXDataHandler::parseDisconnectCmd( obex_t* aHandle, obex_object_t* aObjec
             {
                 aData.iConnectionId = header.bq4;
                 connIdFound = true;
-                LOG_DEBUG("Found connection id: " << aData.iConnectionId);
+                qCDebug(lcSyncML) << "Found connection id: " << aData.iConnectionId;
 
                 break;
             }
             default:
             {
-                LOG_DEBUG("Unknown header: " << headertype);
+                qCDebug(lcSyncML) << "Unknown header: " << headertype;
                 break;
             }
         }
@@ -244,7 +244,7 @@ bool OBEXDataHandler::parseDisconnectCmd( obex_t* aHandle, obex_object_t* aObjec
 
 obex_object_t* OBEXDataHandler::createPutCmd( obex_t* aHandle, const PutCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
 
@@ -286,7 +286,7 @@ obex_object_t* OBEXDataHandler::createPutCmd( obex_t* aHandle, const PutCmdData&
 
 bool OBEXDataHandler::parsePutCmd( obex_t* aHandle, obex_object_t* aObject, PutCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -307,7 +307,7 @@ bool OBEXDataHandler::parsePutCmd( obex_t* aHandle, obex_object_t* aObject, PutC
             {
                 aData.iConnectionId = header.bq4;;
                 connIdFound = true;
-                LOG_DEBUG("Found connection id: " << aData.iConnectionId);
+                qCDebug(lcSyncML) << "Found connection id: " << aData.iConnectionId;
 
                 break;
             }
@@ -315,33 +315,33 @@ bool OBEXDataHandler::parsePutCmd( obex_t* aHandle, obex_object_t* aObject, PutC
             {
                 aData.iContentType = QByteArray( (char *)header.bs );
                 typeFound = true;
-                LOG_DEBUG("Found type: " << aData.iContentType);
+                qCDebug(lcSyncML) << "Found type: " << aData.iContentType;
                 break;
             }
             case OBEX_HDR_LENGTH:
             {
                 aData.iLength = header.bq4;
                 lengthFound = true;
-                LOG_DEBUG("Found length: " << aData.iLength);
+                qCDebug(lcSyncML) << "Found length: " << aData.iLength;
                 break;
             }
             case OBEX_HDR_BODY:
             {
                 QByteArray body( (char*)header.bs, len );
                 aData.iBody.append( body );
-                LOG_DEBUG("Found body with length of " << len << " bytes");
+                qCDebug(lcSyncML) << "Found body with length of " << len << " bytes";
                 break;
             }
             case OBEX_HDR_BODY_END:
             {
                 QByteArray body( (char*)header.bs, len );
                 aData.iBody.append( body );
-                LOG_DEBUG("Found end of body");
+                qCDebug(lcSyncML) << "Found end of body";
                 break;
             }
             default:
             {
-                LOG_DEBUG("Unknown header: " << headertype);
+                qCDebug(lcSyncML) << "Unknown header: " << headertype;
                 aData.iUnsupportedHeaders = true;
                 break;
             }
@@ -349,14 +349,14 @@ bool OBEXDataHandler::parsePutCmd( obex_t* aHandle, obex_object_t* aObject, PutC
     }
 
     if( !connIdFound ) {
-        LOG_DEBUG("Warning: no connection id header found");
+        qCDebug(lcSyncML) << "Warning: no connection id header found";
     }
 
     if( typeFound ) {
         return true;
     }
     else {
-        LOG_WARNING( "Request did not include TYPE header as expected" );
+        qCWarning(lcSyncML) << "Request did not include TYPE header as expected";
         return false;
     }
 
@@ -364,7 +364,7 @@ bool OBEXDataHandler::parsePutCmd( obex_t* aHandle, obex_object_t* aObject, PutC
 
 obex_object_t* OBEXDataHandler::createGetCmd( obex_t* aHandle, const GetCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
 
@@ -394,7 +394,7 @@ obex_object_t* OBEXDataHandler::createGetCmd( obex_t* aHandle, const GetCmdData&
 
 bool OBEXDataHandler::parseGetCmd( obex_t* aHandle, obex_object_t* aObject, GetCmdData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -411,7 +411,7 @@ bool OBEXDataHandler::parseGetCmd( obex_t* aHandle, obex_object_t* aObject, GetC
             {
                 aData.iConnectionId = header.bq4;;
                 connIdFound = true;
-                LOG_DEBUG("Found connection id: " << aData.iConnectionId);
+                qCDebug(lcSyncML) << "Found connection id: " << aData.iConnectionId;
 
                 break;
             }
@@ -419,14 +419,14 @@ bool OBEXDataHandler::parseGetCmd( obex_t* aHandle, obex_object_t* aObject, GetC
             {
                 aData.iContentType = QByteArray( (char *)header.bs );
                 typeFound = true;
-                LOG_DEBUG("Found type: " << aData.iContentType);
+                qCDebug(lcSyncML) << "Found type: " << aData.iContentType;
                 break;
             }
         }
     }
 
     if( !connIdFound ) {
-        LOG_DEBUG("Warning: no connection id header found");
+        qCDebug(lcSyncML) << "Warning: no connection id header found";
     }
 
     if( typeFound ) {
@@ -440,7 +440,7 @@ bool OBEXDataHandler::parseGetCmd( obex_t* aHandle, obex_object_t* aObject, GetC
 
 bool OBEXDataHandler::createGetRsp( obex_t* aHandle, obex_object_t* aObject, const GetRspData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     obex_headerdata_t header;
 
@@ -465,7 +465,7 @@ bool OBEXDataHandler::createGetRsp( obex_t* aHandle, obex_object_t* aObject, con
 
 bool OBEXDataHandler::parseGetRsp( obex_t* aHandle, obex_object_t* aObject, GetRspData& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     uint8_t headertype;
     obex_headerdata_t header;
@@ -482,26 +482,26 @@ bool OBEXDataHandler::parseGetRsp( obex_t* aHandle, obex_object_t* aObject, GetR
             {
                 aData.iLength = header.bq4;
                 lengthFound = true;
-                LOG_DEBUG("Found length: " << aData.iLength);
+                qCDebug(lcSyncML) << "Found length: " << aData.iLength;
                 break;
             }
             case OBEX_HDR_BODY:
             {
                 QByteArray body( (char*)header.bs, len );
                 aData.iBody.append( body );
-                LOG_DEBUG("Found body with length of " << len << " bytes");
+                qCDebug(lcSyncML) << "Found body with length of " << len << " bytes";
                 break;
             }
             case OBEX_HDR_BODY_END:
             {
                 QByteArray body( (char*)header.bs, len );
                 aData.iBody.append( body );
-                LOG_DEBUG("Found end of body");
+                qCDebug(lcSyncML) << "Found end of body";
                 break;
             }
             default:
             {
-                LOG_DEBUG("Unknown header: " << headertype);
+                qCDebug(lcSyncML) << "Unknown header: " << headertype;
                 break;
             }
         }

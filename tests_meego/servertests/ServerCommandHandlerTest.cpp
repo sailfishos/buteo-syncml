@@ -42,7 +42,7 @@
 #include "ConflictResolver.h"
 #include "DeviceInfo.h"
 #include <QDebug>
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 

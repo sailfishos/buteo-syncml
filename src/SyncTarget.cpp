@@ -38,7 +38,7 @@
 #include "SyncItem.h"
 #include "DatabaseHandler.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -51,12 +51,12 @@ SyncTarget::SyncTarget( ChangeLog* aChangeLog, StoragePlugin* aPlugin,
     iReverted( false ),
     iLocalChangesDiscovered( false )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 SyncTarget::~SyncTarget()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     delete iChangeLog;
     iChangeLog = NULL;
@@ -65,7 +65,7 @@ SyncTarget::~SyncTarget()
 
 QString SyncTarget::getSourceDatabase() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QString sourceDb;
 
@@ -128,7 +128,7 @@ void SyncTarget::setSyncMode( const SyncMode& aSyncMode )
 
 void SyncTarget::revertSyncMode()
 {
-	FUNCTION_CALL_TRACE
+	FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iSyncMode.syncType() == TYPE_FAST ) {
         iSyncMode.toSlowSync();
@@ -138,7 +138,7 @@ void SyncTarget::revertSyncMode()
 
 bool SyncTarget::setRefreshFromClient()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     
     bool refreshSet = false;
 
@@ -159,7 +159,7 @@ bool SyncTarget::reverted() const
 
 bool SyncTarget::discoverLocalChanges( const Role& aRole )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iLocalChangesDiscovered ) {
         return true;
@@ -171,8 +171,8 @@ bool SyncTarget::discoverLocalChanges( const Role& aRole )
     iLocalChanges.modified.clear();
     iLocalChanges.removed.clear();
 
-    LOG_DEBUG("Analyzing local changes");
-    LOG_DEBUG("Sync Type getting Local Changes " << iSyncMode.toSyncMLCode());
+    qCDebug(lcSyncML) << "Analyzing local changes";
+    qCDebug(lcSyncML) << "Sync Type getting Local Changes " << iSyncMode.toSyncMLCode();
 
     SyncDirection direction = iSyncMode.syncDirection();
 
@@ -182,33 +182,33 @@ bool SyncTarget::discoverLocalChanges( const Role& aRole )
 
 
         if( iSyncMode.syncType() == TYPE_SLOW ) {
-            LOG_DEBUG("Slow sync mode");
+            qCDebug(lcSyncML) << "Slow sync mode";
 
             if (iPlugin != NULL) {
                 success = iPlugin->getAll( iLocalChanges.added );
             }
         }
 	else if( iSyncMode.syncType() == TYPE_REFRESH ) {
-            LOG_DEBUG("Refresh sync mode");
+            qCDebug(lcSyncML) << "Refresh sync mode";
             // As server, we don't initiate a refresh sync
             if( aRole == ROLE_CLIENT && direction == DIRECTION_FROM_CLIENT ) {
-                LOG_DEBUG("We need to send all changes as a client");
+                qCDebug(lcSyncML) << "We need to send all changes as a client";
                 if (iPlugin != NULL) {
                     success = iPlugin->getAll( iLocalChanges.added );
                 }
             }
         }
         else {
-            LOG_DEBUG("Fast sync mode");
+            qCDebug(lcSyncML) << "Fast sync mode";
 
             QDateTime time = iChangeLog->getLastSyncTime();
 
-            LOG_DEBUG("Getting modifications after: " << time);
+            qCDebug(lcSyncML) << "Getting modifications after: " << time;
 
             if (iPlugin != NULL) {
                 if( time.toString().isEmpty() )
                 {
-                    LOG_DEBUG("Getting All modifications for a 1st time fast sync req");
+                    qCDebug(lcSyncML) << "Getting All modifications for a 1st time fast sync req";
                     success = iPlugin->getAll( iLocalChanges.added );
                 }
                 else
@@ -224,13 +224,13 @@ bool SyncTarget::discoverLocalChanges( const Role& aRole )
 
     }
     else {
-        LOG_DEBUG("Local changes not needed in current sync mode");
+        qCDebug(lcSyncML) << "Local changes not needed in current sync mode";
         success = true;
     }
 
-    LOG_DEBUG("Number of items added: " << iLocalChanges.added.count());
-    LOG_DEBUG("Number of items modified: " << iLocalChanges.modified.count());
-    LOG_DEBUG("Number of items deleted: " << iLocalChanges.removed.count());
+    qCDebug(lcSyncML) << "Number of items added: " << iLocalChanges.added.count();
+    qCDebug(lcSyncML) << "Number of items modified: " << iLocalChanges.modified.count();
+    qCDebug(lcSyncML) << "Number of items deleted: " << iLocalChanges.removed.count();
 
     iLocalChangesDiscovered = success;
 
@@ -261,7 +261,7 @@ void SyncTarget::addUIDMapping( const UIDMapping& aMapping )
 
 void SyncTarget::removeUIDMapping( const SyncItemKey& aLocalKey )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     for( int i = 0; i < iUIDMappings.count(); ++i ) {
         if( iUIDMappings[i].iLocalUID == aLocalKey ) {
@@ -273,7 +273,7 @@ void SyncTarget::removeUIDMapping( const SyncItemKey& aLocalKey )
 
 SyncItemKey SyncTarget::mapToLocalUID( const QString& aRemoteKey ) const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     SyncItemKey localUID;
 
@@ -285,7 +285,7 @@ SyncItemKey SyncTarget::mapToLocalUID( const QString& aRemoteKey ) const
     }
 
     if( localUID.isEmpty() ) {
-        LOG_DEBUG( "Warning: no existing mapping found for remote key" << aRemoteKey );
+        qCDebug(lcSyncML) << "Warning: no existing mapping found for remote key" << aRemoteKey;
     }
 
     return localUID;
@@ -293,7 +293,7 @@ SyncItemKey SyncTarget::mapToLocalUID( const QString& aRemoteKey ) const
 
 QString SyncTarget::mapToRemoteUID( const SyncItemKey& aLocalUID ) const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QString remoteUID;
 
@@ -323,7 +323,7 @@ void SyncTarget::clearUIDMappings()
 
 void SyncTarget::saveSession( DatabaseHandler& aDbHandler, const QDateTime& aSyncEndTime )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iChangeLog->setLastLocalAnchor( iLocalNextAnchor );
     iChangeLog->setLastRemoteAnchor( iRemoteNextAnchor );
@@ -331,7 +331,7 @@ void SyncTarget::saveSession( DatabaseHandler& aDbHandler, const QDateTime& aSyn
     iChangeLog->setMaps( iUIDMappings );
 
     if( !iChangeLog->save( aDbHandler.getDbHandle() ) ) {
-        LOG_WARNING( "Could not save information to persistent storage!");
+        qCWarning(lcSyncML) << "Could not save information to persistent storage!";
     }
 
 }

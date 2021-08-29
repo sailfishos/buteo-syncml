@@ -38,21 +38,21 @@
 #include "SyncTarget.h"
 #include "SyncMode.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 AlertPackage::AlertPackage( qint32 aAlertCode )
  : iParams( CommandParams::COMMAND_ALERT)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iParams.data = QString::number( aAlertCode );
 }
 
 AlertPackage::AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, const QString& aTargetDatabase )
  : iParams( CommandParams::COMMAND_ALERT )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iParams.data = QString::number( aAlertCode );
 
@@ -66,7 +66,7 @@ AlertPackage::AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, c
                             const QString& aLocalLastAnchor, const QString& aLocalNextAnchor )
  : iParams( CommandParams::COMMAND_ALERT )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iParams.data = QString::number( aAlertCode );
 
@@ -87,7 +87,7 @@ AlertPackage::AlertPackage( qint32 aAlertCode, const QString& aSourceDatabase, c
 AlertPackage::AlertPackage( const QString& aSourceDatabase, const QString& aMIMEType, qint32 aAlertCode )
 : iParams( CommandParams::COMMAND_ALERT )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iParams.data = QString::number( aAlertCode );
 
@@ -103,7 +103,7 @@ AlertPackage::~AlertPackage()
 
 bool AlertPackage::write( SyncMLMessage& aMessage, int& aSizeThreshold, bool aWBXML, const ProtocolVersion& aVersion )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iParams.cmdId = aMessage.getNextCmdId();
     SyncMLAlert* alertObject = new SyncMLAlert( iParams );

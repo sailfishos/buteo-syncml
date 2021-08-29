@@ -41,7 +41,7 @@
 #include "Mock.h"
 #include "ChangeLog.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 

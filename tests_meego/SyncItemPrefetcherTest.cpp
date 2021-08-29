@@ -38,7 +38,7 @@
 #include "SyncItemPrefetcher.h"
 #include "Mock.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 PrefetchStorage::PrefetchStorage( const QList<SyncItemKey>& aItemIds )
     : iItemIds( aItemIds ), iForceSyncItems( false )

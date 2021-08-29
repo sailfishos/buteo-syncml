@@ -36,7 +36,7 @@
 #include "OBEXConnection.h"
 #include "OBEXDataHandler.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 #define SYNCMLTARGET "SYNCML-SYNC"
 #define LINKERRORRESULT -2
@@ -56,23 +56,23 @@ OBEXClientWorker::~OBEXClientWorker()
 
 void OBEXClientWorker::connect()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
-        LOG_DEBUG( "Already connected, ignoring connect attempt" );
+        qCDebug(lcSyncML) << "Already connected, ignoring connect attempt";
         return;
     }
 
     if( !setupOpenOBEX( iFd, iMTU, OBEXClientWorker::handleEvent ) )
     {
-        LOG_CRITICAL( "Could not set up OBEX link, aborting CONNECT" );
+        qCCritical(lcSyncML) << "Could not set up OBEX link, aborting CONNECT";
         return;
     }
 
     OBEX_SetUserData( getHandle(), this );
 
-    LOG_DEBUG("Sending OBEX CONNECT");
+    qCDebug(lcSyncML) << "Sending OBEX CONNECT";
 
     OBEXDataHandler handler;
     OBEXDataHandler::ConnectCmdData data;
@@ -82,7 +82,7 @@ void OBEXClientWorker::connect()
 
     if( !object || OBEX_Request( getHandle(), object ) < 0 )
     {
-        LOG_CRITICAL( "Failed in OBEX_Request while doing CONNECT" );
+        qCCritical(lcSyncML) << "Failed in OBEX_Request while doing CONNECT";
         return;
     }
 
@@ -94,7 +94,7 @@ void OBEXClientWorker::connect()
 
 void OBEXClientWorker::disconnect()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( isConnected() )
     {
@@ -108,8 +108,8 @@ void OBEXClientWorker::disconnect()
         {
             // Cannot send disconnect, then we have no choice but to force transport
             // disconnection
-            LOG_CRITICAL( "Failed in OBEX_Request while doing DISCONNECT" );
-            LOG_CRITICAL( "Forcing link disconnect" );
+            qCCritical(lcSyncML) << "Failed in OBEX_Request while doing DISCONNECT";
+            qCCritical(lcSyncML) << "Forcing link disconnect";
         }
         else
         {
@@ -122,18 +122,18 @@ void OBEXClientWorker::disconnect()
     }
     else
     {
-        LOG_DEBUG( "Not connected, ignoring sending OBEX DISCONNECT" );
+        qCDebug(lcSyncML) << "Not connected, ignoring sending OBEX DISCONNECT";
     }
 
 }
 
 void OBEXClientWorker::send( const QByteArray& aBuffer, const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !isConnected() )
     {
-        LOG_WARNING( "Connection not established, cannot send" );
+        qCWarning(lcSyncML) << "Connection not established, cannot send";
         emit connectionFailed();
         return;
     }
@@ -149,7 +149,7 @@ void OBEXClientWorker::send( const QByteArray& aBuffer, const QString& aContentT
 
     if( !object || OBEX_Request( getHandle(), object ) < 0 )
     {
-        LOG_WARNING( "Failed in OBEX_Request while doing PUT" );
+        qCWarning(lcSyncML) << "Failed in OBEX_Request while doing PUT";
         emit connectionError();
         return;
     }
@@ -158,12 +158,12 @@ void OBEXClientWorker::send( const QByteArray& aBuffer, const QString& aContentT
 
     if( result < 0 )
     {
-        LOG_WARNING( "OBEX PUT failed" );
+        qCWarning(lcSyncML) << "OBEX PUT failed";
         emit connectionError();
     }
     else if( result == 0 )
     {
-        LOG_WARNING( "OBEX PUT timed out" );
+        qCWarning(lcSyncML) << "OBEX PUT timed out";
         emit connectionTimeout();
     }
 
@@ -171,11 +171,11 @@ void OBEXClientWorker::send( const QByteArray& aBuffer, const QString& aContentT
 
 void OBEXClientWorker::receive( const QString& aContentType )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !isConnected() )
     {
-        LOG_WARNING( "Connection not established, cannot receive" );
+        qCWarning(lcSyncML) << "Connection not established, cannot receive";
         emit connectionFailed();
         return;
     }
@@ -188,7 +188,7 @@ void OBEXClientWorker::receive( const QString& aContentType )
     obex_object_t* object = handler.createGetCmd( getHandle(), data );
 
     if( !object || OBEX_Request( getHandle(), object ) < 0 ) {
-        LOG_WARNING( "Failed in OBEX_Request while doing GET" );
+        qCWarning(lcSyncML) << "Failed in OBEX_Request while doing GET";
         emit connectionError();
         return;
     }
@@ -199,12 +199,12 @@ void OBEXClientWorker::receive( const QString& aContentType )
 
     if( result < 0 )
     {
-        LOG_WARNING( "OBEX GET failed" );
+        qCWarning(lcSyncML) << "OBEX GET failed";
         emit connectionError();
     }
     else if( result == 0 )
     {
-        LOG_WARNING( "OBEX GET timed out" );
+        qCWarning(lcSyncML) << "OBEX GET timed out";
         emit connectionTimeout();
     }
 
@@ -212,7 +212,7 @@ void OBEXClientWorker::receive( const QString& aContentType )
 
 int OBEXClientWorker::process()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iProcessing = true;
 
@@ -244,10 +244,10 @@ int OBEXClientWorker::process()
 void OBEXClientWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int aMode,
                                     int aEvent, int aObexCmd, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     OBEXClientWorker* worker= (OBEXClientWorker*)OBEX_GetUserData( aHandle );
-    LOG_DEBUG("OBEX Event: " << aEvent <<" Mode: " << aMode <<" Cmd: " << aObexCmd << " Resp: " << aObexRsp);
+    qCDebug(lcSyncML) << "OBEX Event: " << aEvent <<" Mode: " << aMode <<" Cmd: " << aObexCmd << " Resp: " << aObexRsp;
 
     switch( aEvent )
     {
@@ -275,9 +275,9 @@ void OBEXClientWorker::handleEvent( obex_t *aHandle, obex_object_t *aObject, int
 
 void OBEXClientWorker::linkError()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_CRITICAL( "Link error occurred" );
+    qCCritical(lcSyncML) << "Link error occurred";
 
     closeOpenOBEX();
     setConnected( false );
@@ -285,7 +285,7 @@ void OBEXClientWorker::linkError()
 
 void OBEXClientWorker::RequestCompleted( obex_object_t *aObject, int aMode, int aObexCmd, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_UNUSED(aMode);
     Q_UNUSED(aObject);
@@ -322,7 +322,7 @@ void OBEXClientWorker::RequestCompleted( obex_object_t *aObject, int aMode, int 
 
 void OBEXClientWorker::ConnectResponse( obex_object_t *aObject, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aObexRsp == OBEX_RSP_SUCCESS )
     {
@@ -332,17 +332,17 @@ void OBEXClientWorker::ConnectResponse( obex_object_t *aObject, int aObexRsp )
 
         if( handler.parseConnectRsp( getHandle(), aObject, data ) ) {
             iConnectionId = data.iConnectionId;
-            LOG_DEBUG("OBEX session established as client");
+            qCDebug(lcSyncML) << "OBEX session established as client";
             setConnected( true );
         }
         else
         {
-            LOG_WARNING( "OBEX Connect: failed, remote device sent invalid response" );
+            qCWarning(lcSyncML) << "OBEX Connect: failed, remote device sent invalid response";
         }
     }
     else
     {
-        LOG_WARNING( "OBEX Connect: failed, remote device sent " << aObexRsp );
+        qCWarning(lcSyncML) << "OBEX Connect: failed, remote device sent " << aObexRsp;
     }
 
     iProcessing = false;
@@ -350,9 +350,9 @@ void OBEXClientWorker::ConnectResponse( obex_object_t *aObject, int aObexRsp )
 
 void OBEXClientWorker::DisconnectResponse( obex_object_t */*aObject*/, int /*aObexRsp*/ )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG("OBEX session disconnected as client");
+    qCDebug(lcSyncML) << "OBEX session disconnected as client";
     iConnectionId = -1;
     setConnected( false );
 
@@ -361,17 +361,17 @@ void OBEXClientWorker::DisconnectResponse( obex_object_t */*aObject*/, int /*aOb
 
 void OBEXClientWorker::PutResponse( obex_object_t *aObject, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     Q_UNUSED(aObject);
 
     if( aObexRsp == OBEX_RSP_SUCCESS )
     {
-        LOG_DEBUG( "OBEX PUT succeeded" );
+        qCDebug(lcSyncML) << "OBEX PUT succeeded";
     }
     else
     {
-        LOG_WARNING( "OBEX PUT failed, remote device sent: " << aObexRsp );
+        qCWarning(lcSyncML) << "OBEX PUT failed, remote device sent: " << aObexRsp;
         emit connectionError();
     }
 
@@ -380,11 +380,11 @@ void OBEXClientWorker::PutResponse( obex_object_t *aObject, int aObexRsp )
 
 void OBEXClientWorker::GetResponse( obex_object_t *aObject, int aObexRsp )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aObexRsp == OBEX_RSP_SUCCESS )
     {
-        LOG_DEBUG( "OBEX GET succeeded" );
+        qCDebug(lcSyncML) << "OBEX GET succeeded";
 
         OBEXDataHandler handler;
         OBEXDataHandler::GetRspData rspData;
@@ -395,22 +395,22 @@ void OBEXClientWorker::GetResponse( obex_object_t *aObject, int aObexRsp )
         }
         else
         {
-            LOG_WARNING( "Unexpected data in OBEX GET" );
+            qCWarning(lcSyncML) << "Unexpected data in OBEX GET";
             emit connectionError();
         }
     }
     else
     {
-        LOG_WARNING( "OBEX GET failed, remote device sent: " << aObexRsp );
+        qCWarning(lcSyncML) << "OBEX GET failed, remote device sent: " << aObexRsp;
 
         if( aObexRsp == OBEX_RSP_NOT_FOUND )
         {
-            LOG_WARNING( "Treating failure as session rejection" );
+            qCWarning(lcSyncML) << "Treating failure as session rejection";
             emit sessionRejected();
         }
         else
         {
-            LOG_WARNING( "Treating failure as generic connection error");
+            qCWarning(lcSyncML) << "Treating failure as generic connection error";
             emit connectionError();
         }
     }

@@ -37,18 +37,18 @@
 
 #include "SyncMLMessage.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 QtEncoder::QtEncoder()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 QtEncoder::~QtEncoder()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 
@@ -56,7 +56,7 @@ bool QtEncoder::encodeToXML( const SyncMLCmdObject& aRootObject,
                              QByteArray& aXMLDocument,
                              bool aPrettyPrint ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QXmlStreamWriter writer( &aXMLDocument );
 

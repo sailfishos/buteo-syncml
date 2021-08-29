@@ -44,7 +44,7 @@
 #include "DeviceInfo.h"
 #include "Mock.h"
 #include "TestUtils.h"
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 
 using namespace DataSync;

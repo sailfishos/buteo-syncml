@@ -45,7 +45,7 @@
 #include "datatypes.h"
 #include "Transport.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -56,18 +56,18 @@ SyncAgentConfig::SyncAgentConfig()
    iProtocolVersion( SYNCML_1_2 ),
    iAuthenticationType( AUTH_NONE )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 
 SyncAgentConfig::~SyncAgentConfig()
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     // @todo: The QXmlSchema class has a memory leak (http://bugreports.qt.nokia.com/browse/QTBUG-8948).
     // As this function is called for every sync performed, this leads to large leaks.
@@ -78,7 +78,7 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
     QByteArray schemaData;
 
     if( !readFile( aSchemaFile, schemaData ) ) {
-        LOG_CRITICAL( "Could not open schema file:" << aSchemaFile );
+        qCCritical(lcSyncML) << "Could not open schema file:" << aSchemaFile;
         return false;
     }
 
@@ -86,7 +86,7 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
     schema.load(schemaData);
 
     if( !schema.isValid() ) {
-        LOG_CRITICAL( "Schema file is invalid:" << aSchemaFile );
+        qCCritical(lcSyncML) << "Schema file is invalid:" << aSchemaFile;
         return false;
     }
     */
@@ -108,7 +108,7 @@ bool SyncAgentConfig::fromFile( const QString& aFile, const QString& aSchemaFile
     /*
     QXmlSchemaValidator validator( schema );
     if( !validator.validate( xmlData ) ) {
-        LOG_CRITICAL( "File did not pass validation:" << aFile );
+        qCCritical(lcSyncML) << "File did not pass validation:" << aFile;
         return false;
     }
     */
@@ -256,7 +256,7 @@ const QString& SyncAgentConfig::getNonce() const
 
 void SyncAgentConfig::addSyncTarget( const QString& aSourceDb, const QString& aTargetDb )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     iTargets[aSourceDb] = aTargetDb;
     iTargetDbs.append(aSourceDb);
@@ -264,13 +264,13 @@ void SyncAgentConfig::addSyncTarget( const QString& aSourceDb, const QString& aT
 
 void SyncAgentConfig::addDisabledSyncTarget( const QString& aSourceDb)
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     iDTargetDbs.append(aSourceDb);
 }
 
 QList<QString> SyncAgentConfig::getDisabledSourceDbs() const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     return iDTargetDbs;
 }
 
@@ -306,7 +306,7 @@ void SyncAgentConfig::setExtension( const QString& aName, const QVariant& aData 
         }
         else
         {
-            LOG_WARNING( "EMI tags extension: missing required data!" );
+            qCWarning(lcSyncML) << "EMI tags extension: missing required data!";
         }
 
     }
@@ -318,7 +318,7 @@ void SyncAgentConfig::setExtension( const QString& aName, const QVariant& aData 
         }
         else
         {
-            LOG_WARNING( "Sync without init phase extension: data should be invalid!" );
+            qCWarning(lcSyncML) << "Sync without init phase extension: data should be invalid!";
         }
     }
     else if( aName == SANMAPPINGSEXTENSION )
@@ -331,13 +331,13 @@ void SyncAgentConfig::setExtension( const QString& aName, const QVariant& aData 
         }
         else
         {
-            LOG_WARNING( "SAN mappings extension: missing required data!" );
+            qCWarning(lcSyncML) << "SAN mappings extension: missing required data!";
         }
 
     }
     else
     {
-        LOG_WARNING( "Unknown extension" << aName );
+        qCWarning(lcSyncML) << "Unknown extension" << aName;
     }
 
     if( valid )
@@ -363,7 +363,7 @@ void SyncAgentConfig::clearExtension( const QString& aName )
 
 bool SyncAgentConfig::readFile( const QString& aFileName, QByteArray& aData ) const
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QFile file( aFileName );
 
@@ -374,14 +374,14 @@ bool SyncAgentConfig::readFile( const QString& aFileName, QByteArray& aData ) co
         return true;
     }
     else {
-        LOG_DEBUG( "Could not read file:" << aFileName );
+        qCDebug(lcSyncML) << "Could not read file:" << aFileName;
         return false;
     }
 }
 
 bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QXmlStreamReader reader( aData );
 
@@ -401,7 +401,7 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
             {
                 reader.readNext();
                 QString dbPath = reader.text().toString();
-                LOG_DEBUG( "Found critical property" << DBPATH <<":" << dbPath );
+                qCDebug(lcSyncML) << "Found critical property" << DBPATH <<":" << dbPath;
 
                 QFileInfo dbPathInfo(dbPath);
                 if (dbPathInfo.isAbsolute()) {
@@ -410,7 +410,7 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
                     if (QDir().mkpath(Sync::syncCacheDir())) {
                         setDatabaseFilePath(Sync::syncCacheDir() + QDir::separator() + dbPathInfo.fileName());
                     } else {
-                        LOG_CRITICAL("Unable to create database dir");
+                        qCCritical(lcSyncML) << "Unable to create database dir";
                         return false;
                     }
                 }
@@ -419,7 +419,7 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
             {
                 reader.readNext();
                 QString localDeviceName = reader.text().toString();
-                LOG_DEBUG( "Found critical property" << LOCALDEVICENAME <<":" << localDeviceName );
+                qCDebug(lcSyncML) << "Found critical property" << LOCALDEVICENAME <<":" << localDeviceName;
                 setLocalDeviceName( localDeviceName );
             }
             else if( reader.name() == AGENTPROPS )
@@ -445,7 +445,7 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
 
 bool SyncAgentConfig::parseAgentProps( QXmlStreamReader& aReader )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString AGENTPROPS( "agent-props" );
 
@@ -458,35 +458,35 @@ bool SyncAgentConfig::parseAgentProps( QXmlStreamReader& aReader )
             {
                 aReader.readNext();
                 QString maxChangesPerMessage = aReader.text().toString();
-                LOG_DEBUG( "Found agent property" << MAXCHANGESPERMESSAGEPROP <<":" << maxChangesPerMessage );
+                qCDebug(lcSyncML) << "Found agent property" << MAXCHANGESPERMESSAGEPROP <<":" << maxChangesPerMessage;
                 setAgentProperty( MAXCHANGESPERMESSAGEPROP, maxChangesPerMessage );
             }
             else if( aReader.name() == MAXMESSAGESIZEPROP )
             {
                 aReader.readNext();
                 QString maxMessageSize = aReader.text().toString();
-                LOG_DEBUG( "Found agent property" << MAXMESSAGESIZEPROP <<":" << maxMessageSize );
+                qCDebug(lcSyncML) << "Found agent property" << MAXMESSAGESIZEPROP <<":" << maxMessageSize;
                 setAgentProperty( MAXMESSAGESIZEPROP, maxMessageSize );
             }
             else if( aReader.name() == CONFLICTRESOLUTIONPOLICYPROP )
             {
                 aReader.readNext();
                 QString conflictResolutionPolicy = aReader.text().toString();
-                LOG_DEBUG( "Found agent property" << CONFLICTRESOLUTIONPOLICYPROP <<":" << conflictResolutionPolicy );
+                qCDebug(lcSyncML) << "Found agent property" << CONFLICTRESOLUTIONPOLICYPROP <<":" << conflictResolutionPolicy;
                 setAgentProperty( CONFLICTRESOLUTIONPOLICYPROP, conflictResolutionPolicy );
             }
             else if( aReader.name() == FASTMAPSSENDPROP )
             {
                 aReader.readNext();
                 QString fastMapsSend = aReader.text().toString();
-                LOG_DEBUG( "Found agent property" << FASTMAPSSENDPROP <<":" << fastMapsSend );
+                qCDebug(lcSyncML) << "Found agent property" << FASTMAPSSENDPROP <<":" << fastMapsSend;
                 setAgentProperty( FASTMAPSSENDPROP, fastMapsSend );
             }
             else if( aReader.name() == OMITDATAUPDATESTATUSPROP )
             {
                 aReader.readNext();
                 QString omitDataUpdateStatus = aReader.text().toString();
-                LOG_DEBUG( "Found agent property" << OMITDATAUPDATESTATUSPROP <<":" << omitDataUpdateStatus );
+                qCDebug(lcSyncML) << "Found agent property" << OMITDATAUPDATESTATUSPROP <<":" << omitDataUpdateStatus;
                 setAgentProperty( OMITDATAUPDATESTATUSPROP, omitDataUpdateStatus );
             }
 
@@ -505,7 +505,7 @@ bool SyncAgentConfig::parseAgentProps( QXmlStreamReader& aReader )
 
 bool SyncAgentConfig::parseTransportProps( QXmlStreamReader& aReader )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString TRANSPORTPROPS( "transport-props" );
 
@@ -518,49 +518,49 @@ bool SyncAgentConfig::parseTransportProps( QXmlStreamReader& aReader )
             {
                 aReader.readNext();
                 QString btObexMtu = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << OBEXMTUBTPROP <<":" << btObexMtu );
+                qCDebug(lcSyncML) << "Found transport property" << OBEXMTUBTPROP <<":" << btObexMtu;
                 setTransportProperty( OBEXMTUBTPROP, btObexMtu );
             }
             else if( aReader.name() == OBEXMTUUSBPROP )
             {
                 aReader.readNext();
                 QString usbObexMtu = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << OBEXMTUUSBPROP <<":" << usbObexMtu );
+                qCDebug(lcSyncML) << "Found transport property" << OBEXMTUUSBPROP <<":" << usbObexMtu;
                 setTransportProperty( OBEXMTUUSBPROP, usbObexMtu );
             }
             else if( aReader.name() == OBEXMTUOTHERPROP )
             {
                 aReader.readNext();
                 QString otherObexMtu = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << OBEXMTUOTHERPROP <<":" << otherObexMtu );
+                qCDebug(lcSyncML) << "Found transport property" << OBEXMTUOTHERPROP <<":" << otherObexMtu;
                 setTransportProperty( OBEXMTUOTHERPROP, otherObexMtu );
             }
             else if( aReader.name() == OBEXTIMEOUTPROP )
             {
                 aReader.readNext();
                 QString obexTimeout= aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << OBEXTIMEOUTPROP <<":" << obexTimeout );
+                qCDebug(lcSyncML) << "Found transport property" << OBEXTIMEOUTPROP <<":" << obexTimeout;
                 setTransportProperty( OBEXTIMEOUTPROP, obexTimeout );
             }
             else if( aReader.name() == HTTPNUMBEROFRESENDATTEMPTSPROP )
             {
                 aReader.readNext();
                 QString numAttempts = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << HTTPNUMBEROFRESENDATTEMPTSPROP <<":" << numAttempts );
+                qCDebug(lcSyncML) << "Found transport property" << HTTPNUMBEROFRESENDATTEMPTSPROP <<":" << numAttempts;
                 setTransportProperty( HTTPNUMBEROFRESENDATTEMPTSPROP, numAttempts );
             }
             else if( aReader.name() == HTTPPROXYHOSTPROP )
             {
                 aReader.readNext();
                 QString proxyHost = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << HTTPPROXYHOSTPROP <<":" << proxyHost );
+                qCDebug(lcSyncML) << "Found transport property" << HTTPPROXYHOSTPROP <<":" << proxyHost;
                 setTransportProperty( HTTPPROXYHOSTPROP, proxyHost );
             }
             else if( aReader.name() == HTTPPROXYPORTPROP )
             {
                 aReader.readNext();
                 QString proxyPort = aReader.text().toString();
-                LOG_DEBUG( "Found transport property" << HTTPPROXYPORTPROP <<":" << proxyPort );
+                qCDebug(lcSyncML) << "Found transport property" << HTTPPROXYPORTPROP <<":" << proxyPort;
                 setTransportProperty( HTTPPROXYPORTPROP, proxyPort );
             }
 
@@ -580,7 +580,7 @@ bool SyncAgentConfig::parseTransportProps( QXmlStreamReader& aReader )
 
 bool SyncAgentConfig::parseSyncExtensions( QXmlStreamReader& aReader )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString EXTENSIONS( "extensions" );
 
@@ -596,7 +596,7 @@ bool SyncAgentConfig::parseSyncExtensions( QXmlStreamReader& aReader )
             else if( aReader.name() == SYNCWITHOUTINITPHASEEXTENSION )
             {
                 aReader.readNext();
-                LOG_DEBUG( "Found extension" << SYNCWITHOUTINITPHASEEXTENSION );
+                qCDebug(lcSyncML) << "Found extension" << SYNCWITHOUTINITPHASEEXTENSION;
 
                 QVariant data;
                 setExtension( SYNCWITHOUTINITPHASEEXTENSION, data );
@@ -621,7 +621,7 @@ bool SyncAgentConfig::parseSyncExtensions( QXmlStreamReader& aReader )
 
 bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
 {
-    FUNCTION_CALL_TRACE
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString EMITAGSTOKEN( "token" );
     const QString EMITAGSRESPONSE( "response" );
@@ -638,14 +638,14 @@ bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
             {
                 aReader.readNext();
                 token = aReader.text().toString();
-                LOG_DEBUG( "Found EMI tag" << EMITAGSTOKEN <<":" << token );
+                qCDebug(lcSyncML) << "Found EMI tag" << EMITAGSTOKEN <<":" << token;
 
             }
             else if( aReader.name() == EMITAGSRESPONSE )
             {
                 aReader.readNext();
                 response = aReader.text().toString();
-                LOG_DEBUG( "Found EMI tag" << EMITAGSRESPONSE <<":" << response );
+                qCDebug(lcSyncML) << "Found EMI tag" << EMITAGSRESPONSE <<":" << response;
             }
 
         }
@@ -667,7 +667,7 @@ bool SyncAgentConfig::parseEMITagsExtension( QXmlStreamReader& aReader )
 
 bool SyncAgentConfig::parseSANMappingsExtension( QXmlStreamReader& aReader )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString SANMAPPING( "san-mapping" );
 
@@ -697,7 +697,7 @@ bool SyncAgentConfig::parseSANMappingsExtension( QXmlStreamReader& aReader )
 bool SyncAgentConfig::parseSANMappingData( QXmlStreamReader& aReader,
                                            QStringList& aMappings )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     const QString SANMAPPING( "san-mapping" );
     const QString URI( "uri" );
@@ -714,13 +714,13 @@ bool SyncAgentConfig::parseSANMappingData( QXmlStreamReader& aReader,
             {
                 aReader.readNext();
                 uri = aReader.text().toString();
-                LOG_DEBUG( "Found SAN URI:" << uri );
+                qCDebug(lcSyncML) << "Found SAN URI:" << uri;
             }
             else if( aReader.name() == MIME )
             {
                 aReader.readNext();
                 mime = aReader.text().toString();
-                LOG_DEBUG( "Found SAN MIME:" << mime );
+                qCDebug(lcSyncML) << "Found SAN MIME:" << mime;
             }
         }
         else if( aReader.tokenType() == QXmlStreamReader::EndElement &&

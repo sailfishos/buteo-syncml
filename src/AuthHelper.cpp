@@ -35,23 +35,23 @@
 
 #include <QCryptographicHash>
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
 AuthHelper::AuthHelper()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 AuthHelper::~AuthHelper()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 QByteArray AuthHelper::encodeBasicB64Auth( const QString& aUsername, const QString& aPassword ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray in;
 
@@ -66,7 +66,7 @@ QByteArray AuthHelper::encodeBasicB64Auth( const QString& aUsername, const QStri
 QByteArray AuthHelper::encodeMD5Auth( const QString& aUsername, const QString& aPassword,
                                       const QString& aNonce ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QByteArray in;
 
@@ -85,7 +85,7 @@ QByteArray AuthHelper::encodeMD5Auth( const QString& aUsername, const QString& a
 
 QByteArray AuthHelper::toMD5( const QByteArray& aString ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QCryptographicHash md5Hash( QCryptographicHash::Md5 );
     md5Hash.addData( aString );

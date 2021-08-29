@@ -39,7 +39,7 @@
 #include "SyncItem.h"
 #include "ConflictResolver.h"
 
-#include "LogMacros.h"
+#include "SyncMLLogging.h"
 
 using namespace DataSync;
 
@@ -47,12 +47,12 @@ StorageHandler::StorageHandler() :
     iLargeObject( NULL ),
     iLargeObjectSize(0)
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 }
 
 StorageHandler::~StorageHandler()
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     qDeleteAll(iAddList);
     qDeleteAll(iReplaceList);
@@ -70,19 +70,19 @@ bool StorageHandler::addItem( const ItemId& aItemId,
                               const QString& aVersion,
                               const QString& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Processing item for add:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex );
+    qCDebug(lcSyncML) << "Processing item for add:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex;
 
     if( iLargeObject ) {
-        LOG_CRITICAL( "Already processing large object, aborting" );
+        qCCritical(lcSyncML) << "Already processing large object, aborting";
         return false;
     }
 
     SyncItem* newItem = aPlugin.newItem();
 
     if( !newItem ) {
-        LOG_CRITICAL( "Could not create new item" );
+        qCCritical(lcSyncML) << "Could not create new item";
         return false;
     }
 
@@ -95,12 +95,12 @@ bool StorageHandler::addItem( const ItemId& aItemId,
 
     if( !newItem->write( 0, aData.toUtf8() ) ) {
         delete newItem;
-        LOG_CRITICAL( "Could not write to item" );
+        qCCritical(lcSyncML) << "Could not write to item";
         return false;
     }
 
     iAddList.insert( aItemId, newItem );
-    LOG_DEBUG( "Item queued for addition" );
+    qCDebug(lcSyncML) << "Item queued for addition";
 
     return true;
 }
@@ -114,12 +114,12 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
                                   const QString& aVersion,
                                   const QString& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Processing item for replace:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex );
+    qCDebug(lcSyncML) << "Processing item for replace:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex;
 
     if( iLargeObject ) {
-        LOG_CRITICAL( "Already processing large object, aborting" );
+        qCCritical(lcSyncML) << "Already processing large object, aborting";
         return false;
     }
 
@@ -132,7 +132,7 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
     }
 
     if( !item ) {
-        LOG_DEBUG( "Could not find item, processing as Add" );
+        qCDebug(lcSyncML) << "Could not find item, processing as Add";
         return addItem( aItemId, aPlugin, aLocalKey, aParentKey, aType, aFormat, aVersion, aData );
     }
 
@@ -143,12 +143,12 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 
     if( !item->write( 0, aData.toUtf8() ) ) {
         delete item;
-        LOG_CRITICAL( "Could not write to item" );
+        qCCritical(lcSyncML) << "Could not write to item";
         return false;
     }
 
     iReplaceList.insert( aItemId, item );
-    LOG_DEBUG( "Item queued for replace" );
+    qCDebug(lcSyncML) << "Item queued for replace";
 
     return true;
 }
@@ -156,17 +156,17 @@ bool StorageHandler::replaceItem( const ItemId& aItemId,
 bool StorageHandler::deleteItem( const ItemId& aItemId,
                                  const SyncItemKey& aLocalKey )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
-    LOG_DEBUG( "Processing item for delete:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex );
+    qCDebug(lcSyncML) << "Processing item for delete:" << aItemId.iCmdId <<"/" << aItemId.iItemIndex;
 
     if( iLargeObject ) {
-        LOG_CRITICAL( "Already processing large object, aborting" );
+        qCCritical(lcSyncML) << "Already processing large object, aborting";
         return false;
     }
 
     iDeleteList.insert( aItemId, aLocalKey );
-    LOG_DEBUG( "Item queued for delete" );
+    qCDebug(lcSyncML) << "Item queued for delete";
 
     return true;
 }
@@ -179,17 +179,17 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
                                           const QString& aVersion,
                                           qint64 aSize )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iLargeObject ) {
-        LOG_CRITICAL( "Already processing large object, aborting" );
+        qCCritical(lcSyncML) << "Already processing large object, aborting";
         return false;
     }
 
     SyncItem* newItem = aPlugin.newItem();
 
     if( !newItem ) {
-        LOG_CRITICAL( "Could not create new item for large object" );
+        qCCritical(lcSyncML) << "Could not create new item for large object";
         return false;
     }
 
@@ -204,7 +204,7 @@ bool StorageHandler::startLargeObjectAdd( StoragePlugin& aPlugin,
     iLargeObjectSize = aSize;
     iLargeObjectKey = aRemoteKey;
 
-    LOG_DEBUG( "Large object created for addition" );
+    qCDebug(lcSyncML) << "Large object created for addition";
 
     return true;
 }
@@ -217,10 +217,10 @@ bool StorageHandler::startLargeObjectReplace( StoragePlugin& aPlugin,
                                               const QString& aVersion,
                                               qint64 aSize )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iLargeObject ) {
-        LOG_CRITICAL( "Already processing large object, aborting" );
+        qCCritical(lcSyncML) << "Already processing large object, aborting";
         return false;
     }
 
@@ -233,7 +233,7 @@ bool StorageHandler::startLargeObjectReplace( StoragePlugin& aPlugin,
     }
 
     if( !item ) {
-        LOG_CRITICAL( "Could not find item, processing as Add" );
+        qCCritical(lcSyncML) << "Could not find item, processing as Add";
         return startLargeObjectAdd( aPlugin, aLocalKey, aParentKey, aType, aFormat, aVersion, aSize );
     }
 
@@ -247,17 +247,17 @@ bool StorageHandler::startLargeObjectReplace( StoragePlugin& aPlugin,
     iLargeObjectKey = aLocalKey;
     if( !iLargeObject->resize(0) )
     {
-        LOG_DEBUG( "Large object created for replace couldn't be resized" );
+        qCDebug(lcSyncML) << "Large object created for replace couldn't be resized";
     }
 
-    LOG_DEBUG( "Large object created for replace" );
+    qCDebug(lcSyncML) << "Large object created for replace";
 
     return true;
 }
 
 bool StorageHandler::buildingLargeObject() const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( iLargeObject ) {
         return true;
@@ -269,7 +269,7 @@ bool StorageHandler::buildingLargeObject() const
 
 bool StorageHandler::matchesLargeObject( const QString& aKey )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( aKey == iLargeObjectKey ) {
         return true;
@@ -286,10 +286,10 @@ bool StorageHandler::matchesLargeObject( const QString& aKey )
 
 bool StorageHandler::appendLargeObjectData( const QString& aData )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iLargeObject ) {
-        LOG_CRITICAL( "Not building large object, aborting" );
+        qCCritical(lcSyncML) << "Not building large object, aborting";
         return false;
     }
 
@@ -301,7 +301,7 @@ bool StorageHandler::appendLargeObjectData( const QString& aData )
         iLargeObject = NULL;
         iLargeObjectSize = 0;
         iLargeObjectKey.clear();
-        LOG_CRITICAL( "Could not write to large object" );
+        qCCritical(lcSyncML) << "Could not write to large object";
         return false;
     }
 
@@ -309,20 +309,20 @@ bool StorageHandler::appendLargeObjectData( const QString& aData )
 
 bool StorageHandler::finishLargeObject( const ItemId& aItemId )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     if( !iLargeObject ) {
-        LOG_CRITICAL( "Not building large object, aborting" );
+        qCCritical(lcSyncML) << "Not building large object, aborting";
         return false;
     }
 
     if(iLargeObject->getKey()->isEmpty()) {
-        LOG_DEBUG( "Queuing large object for addition" );
+        qCDebug(lcSyncML) << "Queuing large object for addition";
 	iLargeObject->setKey(iLargeObjectKey);
         iAddList.insert( aItemId, iLargeObject );
     }
     else {
-        LOG_DEBUG( "Queuing large object for replace" );
+        qCDebug(lcSyncML) << "Queuing large object for replace";
 	iLargeObject->setKey(iLargeObjectKey);
         iReplaceList.insert( aItemId, iLargeObject );
     }
@@ -339,7 +339,7 @@ QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* a
                                                              QMap<ItemId, SyncItemKey> &aMap,
                                                              CommitStatus aStatus )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     QMutableMapIterator<ItemId, SyncItemKey> i(aMap);
 
     QMap<ItemId, CommitResult> results;
@@ -357,26 +357,26 @@ QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* a
         iId.iCmdId = i.key().iCmdId;
         iId.iItemIndex = i.key().iItemIndex;
 
-        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
+        qCDebug(lcSyncML) << "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict";
 
         if( aConflictResolver && aConflictResolver->isConflict( result.iItemKey, false ) ) {
 
-            LOG_DEBUG( "Conflict detected" );
+            qCDebug(lcSyncML) << "Conflict detected";
 
             if( aConflictResolver->localSideWins() ) {
-                LOG_DEBUG( "Conflict resolved, local side wins" );
+                qCDebug(lcSyncML) << "Conflict resolved, local side wins";
                 result.iConflict = CONFLICT_LOCAL_WIN;
                 aConflictResolver->revertLocalChange ( result.iItemKey, CR_MODIFY_TO_ADD );
                 i.remove();
             }
             else {
-                LOG_DEBUG( "Conflict resolved, remote side wins" );
+                qCDebug(lcSyncML) << "Conflict resolved, remote side wins";
                 result.iConflict = CONFLICT_REMOTE_WIN;
                 aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
             }
         }
         else {
-            LOG_DEBUG( "No conflict detected" );
+            qCDebug(lcSyncML) << "No conflict detected";
             result.iConflict = CONFLICT_NO_CONFLICT;
         }
 
@@ -390,7 +390,7 @@ QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* a
                                                              QMap<ItemId, SyncItem*> &aMap,
                                                              CommitStatus aStatus )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
     QMap<ItemId, CommitResult> results;
     ItemId iId;
 
@@ -408,26 +408,26 @@ QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* a
         iId.iCmdId = i.key().iCmdId;
         iId.iItemIndex = i.key().iItemIndex;
 
-        LOG_DEBUG( "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict" );
+        qCDebug(lcSyncML) << "Checking item" << iId.iCmdId <<"/" << iId.iItemIndex << "for conflict";
 
         if( aConflictResolver && aConflictResolver->isConflict( result.iItemKey, false ) ) {
 
-            LOG_DEBUG( "Conflict detected" );
+            qCDebug(lcSyncML) << "Conflict detected";
 
             if( aConflictResolver->localSideWins() ) {
-                LOG_DEBUG( "Conflict resolved, local side wins" );
+                qCDebug(lcSyncML) << "Conflict resolved, local side wins";
                 result.iConflict = CONFLICT_LOCAL_WIN;
                 delete i.value();
                 i.remove();
             }
             else {
-                LOG_DEBUG( "Conflict resolved, remote side wins" );
+                qCDebug(lcSyncML) << "Conflict resolved, remote side wins";
                 result.iConflict = CONFLICT_REMOTE_WIN;
                 aConflictResolver->revertLocalChange ( result.iItemKey, CR_REMOVE_LOCAL );
             }
         }
         else {
-            LOG_DEBUG( "No conflict detected" );
+            qCDebug(lcSyncML) << "No conflict detected";
             result.iConflict = CONFLICT_NO_CONFLICT;
         }
 
@@ -440,13 +440,13 @@ QMap<ItemId, CommitResult> StorageHandler::resolveConflicts( ConflictResolver* a
 QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlugin, 
 		                               ConflictResolver* aConflictResolver )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iAddList, COMMIT_INIT_ADD);    
     QList<ItemId> addIds = iAddList.keys();
     QList<SyncItem*> addItems = iAddList.values();
 
-    LOG_DEBUG( "Committing" << addItems.count() << "added items" );
+    qCDebug(lcSyncML) << "Committing" << addItems.count() << "added items";
 
     QList<StoragePlugin::StoragePluginStatus> addStatus = aPlugin.addItems( addItems );
 
@@ -455,14 +455,14 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
         CommitResult& result = results[addIds[i]];
         result.iItemKey = *addItems[i]->getKey();
         
-        LOG_DEBUG( "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed" );
+        qCDebug(lcSyncML) << "Item" << addIds[i].iCmdId << "/" << addIds[i].iItemIndex << "committed";
 
         switch( addStatus[i] )
         {
 
             case StoragePlugin::STATUS_OK:
             {
-                LOG_DEBUG( "Commit result: COMMIT_ADDED" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_ADDED";
                 result.iStatus = COMMIT_ADDED;
                 
 		emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
@@ -472,7 +472,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
             }
             case StoragePlugin::STATUS_DUPLICATE:
             {
-                LOG_DEBUG( "Commit result: COMMIT_DUPLICATE" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_DUPLICATE";
                 result.iStatus = COMMIT_DUPLICATE;
 
                 emit itemProcessed( MOD_ITEM_ADDED, MOD_LOCAL_DATABASE,
@@ -505,28 +505,28 @@ QMap<ItemId, CommitResult> StorageHandler::commitAddedItems( StoragePlugin& aPlu
 QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& aPlugin,
                                                                 ConflictResolver* aConflictResolver )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iReplaceList, COMMIT_INIT_REPLACE);
 
     QList<ItemId> replaceIds = iReplaceList.keys();
     QList<SyncItem*> replaceItems = iReplaceList.values();
 
-    LOG_DEBUG( "Committing" << replaceItems.count() << "replaced items" );
+    qCDebug(lcSyncML) << "Committing" << replaceItems.count() << "replaced items";
 
     QList<StoragePlugin::StoragePluginStatus> replaceStatus = aPlugin.replaceItems( replaceItems );
 
     for( int i = 0; i < replaceStatus.count(); ++i ) {
 
         CommitResult& result = results[replaceIds[i]];
-        LOG_DEBUG( "Item" << replaceIds[i].iCmdId << "/" << replaceIds[i].iItemIndex << "committed" );
+        qCDebug(lcSyncML) << "Item" << replaceIds[i].iCmdId << "/" << replaceIds[i].iItemIndex << "committed";
 
         switch( replaceStatus[i] )
         {
 
             case StoragePlugin::STATUS_OK:
             {
-                LOG_DEBUG( "Commit result: COMMIT_REPLACED" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_REPLACED";
                 result.iStatus = COMMIT_REPLACED;
 
                 emit itemProcessed( MOD_ITEM_MODIFIED, MOD_LOCAL_DATABASE,
@@ -536,7 +536,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
             }
             case StoragePlugin::STATUS_DUPLICATE:
             {
-                LOG_DEBUG( "Commit result: COMMIT_DUPLICATE" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_DUPLICATE";
                 result.iStatus = COMMIT_DUPLICATE;
 
                 emit itemProcessed( MOD_ITEM_MODIFIED, MOD_LOCAL_DATABASE,
@@ -568,13 +568,13 @@ QMap<ItemId, CommitResult> StorageHandler::commitReplacedItems( StoragePlugin& a
 QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aPlugin,
                                                                ConflictResolver* aConflictResolver )
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     QMap<ItemId, CommitResult> results = resolveConflicts (aConflictResolver, iDeleteList, COMMIT_INIT_DELETE);
     QList<ItemId> deleteIds = iDeleteList.keys();
     QList<SyncItemKey> deleteItems = iDeleteList.values();
 
-    LOG_DEBUG( "Committing" << deleteItems.count() << "deleted items" );
+    qCDebug(lcSyncML) << "Committing" << deleteItems.count() << "deleted items";
 
     QList<StoragePlugin::StoragePluginStatus> deleteStatus = aPlugin.deleteItems( deleteItems );
 
@@ -582,14 +582,14 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
 
         CommitResult& result = results[deleteIds[i]];
 
-        LOG_DEBUG( "Item" << deleteIds[i].iCmdId << "/" << deleteIds[i].iItemIndex << "committed" );
+        qCDebug(lcSyncML) << "Item" << deleteIds[i].iCmdId << "/" << deleteIds[i].iItemIndex << "committed";
 
         switch( deleteStatus[i] )
         {
 
             case StoragePlugin::STATUS_OK:
             {
-                LOG_DEBUG( "Commit result: COMMIT_DELETED" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_DELETED";
                 result.iStatus = COMMIT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
@@ -599,7 +599,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
             }
             case StoragePlugin::STATUS_NOT_FOUND:
             {
-                LOG_DEBUG( "Commit result: COMMIT_NOT_DELETED" );
+                qCDebug(lcSyncML) << "Commit result: COMMIT_NOT_DELETED";
                 result.iStatus = COMMIT_NOT_DELETED;
 
                 emit itemProcessed( MOD_ITEM_DELETED, MOD_LOCAL_DATABASE,
@@ -629,7 +629,7 @@ QMap<ItemId, CommitResult> StorageHandler::commitDeletedItems( StoragePlugin& aP
 
 CommitStatus StorageHandler::generalStatus( StoragePlugin::StoragePluginStatus aStatus ) const
 {
-    FUNCTION_CALL_TRACE;
+    FUNCTION_CALL_TRACE(lcSyncMLTrace);
 
     CommitStatus status;
 
@@ -638,25 +638,25 @@ CommitStatus StorageHandler::generalStatus( StoragePlugin::StoragePluginStatus a
 
         case StoragePlugin::STATUS_OBJECT_TOO_BIG:
         {
-            LOG_DEBUG( "Commit result: COMMIT_ITEM_TOO_BIG" );
+            qCDebug(lcSyncML) << "Commit result: COMMIT_ITEM_TOO_BIG";
             status = COMMIT_ITEM_TOO_BIG;
             break;
         }
         case StoragePlugin::STATUS_STORAGE_FULL:
         {
-            LOG_DEBUG( "Commit result: COMMIT_NOT_ENOUGH_SPACE" );
+            qCDebug(lcSyncML) << "Commit result: COMMIT_NOT_ENOUGH_SPACE";
             status = COMMIT_NOT_ENOUGH_SPACE;
             break;
         }
         case StoragePlugin::STATUS_INVALID_FORMAT:
         {
-            LOG_DEBUG( "Commit result: COMMIT_UNSUPPORTED_FORMAT" );
+            qCDebug(lcSyncML) << "Commit result: COMMIT_UNSUPPORTED_FORMAT";
             status = COMMIT_UNSUPPORTED_FORMAT;
             break;
         }
         default:
         {
-            LOG_DEBUG( "Commit result: COMMIT_GENERAL_ERROR" );
+            qCDebug(lcSyncML) << "Commit result: COMMIT_GENERAL_ERROR";
             status = COMMIT_GENERAL_ERROR;
             break;
         }
