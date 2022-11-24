@@ -407,8 +407,8 @@ bool SyncAgentConfig::parseConfFile( const QByteArray& aData )
                 if (dbPathInfo.isAbsolute()) {
                     setDatabaseFilePath( dbPath );
                 } else {
-                    if (QDir().mkpath(Sync::syncCacheDir())) {
-                        setDatabaseFilePath(Sync::syncCacheDir() + QDir::separator() + dbPathInfo.fileName());
+                    if (QDir().mkpath(Sync::syncConfigDir())) {
+                        setDatabaseFilePath(Sync::syncConfigDir() + QDir::separator() + dbPathInfo.fileName());
                     } else {
                         qCCritical(lcSyncML) << "Unable to create database dir";
                         return false;
