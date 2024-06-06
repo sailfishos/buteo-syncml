@@ -468,7 +468,7 @@ void ClientSessionHandler::messageParsed()
             }
             else
             {
-                qCDebug(lcSyncML) << "Omiting update status package!";
+                qCDebug(lcSyncML) << "Omitting update status package!";
                 finishSync();
             }
             break;

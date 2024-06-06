@@ -273,7 +273,7 @@ bool SANHandler::generateSANMessageDS( const SANDS &aData, const QString &aPassw
 
     if( serverIdentifierLength > MAX_SERVERURI_LENGTH )
     {
-        qCWarning(lcSyncML) << "Server identifier lenght more than 255 characters";
+        qCWarning(lcSyncML) << "Server identifier length more than 255 characters";
         return false;
     }
 
