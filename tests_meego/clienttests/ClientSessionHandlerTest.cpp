@@ -47,7 +47,7 @@ using namespace DataSync;
 
 void ClientSessionHandlerTest::initTestCase()
 {
-    iDbHandler = new DatabaseHandler( "/tmp/clientsessionhandler.db");
+    iDbHandler = new DatabaseHandler( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/clientsessionhandler.db");
     iClientId = QString("clientId");
     iConfig = new SyncAgentConfig();
     iTransport = new MockTransport(QString("data/transport_initrequest_nohdr.txt"));

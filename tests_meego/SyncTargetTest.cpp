@@ -41,7 +41,7 @@ using namespace DataSync;
 
 void SyncTargetTest::initTestCase()
 {
-    iDbHandler = new DatabaseHandler( "/tmp/synctargettest.db");
+    iDbHandler = new DatabaseHandler( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/synctargettest.db");
     QString remoteDevice = "remotedevice";
     QString localDb = "localcontacts";
     const SyncMode syncMode;

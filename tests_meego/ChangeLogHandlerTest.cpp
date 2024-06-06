@@ -43,7 +43,7 @@ using namespace DataSync;
 
 void ChangeLogHandlerTest::initTestCase()
 {
-    iDbHandler = new DatabaseHandler( "/tmp/changeloghandlertest.db" );
+    iDbHandler = new DatabaseHandler( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/changeloghandlertest.db" );
 
 }
 void ChangeLogHandlerTest::cleanupTestCase()

@@ -48,7 +48,7 @@
 
 using namespace DataSync;
 
-QString DBFILE( "/tmp/sessionhandlertest.db" );
+QString DBFILE( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/sessionhandlertest.db" );
 QString NB153701UNKNOWNDEVICE( "/" );
 QString NB153701SOURCEDEVICE( "IMEI:000000000000000" );
 QString NB153701TARGETDEVICE( "IMEI:000000000000001" );

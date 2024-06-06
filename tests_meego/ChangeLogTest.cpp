@@ -41,8 +41,8 @@
 
 using namespace DataSync;
 
-const QString DB1( "/tmp/changelogtest1.db" );
-const QString DB2( "/tmp/changelogtest2.db" );
+const QString DB1( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/changelogtest1.db" );
+const QString DB2( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/changelogtest2.db" );
 
 void ChangeLogTest::initTestCase()
 {

@@ -37,7 +37,7 @@
 #include "NonceStorage.h"
 
 
-const QString DB( "/tmp/noncestoragetest.db" );
+const QString DB( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/noncestoragetest.db" );
 const QString LOCALDEVICE( "localDevice" );
 const QString REMOTEDEVICE( "remoteDevice" );
 
