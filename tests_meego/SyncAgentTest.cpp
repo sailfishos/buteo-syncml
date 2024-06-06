@@ -68,9 +68,9 @@ void SyncAgentTest::testSync()
 {
     createSyncAgent_t createSyncAgent = (createSyncAgent_t) QLibrary::resolve(
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-            "buteosyncml", "0", "createSyncAgent");
+            "buteosyncml", "1", "createSyncAgent");
 #else
-            "buteosyncml5", "0", "createSyncAgent");
+            "buteosyncml5", "1", "createSyncAgent");
 #endif
     QVERIFY(NULL != createSyncAgent);
     SyncAgent* agent = createSyncAgent(NULL);
@@ -167,7 +167,7 @@ void SyncAgentTest::testSync()
 #else
         (destroySyncAgent_t*) QLibrary::resolve("buteosyncml5",
 #endif
-                "0", "destroySyncAgent");
+                "1", "destroySyncAgent");
     QVERIFY(NULL != destroySyncAgent);
     destroySyncAgent(agent);
     agent = NULL;
