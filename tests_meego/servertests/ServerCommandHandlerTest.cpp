@@ -51,7 +51,7 @@ using namespace DataSync;
  */
 void ServerCommandHandlerTest::initTestCase()
 {
-    iDbHandler = new DatabaseHandler( "/tmp/servercommandhandlertest.db");
+    iDbHandler = new DatabaseHandler( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/servercommandhandlertest.db");
     iStorageHandler = new StorageHandler();
     iCommandHandler = new CommandHandler( MODE_SERVER );
     iRemoteDevice = "remotedevice";

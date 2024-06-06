@@ -45,7 +45,7 @@
 
 using namespace DataSync;
 
-static QString DBFILE( "/tmp/serversessionhandler.db" );
+static QString DBFILE( QProcessEnvironment::systemEnvironment().value("TMPDIR", "/tmp") + "/serversessionhandler.db" );
 
 void ServerSessionHandlerTest::initTestCase()
 {
